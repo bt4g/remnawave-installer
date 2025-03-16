@@ -25,11 +25,12 @@ vless_configuration() {
     local node_name="VLESS-NODE"
 
     # Генерация ключей x25519 с помощью Docker
-    echo -e "${BOLD_GREEN}Генерация ключей x25519...${NC}"
-    sleep 1
-    keys=$(docker run --rm ghcr.io/xtls/xray-core x25519)
+    docker run --rm ghcr.io/xtls/xray-core x25519 > /tmp/xray_keys.txt 2>&1 &
+    spinner $! "Генерация ключей x25519..."
+    keys=$(cat /tmp/xray_keys.txt)
     private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
     public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
+    rm -f /tmp/xray_keys.txt
 
     if [ -z "$private_key" ] || [ -z "$public_key" ]; then
         echo -e "${BOLD_RED}Ошибка: Не удалось сгенерировать ключи.${NC}"
