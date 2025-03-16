@@ -175,18 +175,19 @@ install_panel() {
         show_success "Сгенерирован надежный пароль: ${BOLD_RED}$SUPERADMIN_PASSWORD"
     fi
 
-    sed -i "s|JWT_AUTH_SECRET=change_me|JWT_AUTH_SECRET=$JWT_AUTH_SECRET|" .env
-    sed -i "s|JWT_API_TOKENS_SECRET=change_me|JWT_API_TOKENS_SECRET=$JWT_API_TOKENS_SECRET|" .env
-    sed -i "s|IS_TELEGRAM_ENABLED=false|IS_TELEGRAM_ENABLED=$IS_TELEGRAM_ENV_VALUE|" .env
-    sed -i "s|TELEGRAM_BOT_TOKEN=change_me|TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN|" .env
-    sed -i "s|TELEGRAM_ADMIN_ID=change_me|TELEGRAM_ADMIN_ID=$TELEGRAM_ADMIN_ID|" .env
-    sed -i "s|NODES_NOTIFY_CHAT_ID=change_me|NODES_NOTIFY_CHAT_ID=$NODES_NOTIFY_CHAT_ID|" .env
-    sed -i "s|SUB_PUBLIC_DOMAIN=example.com|SUB_PUBLIC_DOMAIN=$SCRIPT_SUB_DOMAIN|" .env
-    sed -i "s|DATABASE_URL=.*|DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME|" .env
-    sed -i "s|POSTGRES_USER=.*|POSTGRES_USER=$DB_USER|" .env
-    sed -i "s|POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$DB_PASSWORD|" .env
-    sed -i "s|POSTGRES_DB=.*|POSTGRES_DB=$DB_NAME|" .env
-    sed -i "s|METRICS_PASS=.*|METRICS_PASS=$METRICS_PASS|" .env
+    update_file ".env" \
+        "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
+        "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
+        "IS_TELEGRAM_ENABLED" "$IS_TELEGRAM_ENV_VALUE" \
+        "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
+        "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
+        "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
+        "SUB_PUBLIC_DOMAIN" "$SCRIPT_SUB_DOMAIN" \
+        "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
+        "POSTGRES_USER" "$DB_USER" \
+        "POSTGRES_PASSWORD" "$DB_PASSWORD" \
+        "POSTGRES_DB" "$DB_NAME" \
+        "METRICS_PASS" "$METRICS_PASS"
 
     # Генерация секретного ключа для защиты панели управления
     PANEL_SECRET_KEY=$(openssl rand -hex 16)

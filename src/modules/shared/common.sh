@@ -161,6 +161,50 @@ generate_secure_password() {
     echo "$password"
 }
 
+# Функция для безопасного обновления .env файла с несколькими ключами
+update_file() {
+    local env_file="$1"
+    shift
+
+    # Проверка наличия параметров
+    if [ "$#" -eq 0 ] || [ $(($# % 2)) -ne 0 ]; then
+        echo "Ошибка: неверное количество аргументов. Должно быть чётное число ключей и значений." >&2
+        return 1
+    fi
+
+    # Преобразуем аргументы в массивы ключей и значений
+    local keys=()
+    local values=()
+
+    while [ "$#" -gt 0 ]; do
+        keys+=("$1")
+        values+=("$2")
+        shift 2
+    done
+
+    # Создаем временный файл
+    local temp_file=$(mktemp)
+
+    # Построчно обрабатываем файл и заменяем нужные строки
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        local key_found=false
+        for i in "${!keys[@]}"; do
+            if [[ "$line" =~ ^${keys[$i]}= ]]; then
+                echo "${keys[$i]}=${values[$i]}" >>"$temp_file"
+                key_found=true
+                break
+            fi
+        done
+
+        if [ "$key_found" = false ]; then
+            echo "$line" >>"$temp_file"
+        fi
+    done <"$env_file"
+
+    # Заменяем оригинальный файл
+    mv "$temp_file" "$env_file"
+}
+
 # Создание общего Makefile для управления сервисами
 create_makefile() {
     local directory="$1"

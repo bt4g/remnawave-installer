@@ -117,6 +117,7 @@ vless_configuration() {
 }
 EOL
 
+    echo ""
     echo -e "${BOLD_GREEN}Обновление конфигурации Xray...${NC}"
     sleep 1
     local new_config=$(cat "$config_file")
