@@ -210,7 +210,7 @@ EOF
     cat <<EOF
 {
     "inboundUuid": "$inbound_uuid",
-    "remark": "$node_name-HOST",
+    "remark": "VLESS TCP REALITY",
     "address": "$SELF_STEAL_DOMAIN",
     "port": 443,
     "path": "",
