@@ -20,8 +20,6 @@ cd ~/remnawave/panel && make restart
 ```
 
 ## Функциональность
-
-## Функциональность
 Установщик предоставляет следующие возможности:
 - Установка панели Remnawave + Caddy и [Subscription templates](https://remna.st/subscription-templating/installation) для подписок
 - Установка ноды Remnawave + Self Steal (заглушка), доступная локально (для Xray)
@@ -39,7 +37,7 @@ cd ~/remnawave/panel && make restart
 bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/dist/install_remnawave.sh)
 ```
 
-## Процесс установки
+<p align="center"><img src="./assets/menu.png" alt="Remnawave Installer Menu"></p>
 
 ### Установка панели Remnawave
 
@@ -47,20 +45,13 @@ bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/
 2. Скрипт автоматически установит необходимые зависимости (Docker и другие).
 3. Вам потребуется ввести:
    - Токен Telegram-бота / ID администратора и ID чата (если включите интеграцию с Telegram)
-   - Доменное имя для **поддержки** подписок (для приложения клиента)
-   - Доменное имя для **веб-страницы** подписок (для приложения клиента)
    - Основной **домен** для панели управления
    - Отдельный **домен** для подписок
-   - Имя пользователя и пароль SuperAdmin
-4. Вам будет предложено установить `remnawave-subscription-page`:
-   - При положительном выборе будет установлен `remnawave-subscription-page`.
-   - Будут созданы директории для шаблонов и скачаны стандартные шаблоны.
-   - Вы сможете настроить параметры V2Ray Mux и текст объявления.
-   - Caddy будет настроен для работы с `remnawave-subscription-page`.
-5. Скрипт зарегистрирует SuperAdmin в панели за вас и проведёт первичную настройку:
+   - Имя пользователя и пароль SuperAdmin (либо сгенерировать силами скрипта)
+4. Скрипт зарегистрирует SuperAdmin в панели за вас и проведёт первичную настройку:
+   - Запросит selfsteal домен для конфигурации
    - Сгенерирует конфиг Xray VLESS.
-   - Добавит данные о ноде (для связи с вашей удаленной нодой) в панель и получит публичный ключ для неё.
-   - Создаст хост для ноды.
+   - Получит публичный ключ для ноды и создаст хост
 
 ### Установка ноды Remnawave
 
@@ -99,34 +90,11 @@ bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/
 
 Доступные команды:
 
-- `make start` — Запуск сервиса и просмотр логов
-- `make stop` — Остановка сервиса
-- `make restart` — Перезапуск сервиса
-- `make update` — Обновление сервиса
+- `make start` — Запуск и просмотр логов
+- `make stop` — Остановка
+- `make restart` — Перезапуск
+- `make update` — Обновление
 - `make logs` — Просмотр логов
-
-## Работа с remnawave-subscription-page
-
-При установке `remnawave-subscription-page` создаются следующие шаблоны:
-
-- Шаблон V2Ray:
-  ```
-  ~/remnawave/remnawave-subscription-page/templates/v2ray/default.json
-  ```
-- Шаблон V2Ray Mux:
-  ```
-  ~/remnawave/remnawave-subscription-page/templates/mux/default.json
-  ```
-- Шаблон страницы подписки:
-  ```
-  ~/remnawave/remnawave-subscription-page/templates/subscription/index.html
-  ```
-
-Для изменения шаблонов:
-
-1. Перейдите в директорию `~/remnawave/remnawave-subscription-page` и выполните `make stop`.
-2. Отредактируйте нужные файлы шаблонов.
-3. Запустите сервисы снова: `make start`.
 
 ## Примечания
 
