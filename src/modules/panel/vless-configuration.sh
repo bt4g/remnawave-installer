@@ -61,7 +61,7 @@ vless_configuration() {
         ]
       },
       "streamSettings": {
-        "network": "raw",
+        "network": "tcp",
         "security": "reality",
         "realitySettings": {
           "dest": "127.0.0.1:$SELF_STEAL_PORT",
