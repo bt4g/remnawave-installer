@@ -82,28 +82,23 @@ install_panel() {
         if prompt_yes_no "Для продолжения требуется удалить предыдущую установку, подтверждаете удаление?" "$ORANGE"; then
             # Проверка наличия Caddy и его остановка
             if [ -f "$REMNAWAVE_DIR/caddy/docker-compose.yml" ]; then
-                show_info "Останавливаем Caddy..."
                 cd $REMNAWAVE_DIR && docker compose -f caddy/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер Caddy"
             fi
             # Проверка наличия страницы подписки и её остановка
             if [ -f "$REMNAWAVE_DIR/subscription-page/docker-compose.yml" ]; then
-                show_info "Останавливаем страницу подписки..." 
                 cd $REMNAWAVE_DIR && docker compose -f subscription-page/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер remnawave-subscription-page"
             fi
             # Проверка наличия панели и её остановка
             if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
-                show_info "Останавливаем панель Remnawave..." 
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнеры панели Remnawave"
             fi
             # Удаление директории
-            show_info "Удаление файлов Remnawave..." 
             rm -rf $REMNAWAVE_DIR >/dev/null 2>&1 &
             spinner $! "Удаляем каталог $REMNAWAVE_DIR"
             # Удаление томов Docker
-            show_info "Удаление томов Docker..." 
             docker volume rm remnawave-db-data remnawave-redis-data >/dev/null 2>&1 &
             spinner $! "Удаляем тома Docker: remnawave-db-data и remnawave-redis-data"
             show_success "Проведено удаление предыдущей установки."
