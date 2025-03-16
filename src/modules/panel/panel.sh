@@ -172,7 +172,6 @@ install_panel() {
     else
         # Автоматическая генерация пароля
         SUPERADMIN_PASSWORD=$(generate_secure_password 25)
-        show_success "Сгенерирован надежный пароль: ${BOLD_RED}$SUPERADMIN_PASSWORD"
     fi
 
     update_file ".env" \

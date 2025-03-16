@@ -42,16 +42,7 @@ display_panel_installation_complete_message() {
 
     echo
     show_success "Данные сохранены в файле: $CREDENTIALS_FILE"
-    echo
-    echo -e "${BOLD_BLUE}Директория панели: ${NC}$REMNAWAVE_DIR/panel"
-    echo -e "${BOLD_BLUE}Директория Caddy: ${NC}$REMNAWAVE_DIR/caddy"
-    echo
-    echo -e "${BOLD_GREEN}Вы можете управлять обеими службами с помощью команды 'make' в соответствующих директориях:${NC}"
-    echo
-    echo -e "  ${ORANGE}make start   ${NC}- Запуск службы и просмотр логов"
-    echo -e "  ${ORANGE}make stop    ${NC}- Остановка службы"
-    echo -e "  ${ORANGE}make restart ${NC}- Перезапуск службы"
-    echo -e "  ${ORANGE}make logs    ${NC}- Просмотр логов"
+    echo -e "${BOLD_BLUE}Директория установки: ${NC}$REMNAWAVE_DIR/"
     echo
 
     cd ~

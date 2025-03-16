@@ -25,13 +25,13 @@ restart_panel() {
     echo ""
     # Проверка существования директории панели
     if [ ! -d ~/remnawave/panel ]; then
-        echo -e "${BOLD_RED}Ошибка: директория панели не найдена по пути ~/remnawave/panel!${NC}"
-        echo -e "${BOLD_RED}Сначала установите панель Remnawave.${NC}"
+        show_error "Ошибка: директория панели не найдена по пути ~/remnawave/panel!"
+        show_error "Сначала установите панель Remnawave."
     else
         # Проверка наличия docker-compose.yml в директории панели
         if [ ! -f ~/remnawave/panel/docker-compose.yml ]; then
-            echo -e "${BOLD_RED}Ошибка: docker-compose.yml не найден в директории панели!${NC}"
-            echo -e "${BOLD_RED}Возможно, установка панели повреждена или не завершена.${NC}"
+            show_error "Ошибка: docker-compose.yml не найден в директории панели!"
+            show_error "Возможно, установка панели повреждена или не завершена."
         else
             # Переменная для отслеживания наличия директории subscription-page
             SUBSCRIPTION_PAGE_EXISTS=false
@@ -41,35 +41,30 @@ restart_panel() {
                 SUBSCRIPTION_PAGE_EXISTS=true
             fi
 
-            echo -e "${BOLD_GREEN}Останавливаем контейнеры...${NC}"
+            show_info "Останавливаем контейнеры..."
 
             # Останавливаем страницу подписки, если она существует
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
-                echo -e "${BOLD_YELLOW}Останавливаем страницу подписки...${NC}"
                 cd ~/remnawave/subscription-page && docker compose down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер remnawave-subscription-page"
             fi
 
             # Останавливаем панель
-            echo -e "${BOLD_YELLOW}Останавливаем панель Remnawave...${NC}"
             cd ~/remnawave/panel && docker compose down >/dev/null 2>&1 &
             spinner $! "Останавливаем контейнеры панели Remnawave"
 
             # Запускаем панель
-            echo -e "${BOLD_YELLOW}Запускаем панель Remnawave...${NC}"
             cd ~/remnawave/panel && docker compose up -d >/dev/null 2>&1 &
             spinner $! "Запускаем контейнеры панели Remnawave"
 
             # Запускаем страницу подписки, если она существует
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
-                echo -e "${BOLD_YELLOW}Запускаем страницу подписки...${NC}"
                 cd ~/remnawave/subscription-page && docker compose up -d >/dev/null 2>&1 &
                 spinner $! "Запускаем контейнер remnawave-subscription-page"
             fi
-
+            show_info "Панель перезапущена"
         fi
     fi
-    echo
     echo -e "${BOLD_GREEN}Нажмите Enter, чтобы продолжить...${NC}"
     read
 }
@@ -100,8 +95,8 @@ start_container() {
         echo -e "${ORANGE}Вы можете проверить логи позже с помощью 'make logs' в директории $directory.${NC}"
         return 1
     else
-        echo -e "${BOLD_GREEN}$service_name успешно запущен.${NC}"
-        echo ""
+        # echo -e "${BOLD_GREEN}$service_name успешно запущен.${NC}"
+        # echo ""
         return 0
     fi
 }

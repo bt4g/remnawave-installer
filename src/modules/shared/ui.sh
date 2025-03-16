@@ -25,7 +25,7 @@ draw_info_box() {
 
     # Строка версии - аккуратная обработка цветов
     local version_text="  • Версия: "
-    local version_value="$VERSION (Бета)"
+    local version_value="$VERSION"
     local version_value_colored="${ORANGE}${version_value}${BOLD_GREEN}"
     local version_value_length=${#version_value}
     local remaining_space=$((width - ${#version_text} - version_value_length))

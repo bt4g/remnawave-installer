@@ -9,31 +9,23 @@ setup_node() {
 
     # Проверка наличия предыдущей установки
     if [ -d "$REMNANODE_ROOT_DIR" ]; then
-        show_warning "Обнаружена предыдущая установка RemnaWave Node."
+        show_warning "Обнаружена предыдущая установка Remnawave Node."
         if prompt_yes_no "Для продолжения требуется удалить предыдущую установку, подтверждаете удаление?" "$ORANGE"; then
             # Остановка основного контейнера
             if [ -f "$REMNANODE_DIR/docker-compose.yml" ]; then
-                show_info "Останавливаем RemnaWave Node..."
                 cd $REMNANODE_DIR && docker compose -f docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер RemnaWave Node"
+                spinner $! "Останавливаем контейнер Remnawave Node"
             fi
 
             # Остановка контейнера selfsteal
             if [ -f "$SELFSTEAL_DIR/docker-compose.yml" ]; then
-                show_info "Останавливаем Selfsteal..."
                 cd $SELFSTEAL_DIR && docker compose -f docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер Selfsteal"
             fi
 
             # Удаление директории
-            show_info "Удаление файлов RemnaWave Node..."
             rm -rf $REMNANODE_ROOT_DIR >/dev/null 2>&1 &
             spinner $! "Удаляем каталог $REMNANODE_ROOT_DIR"
-
-            # Удаление томов Docker (если они есть)
-            show_info "Удаление томов Docker..."
-            docker volume rm remnanode-data selfsteal-data >/dev/null 2>&1 &
-            spinner $! "Удаляем тома Docker: remnanode-data и selfsteal-data"
 
             show_success "Проведено удаление предыдущей установки."
         else
@@ -90,6 +82,7 @@ setup_node() {
     NODE_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "node" && echo "running" || echo "stopped")
 
     if [ "$NODE_STATUS" = "running" ]; then
+        echo -e "${BOLD_GREEN}✓ Нода Remnawave успешно установлена и запущена!${NC}"
         echo -e "${LIGHT_GREEN}• Порт ноды: ${BOLD_GREEN}$NODE_PORT${NC}"
         echo -e "${LIGHT_GREEN}• Директория ноды: ${BOLD_GREEN}$REMNANODE_DIR${NC}"
         echo ""

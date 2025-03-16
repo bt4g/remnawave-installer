@@ -28,21 +28,20 @@ check_and_install_dependency() {
 
 # Установка общих зависимостей для всех компонентов
 install_dependencies() {
-    echo -e "${GREEN}Проверка зависимостей...${NC}"
+    show_info "Проверка зависимостей..."
     sudo apt update >/dev/null 2>&1
 
     # Проверка и установка необходимых пакетов
     check_and_install_dependency "curl" "jq" "make" || {
-        echo -e "${BOLD_RED}Ошибка: Не все необходимые зависимости были установлены.${NC}"
+        show_error "Ошибка: Не все необходимые зависимости были установлены."
         return 1
     }
 
     # Проверка, установлен ли Docker
     if command -v docker &>/dev/null && docker --version &>/dev/null; then
-        echo -e "${GREEN}Docker уже установлен. Пропускаем установку Docker.${NC}"
+        : # echo -e "${GREEN}Docker уже установлен. Пропускаем установку Docker.${NC}"
     else
-        echo ""
-        echo -e "${GREEN}Установка Docker и других необходимых пакетов...${NC}"
+        show_info "Установка Docker и других необходимых пакетов..."
 
         # Установка предварительных зависимостей
         sudo apt install -y apt-transport-https ca-certificates curl software-properties-common make >/dev/null 2>&1

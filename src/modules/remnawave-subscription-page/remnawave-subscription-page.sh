@@ -2,7 +2,7 @@
 
 # Установка и настройка remnawave-subscription-page
 setup_remnawave-subscription-page() {
-    echo -e "${BOLD_GREEN}Установка remnawave-subscription-page...${NC}"
+    # echo -e "${BOLD_GREEN}Установка remnawave-subscription-page...${NC}"
 
     # Создаем директорию для remnawave-subscription-page
     mkdir -p $REMNAWAVE_DIR/subscription-page
@@ -41,5 +41,5 @@ EOF
     # Создание Makefile для remnawave-subscription-page
     create_makefile "$REMNAWAVE_DIR/subscription-page"
 
-    echo -e "${BOLD_GREEN}Конфигурация remnawave-subscription-page завершена.${NC}"
+    # echo -e "${BOLD_GREEN}Конфигурация remnawave-subscription-page завершена.${NC}"
 }
