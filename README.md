@@ -93,7 +93,6 @@ bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/
 - `make start` — Запуск и просмотр логов
 - `make stop` — Остановка
 - `make restart` — Перезапуск
-- `make update` — Обновление
 - `make logs` — Просмотр логов
 
 ## Примечания

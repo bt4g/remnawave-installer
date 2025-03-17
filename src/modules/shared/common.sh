@@ -212,8 +212,6 @@ stop:
 	docker compose down
 restart:
 	docker compose down && docker compose up -d
-update:
-	docker compose pull && docker compose up -d
 logs:
 	docker compose logs -f -t
 EOF
