@@ -29,13 +29,13 @@ restart_panel() {
     echo ""
     # Проверка существования директории панели
     if [ ! -d ~/remnawave/panel ]; then
-        echo -e "${BOLD_RED}Ошибка: директория панели не найдена по пути ~/remnawave/panel!${NC}"
-        echo -e "${BOLD_RED}Сначала установите панель Remnawave.${NC}"
+        show_error "Ошибка: директория панели не найдена по пути ~/remnawave/panel!"
+        show_error "Сначала установите панель Remnawave."
     else
         # Проверка наличия docker-compose.yml в директории панели
         if [ ! -f ~/remnawave/panel/docker-compose.yml ]; then
-            echo -e "${BOLD_RED}Ошибка: docker-compose.yml не найден в директории панели!${NC}"
-            echo -e "${BOLD_RED}Возможно, установка панели повреждена или не завершена.${NC}"
+            show_error "Ошибка: docker-compose.yml не найден в директории панели!"
+            show_error "Возможно, установка панели повреждена или не завершена."
         else
             # Переменная для отслеживания наличия директории subscription-page
             SUBSCRIPTION_PAGE_EXISTS=false
@@ -45,55 +45,53 @@ restart_panel() {
                 SUBSCRIPTION_PAGE_EXISTS=true
             fi
 
-            echo -e "${BOLD_GREEN}Останавливаем контейнеры...${NC}"
+            show_info "Останавливаем контейнеры..."
 
             # Останавливаем страницу подписки, если она существует
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
-                echo -e "${BOLD_YELLOW}Останавливаем страницу подписки...${NC}"
                 cd ~/remnawave/subscription-page && docker compose down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер remnawave-subscription-page"
             fi
 
             # Останавливаем панель
-            echo -e "${BOLD_YELLOW}Останавливаем панель Remnawave...${NC}"
             cd ~/remnawave/panel && docker compose down >/dev/null 2>&1 &
             spinner $! "Останавливаем контейнеры панели Remnawave"
 
             # Запускаем панель
-            echo -e "${BOLD_YELLOW}Запускаем панель Remnawave...${NC}"
             cd ~/remnawave/panel && docker compose up -d >/dev/null 2>&1 &
             spinner $! "Запускаем контейнеры панели Remnawave"
 
             # Запускаем страницу подписки, если она существует
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
-                echo -e "${BOLD_YELLOW}Запускаем страницу подписки...${NC}"
                 cd ~/remnawave/subscription-page && docker compose up -d >/dev/null 2>&1 &
                 spinner $! "Запускаем контейнер remnawave-subscription-page"
             fi
-
+            show_info "Панель перезапущена"
         fi
     fi
-    echo
     echo -e "${BOLD_GREEN}Нажмите Enter, чтобы продолжить...${NC}"
     read
 }
 
-# Функция для запуска и проверки инициализации контейнера
 start_container() {
     local directory="$1"      # Директория с docker-compose.yml
     local container_name="$2" # Имя контейнера для проверки в docker ps
     local service_name="$3"   # Название сервиса для вывода сообщений
-    local wait_time=${4:-5}  # Время ожидания в секундах (по умолчанию 5 секунд)
+    local wait_time=${4:-1}   # Время ожидания в секундах
 
-    # Запуск контейнера
+    # Переходим в нужную директорию
     cd "$directory"
-    docker compose up -d >/dev/null 2>&1 &
-    local docker_pid=$!
 
-    # Отображаем спиннер во время запуска контейнера
-    spinner $docker_pid "Запуск контейнера ${service_name}..."
+    # Запускаем весь процесс в фоне с помощью подоболочки
+    (
+        docker compose up -d >/dev/null 2>&1
+        sleep $wait_time
+    ) &
 
-    sleep $wait_time
+    local bg_pid=$!
+
+    # Отображаем спиннер для всего процесса запуска и ожидания
+    spinner $bg_pid "Запуск контейнера ${service_name}..."
 
     # Проверяем статус контейнера
     if ! docker ps | grep -q "$container_name"; then
@@ -101,8 +99,8 @@ start_container() {
         echo -e "${ORANGE}Вы можете проверить логи позже с помощью 'make logs' в директории $directory.${NC}"
         return 1
     else
-        echo -e "${BOLD_GREEN}$service_name успешно запущен.${NC}"
-        echo ""
+        # echo -e "${BOLD_GREEN}$service_name успешно запущен.${NC}"
+        # echo ""
         return 0
     fi
 }
@@ -162,6 +160,50 @@ generate_secure_password() {
     echo "$password"
 }
 
+# Функция для безопасного обновления .env файла с несколькими ключами
+update_file() {
+    local env_file="$1"
+    shift
+
+    # Проверка наличия параметров
+    if [ "$#" -eq 0 ] || [ $(($# % 2)) -ne 0 ]; then
+        echo "Ошибка: неверное количество аргументов. Должно быть чётное число ключей и значений." >&2
+        return 1
+    fi
+
+    # Преобразуем аргументы в массивы ключей и значений
+    local keys=()
+    local values=()
+
+    while [ "$#" -gt 0 ]; do
+        keys+=("$1")
+        values+=("$2")
+        shift 2
+    done
+
+    # Создаем временный файл
+    local temp_file=$(mktemp)
+
+    # Построчно обрабатываем файл и заменяем нужные строки
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        local key_found=false
+        for i in "${!keys[@]}"; do
+            if [[ "$line" =~ ^${keys[$i]}= ]]; then
+                echo "${keys[$i]}=${values[$i]}" >>"$temp_file"
+                key_found=true
+                break
+            fi
+        done
+
+        if [ "$key_found" = false ]; then
+            echo "$line" >>"$temp_file"
+        fi
+    done <"$env_file"
+
+    # Заменяем оригинальный файл
+    mv "$temp_file" "$env_file"
+}
+
 # Создание общего Makefile для управления сервисами
 create_makefile() {
     local directory="$1"
@@ -174,8 +216,6 @@ stop:
 	docker compose down
 restart:
 	docker compose down && docker compose up -d
-update:
-    docker-compose pull && docker-compose up -d
 logs:
 	docker compose logs -f -t
 EOF
@@ -395,7 +435,7 @@ draw_info_box() {
 
     # Строка версии - аккуратная обработка цветов
     local version_text="  • Версия: "
-    local version_value="$VERSION (Бета)"
+    local version_value="$VERSION"
     local version_value_colored="${ORANGE}${version_value}${BOLD_GREEN}"
     local version_value_length=${#version_value}
     local remaining_space=$((width - ${#version_text} - version_value_length))
@@ -814,21 +854,20 @@ check_and_install_dependency() {
 
 # Установка общих зависимостей для всех компонентов
 install_dependencies() {
-    echo -e "${GREEN}Проверка зависимостей...${NC}"
+    show_info "Проверка зависимостей..."
     sudo apt update >/dev/null 2>&1
 
     # Проверка и установка необходимых пакетов
     check_and_install_dependency "curl" "jq" "make" || {
-        echo -e "${BOLD_RED}Ошибка: Не все необходимые зависимости были установлены.${NC}"
+        show_error "Ошибка: Не все необходимые зависимости были установлены."
         return 1
     }
 
     # Проверка, установлен ли Docker
     if command -v docker &>/dev/null && docker --version &>/dev/null; then
-        echo -e "${GREEN}Docker уже установлен. Пропускаем установку Docker.${NC}"
+        : # echo -e "${GREEN}Docker уже установлен. Пропускаем установку Docker.${NC}"
     else
-        echo ""
-        echo -e "${GREEN}Установка Docker и других необходимых пакетов...${NC}"
+        show_info "Установка Docker и других необходимых пакетов..."
 
         # Установка предварительных зависимостей
         sudo apt install -y apt-transport-https ca-certificates curl software-properties-common make >/dev/null 2>&1
@@ -878,7 +917,7 @@ install_dependencies() {
 
 # Установка и настройка remnawave-subscription-page
 setup_remnawave-subscription-page() {
-    echo -e "${BOLD_GREEN}Установка remnawave-subscription-page...${NC}"
+    # echo -e "${BOLD_GREEN}Установка remnawave-subscription-page...${NC}"
 
     # Создаем директорию для remnawave-subscription-page
     mkdir -p $REMNAWAVE_DIR/subscription-page
@@ -917,7 +956,7 @@ EOF
     # Создание Makefile для remnawave-subscription-page
     create_makefile "$REMNAWAVE_DIR/subscription-page"
 
-    echo -e "${BOLD_GREEN}Конфигурация remnawave-subscription-page завершена.${NC}"
+    # echo -e "${BOLD_GREEN}Конфигурация remnawave-subscription-page завершена.${NC}"
 }
 
 # Включение модуля: caddy.sh
@@ -1097,16 +1136,7 @@ display_panel_installation_complete_message() {
 
     echo
     show_success "Данные сохранены в файле: $CREDENTIALS_FILE"
-    echo
-    echo -e "${BOLD_BLUE}Директория панели: ${NC}$REMNAWAVE_DIR/panel"
-    echo -e "${BOLD_BLUE}Директория Caddy: ${NC}$REMNAWAVE_DIR/caddy"
-    echo
-    echo -e "${BOLD_GREEN}Вы можете управлять обеими службами с помощью команды 'make' в соответствующих директориях:${NC}"
-    echo
-    echo -e "  ${ORANGE}make start   ${NC}- Запуск службы и просмотр логов"
-    echo -e "  ${ORANGE}make stop    ${NC}- Остановка службы"
-    echo -e "  ${ORANGE}make restart ${NC}- Перезапуск службы"
-    echo -e "  ${ORANGE}make logs    ${NC}- Просмотр логов"
+    echo -e "${BOLD_BLUE}Директория установки: ${NC}$REMNAWAVE_DIR/"
     echo
 
     cd ~
@@ -1118,42 +1148,43 @@ display_panel_installation_complete_message() {
 # Включение модуля: vless-configuration.sh
 
 vless_configuration() {
-    local panel_url="$1"
-    local panel_domain="$2"
-    local token="$3"
-    local api_url="http://${panel_url}/api/auth/register"
+  local panel_url="$1"
+  local panel_domain="$2"
+  local token="$3"
+  local api_url="http://${panel_url}/api/auth/register"
 
-    # Запрос домена Selfsteal с валидацией
-    SELF_STEAL_DOMAIN=$(read_domain "Введите Selfsteal домен, например domain.example.com")
-    if [ -z "$SELF_STEAL_DOMAIN" ]; then
-        return 1
-    fi
+  # Запрос домена Selfsteal с валидацией
+  SELF_STEAL_DOMAIN=$(read_domain "Введите Selfsteal домен, например domain.example.com")
+  if [ -z "$SELF_STEAL_DOMAIN" ]; then
+    return 1
+  fi
 
-    # Запрос порта Selfsteal с валидацией и дефолтным значением 9443
-    SELF_STEAL_PORT=$(read_port "Введите Selfsteal порт (можно оставить по умолчанию)" "9443")
+  # Запрос порта Selfsteal с валидацией и дефолтным значением 9443
+  SELF_STEAL_PORT=$(read_port "Введите Selfsteal порт (можно оставить по умолчанию)" "9443")
 
-    # Запрос IP адреса или домена сервера с нодой с валидацией и дефолтным значением Selfsteal домена
-    NODE_HOST=$(read_domain "Введите IP адрес или домен сервера с нодой (если отличается от Selfsteal домена)" "$SELF_STEAL_DOMAIN")
+  # Запрос IP адреса или домена сервера с нодой с валидацией и дефолтным значением Selfsteal домена
+  NODE_HOST=$(read_domain "Введите IP адрес или домен сервера с нодой (если отличается от Selfsteal домена)" "$SELF_STEAL_DOMAIN")
 
-    # Запрос порта API ноды с валидацией и дефолтным значением 3000
-    NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "3000")
+  # Запрос порта API ноды с валидацией и дефолтным значением 3000
+  NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "3000")
 
-    local config_file="$REMNAWAVE_DIR/panel/config.json"
-    local node_name="VLESS-NODE"
+  local config_file="$REMNAWAVE_DIR/panel/config.json"
+  local node_name="VLESS-NODE"
 
-    # Генерация ключей x25519 с помощью Docker
-    echo -e "${BOLD_GREEN}Генерация ключей x25519...${NC}"
-    sleep 1
-    keys=$(docker run --rm ghcr.io/xtls/xray-core x25519)
-    private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
-    public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
+  # Генерация ключей x25519 с помощью Docker
+  docker run --rm ghcr.io/xtls/xray-core x25519 >/tmp/xray_keys.txt 2>&1 &
+  spinner $! "Генерация ключей x25519..."
+  keys=$(cat /tmp/xray_keys.txt)
+  private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
+  public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
+  rm -f /tmp/xray_keys.txt
 
-    if [ -z "$private_key" ] || [ -z "$public_key" ]; then
-        echo -e "${BOLD_RED}Ошибка: Не удалось сгенерировать ключи.${NC}"
-    fi
+  if [ -z "$private_key" ] || [ -z "$public_key" ]; then
+    echo -e "${BOLD_RED}Ошибка: Не удалось сгенерировать ключи.${NC}"
+  fi
 
-    short_id=$(openssl rand -hex 8)
-    cat > "$config_file" <<EOL
+  short_id=$(openssl rand -hex 8)
+  cat >"$config_file" <<EOL
 {
   "log": {
     "loglevel": "debug"
@@ -1177,7 +1208,7 @@ vless_configuration() {
         ]
       },
       "streamSettings": {
-        "network": "raw",
+        "network": "tcp",
         "security": "reality",
         "realitySettings": {
           "dest": "127.0.0.1:$SELF_STEAL_PORT",
@@ -1233,29 +1264,32 @@ vless_configuration() {
 }
 EOL
 
-    echo -e "${BOLD_GREEN}Обновление конфигурации Xray...${NC}"
-    sleep 1
-    local new_config=$(cat "$config_file")
-    local update_response=$(curl -s -X POST "http://$panel_url/api/xray/update-config" \
-        -H "Authorization: Bearer $token" \
-        -H "Content-Type: application/json" \
-        -H "Host: $panel_domain" \
-        -H "X-Forwarded-For: $panel_url" \
-        -H "X-Forwarded-Proto: https" \
-        -d "$new_config")
+  # Подготовка данных для обновления конфигурации Xray
+  local new_config=$(cat "$config_file")
+  # Запускаем curl в фоновом режиме и перенаправляем вывод в временный файл
+  curl -s -X POST "http://$panel_url/api/xray/update-config" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -H "Host: $panel_domain" \
+    -H "X-Forwarded-For: $panel_url" \
+    -H "X-Forwarded-Proto: https" \
+    -d "$new_config" >/tmp/update_response.txt 2>&1 &
+  spinner $! "Обновление конфигурации Xray..."
+  local update_response=$(cat /tmp/update_response.txt)
+  rm -f /tmp/update_response.txt
 
-    if [ -z "$update_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при обновлении Xray конфига.${NC}"
-    fi
+  if [ -z "$update_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при обновлении Xray конфига.${NC}"
+  fi
 
-    if echo "$update_response" | jq -e '.response.config' > /dev/null; then
-        echo -e "${BOLD_GREEN}Конфигурация Xray успешно обновлена.${NC}"
-        sleep 1
-    else
-        echo -e "${BOLD_RED}Ошибка: Не удалось обновить конфигурацию Xray.${NC}"
-    fi
+  if echo "$update_response" | jq -e '.response.config' >/dev/null; then
+    : # echo -e "${BOLD_GREEN}Конфигурация Xray успешно обновлена.${NC}"
+  else
+    echo -e "${BOLD_RED}Ошибка: Не удалось обновить конфигурацию Xray.${NC}"
+  fi
 
-    local new_node_data=$(cat <<EOF
+  local new_node_data=$(
+    cat <<EOF
 {
     "name": "$node_name",
     "address": "$NODE_HOST",
@@ -1269,56 +1303,61 @@ EOL
     "consumptionMultiplier": 1.0
 }
 EOF
-)
-    # Создание ноды
-    echo -e "${BOLD_GREEN}Создание ноды...${NC}"
-    sleep 1
-    node_response=$(curl -s -X POST "http://$panel_url/api/nodes/create" \
-        -H "Authorization: Bearer $token" \
-        -H "Content-Type: application/json" \
-        -H "Host: $panel_domain" \
-        -H "X-Forwarded-For: $panel_url" \
-        -H "X-Forwarded-Proto: https" \
-        -d "$new_node_data")
+  )
+  # Создание ноды в фоновом режиме
+  curl -s -X POST "http://$panel_url/api/nodes/create" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -H "Host: $panel_domain" \
+    -H "X-Forwarded-For: $panel_url" \
+    -H "X-Forwarded-Proto: https" \
+    -d "$new_node_data" >/tmp/node_response.txt 2>&1 &
+  spinner $! "Создание ноды..."
+  node_response=$(cat /tmp/node_response.txt)
+  rm -f /tmp/node_response.txt
 
-    if [ -z "$node_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании узла.${NC}"
-    fi
+  if [ -z "$node_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании ноды.${NC}"
+  fi
 
-    if echo "$node_response" | jq -e '.response.uuid' > /dev/null; then
-        echo -e "${BOLD_GREEN}Узел успешно создан.${NC}"
-    else
-        echo -e "${BOLD_RED}Ошибка: Не удалось создать узел, ответ:${NC}"
-        echo
-        echo "Был направлен запрос с телом:"
-        echo "$new_node_data"
-        echo
-        echo "Ответ:"
-        echo
-        echo "$node_response"
-    fi
+  if echo "$node_response" | jq -e '.response.uuid' >/dev/null; then
+    : # echo -e "${BOLD_GREEN}Нода успешно создана.${NC}"
+  else
+    echo -e "${BOLD_RED}Ошибка: Не удалось создать ноду, ответ:${NC}"
+    echo
+    echo "Был направлен запрос с телом:"
+    echo "$new_node_data"
+    echo
+    echo "Ответ:"
+    echo
+    echo "$node_response"
+  fi
 
-    # Получение inbounds
-    inbounds_response=$(curl -s -X GET "http://$panel_url/api/inbounds" \
-        -H "Authorization: Bearer $token" \
-        -H "Content-Type: application/json" \
-        -H "Host: $panel_domain" \
-        -H "X-Forwarded-For: $panel_url" \
-        -H "X-Forwarded-Proto: https")
+  # Получение inbounds в фоновом режиме
+  curl -s -X GET "http://$panel_url/api/inbounds" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -H "Host: $panel_domain" \
+    -H "X-Forwarded-For: $panel_url" \
+    -H "X-Forwarded-Proto: https" >/tmp/inbounds_response.txt 2>&1 &
+  spinner $! "Получение списка inbounds..."
+  inbounds_response=$(cat /tmp/inbounds_response.txt)
+  rm -f /tmp/inbounds_response.txt
 
-    if [ -z "$inbounds_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при получении inbounds.${NC}"
-    fi
+  if [ -z "$inbounds_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при получении inbounds.${NC}"
+  fi
 
-    inbound_uuid=$(echo "$inbounds_response" | jq -r '.response[0].uuid')
-    if [ -z "$inbound_uuid" ]; then
-        echo -e "${BOLD_RED}Ошибка: Не удалось извлечь UUID из ответа.${NC}"
-    fi
-    echo -e "${BOLD_GREEN}Создаем хост с UUID: $inbound_uuid...${NC}"
-    host_data=$(cat <<EOF
+  inbound_uuid=$(echo "$inbounds_response" | jq -r '.response[0].uuid')
+  if [ -z "$inbound_uuid" ]; then
+    echo -e "${BOLD_RED}Ошибка: Не удалось извлечь UUID из ответа.${NC}"
+  fi
+
+  host_data=$(
+    cat <<EOF
 {
     "inboundUuid": "$inbound_uuid",
-    "remark": "$node_name-HOST",
+    "remark": "VLESS TCP REALITY",
     "address": "$SELF_STEAL_DOMAIN",
     "port": 443,
     "path": "",
@@ -1330,46 +1369,55 @@ EOF
     "isDisabled": false
 }
 EOF
-)
+  )
 
-    host_response=$(curl -s -X POST "http://$panel_url/api/hosts/create" \
-        -H "Authorization: Bearer $token" \
-        -H "Content-Type: application/json" \
-        -H "Host: $panel_domain" \
-        -H "X-Forwarded-For: $panel_url" \
-        -H "X-Forwarded-Proto: https" \
-        -d "$host_data")
+  # Создание хоста в фоновом режиме
+  curl -s -X POST "http://$panel_url/api/hosts/create" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -H "Host: $panel_domain" \
+    -H "X-Forwarded-For: $panel_url" \
+    -H "X-Forwarded-Proto: https" \
+    -d "$host_data" >/tmp/host_response.txt 2>&1 &
+  spinner $! "Создание хоста с UUID: $inbound_uuid..."
+  host_response=$(cat /tmp/host_response.txt)
+  rm -f /tmp/host_response.txt
 
-    if [ -z "$host_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании хоста.${NC}"
-    fi
+  if [ -z "$host_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании хоста.${NC}"
+  fi
 
-    if echo "$host_response" | jq -e '.response.uuid' > /dev/null; then
-        echo -e "${BOLD_GREEN}Хост успешно создан.${NC}"
-    else
-        echo -e "${BOLD_RED}Ошибка: Не удалось создать хост.${NC}"
-    fi
+  if echo "$host_response" | jq -e '.response.uuid' >/dev/null; then
+    : # echo -e "${BOLD_GREEN}Хост успешно создан.${NC}"
+  else
+    echo -e "${BOLD_RED}Ошибка: Не удалось создать хост.${NC}"
+  fi
 
-    api_response=$(curl -s -X GET "http://$panel_url/api/keygen/get" \
-        -H "Authorization: Bearer $token" \
-        -H "Content-Type: application/json" \
-        -H "Host: $panel_domain" \
-        -H "X-Forwarded-For: $panel_url" \
-        -H "X-Forwarded-Proto: https")
+  # Получение публичного ключа в фоновом режиме
+  curl -s -X GET "http://$panel_url/api/keygen/get" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -H "Host: $panel_domain" \
+    -H "X-Forwarded-For: $panel_url" \
+    -H "X-Forwarded-Proto: https" >/tmp/api_response.txt 2>&1 &
+  spinner $! "Получение публичного ключа..."
+  api_response=$(cat /tmp/api_response.txt)
+  rm -f /tmp/api_response.txt
 
-    if [ -z "$api_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Не удалось получить публичный ключ.${NC}"
-    fi
+  if [ -z "$api_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Не удалось получить публичный ключ.${NC}"
+  fi
 
-    pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
-    if [ -z "$pubkey" ]; then
-        echo -e "${BOLD_RED}Ошибка: Не удалось извлечь публичный ключ из ответа.${NC}"
-    fi
+  pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
+  if [ -z "$pubkey" ]; then
+    echo -e "${BOLD_RED}Ошибка: Не удалось извлечь публичный ключ из ответа.${NC}"
+  fi
 
-    echo -e "${GREEN}Публичный ключ (нужен для установки ноды):${NC}"
-    echo
-    echo -e "SSL_CERT=\"$pubkey\""
-    echo
+  echo
+  echo -e "${GREEN}Публичный ключ (нужен для установки ноды):${NC}"
+  echo
+  echo -e "SSL_CERT=\"$pubkey\""
+  echo
 }
 
 # Включение модуля: panel.sh
@@ -1456,28 +1504,23 @@ install_panel() {
         if prompt_yes_no "Для продолжения требуется удалить предыдущую установку, подтверждаете удаление?" "$ORANGE"; then
             # Проверка наличия Caddy и его остановка
             if [ -f "$REMNAWAVE_DIR/caddy/docker-compose.yml" ]; then
-                show_info "Останавливаем Caddy..."
                 cd $REMNAWAVE_DIR && docker compose -f caddy/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер Caddy"
             fi
             # Проверка наличия страницы подписки и её остановка
             if [ -f "$REMNAWAVE_DIR/subscription-page/docker-compose.yml" ]; then
-                show_info "Останавливаем страницу подписки..." 
                 cd $REMNAWAVE_DIR && docker compose -f subscription-page/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер remnawave-subscription-page"
             fi
             # Проверка наличия панели и её остановка
             if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
-                show_info "Останавливаем панель Remnawave..." 
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнеры панели Remnawave"
             fi
             # Удаление директории
-            show_info "Удаление файлов Remnawave..." 
             rm -rf $REMNAWAVE_DIR >/dev/null 2>&1 &
             spinner $! "Удаляем каталог $REMNAWAVE_DIR"
             # Удаление томов Docker
-            show_info "Удаление томов Docker..." 
             docker volume rm remnawave-db-data remnawave-redis-data >/dev/null 2>&1 &
             spinner $! "Удаляем тома Docker: remnawave-db-data и remnawave-redis-data"
             show_success "Проведено удаление предыдущей установки."
@@ -1551,21 +1594,21 @@ install_panel() {
     else
         # Автоматическая генерация пароля
         SUPERADMIN_PASSWORD=$(generate_secure_password 25)
-        show_success "Сгенерирован надежный пароль: ${BOLD_RED}$SUPERADMIN_PASSWORD"
     fi
 
-    sed -i "s|JWT_AUTH_SECRET=change_me|JWT_AUTH_SECRET=$JWT_AUTH_SECRET|" .env
-    sed -i "s|JWT_API_TOKENS_SECRET=change_me|JWT_API_TOKENS_SECRET=$JWT_API_TOKENS_SECRET|" .env
-    sed -i "s|IS_TELEGRAM_ENABLED=false|IS_TELEGRAM_ENABLED=$IS_TELEGRAM_ENV_VALUE|" .env
-    sed -i "s|TELEGRAM_BOT_TOKEN=change_me|TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN|" .env
-    sed -i "s|TELEGRAM_ADMIN_ID=change_me|TELEGRAM_ADMIN_ID=$TELEGRAM_ADMIN_ID|" .env
-    sed -i "s|NODES_NOTIFY_CHAT_ID=change_me|NODES_NOTIFY_CHAT_ID=$NODES_NOTIFY_CHAT_ID|" .env
-    sed -i "s|SUB_PUBLIC_DOMAIN=example.com|SUB_PUBLIC_DOMAIN=$SCRIPT_SUB_DOMAIN|" .env
-    sed -i "s|DATABASE_URL=.*|DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME|" .env
-    sed -i "s|POSTGRES_USER=.*|POSTGRES_USER=$DB_USER|" .env
-    sed -i "s|POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$DB_PASSWORD|" .env
-    sed -i "s|POSTGRES_DB=.*|POSTGRES_DB=$DB_NAME|" .env
-    sed -i "s|METRICS_PASS=.*|METRICS_PASS=$METRICS_PASS|" .env
+    update_file ".env" \
+        "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
+        "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
+        "IS_TELEGRAM_ENABLED" "$IS_TELEGRAM_ENV_VALUE" \
+        "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
+        "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
+        "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
+        "SUB_PUBLIC_DOMAIN" "$SCRIPT_SUB_DOMAIN" \
+        "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
+        "POSTGRES_USER" "$DB_USER" \
+        "POSTGRES_PASSWORD" "$DB_PASSWORD" \
+        "POSTGRES_DB" "$DB_NAME" \
+        "METRICS_PASS" "$METRICS_PASS"
 
     # Генерация секретного ключа для защиты панели управления
     PANEL_SECRET_KEY=$(openssl rand -hex 16)
@@ -1714,21 +1757,26 @@ EOF
     # Создание Makefile для управления
     create_makefile "$SELFSTEAL_DIR"
     
-    # Создание директорий и скачивание файлов с GitHub
-    echo -e "${GREEN}Скачивание статических файлов для сайта-заглушки...${NC}"
-    
     mkdir -p ./html/assets
     
-    # Скачивание index.html
-    curl -s -o ./html/index.html https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/index.html
+    # Запускаем процесс скачивания файлов в фоне с перенаправлением вывода
+    (
+        # Скачивание index.html
+        curl -s -o ./html/index.html https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/index.html
+        
+        # Скачивание файлов assets
+        curl -s -o ./html/assets/index-BilmB03J.css https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-BilmB03J.css
+        curl -s -o ./html/assets/index-CRT2NuFx.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-CRT2NuFx.js
+        curl -s -o ./html/assets/index-legacy-D44yECni.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-legacy-D44yECni.js
+        curl -s -o ./html/assets/polyfills-legacy-B97CwC2N.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/polyfills-legacy-B97CwC2N.js
+        curl -s -o ./html/assets/vendor-DHVSyNSs.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/vendor-DHVSyNSs.js
+        curl -s -o ./html/assets/vendor-legacy-Cq-AagHX.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/vendor-legacy-Cq-AagHX.js
+    ) >/dev/null 2>&1 &
     
-    # Скачивание файлов assets
-    curl -s -o ./html/assets/index-BilmB03J.css https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-BilmB03J.css
-    curl -s -o ./html/assets/index-CRT2NuFx.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-CRT2NuFx.js
-    curl -s -o ./html/assets/index-legacy-D44yECni.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-legacy-D44yECni.js
-    curl -s -o ./html/assets/polyfills-legacy-B97CwC2N.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/polyfills-legacy-B97CwC2N.js
-    curl -s -o ./html/assets/vendor-DHVSyNSs.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/vendor-DHVSyNSs.js
-    curl -s -o ./html/assets/vendor-legacy-Cq-AagHX.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/vendor-legacy-Cq-AagHX.js
+    download_pid=$!
+    
+    # Запускаем спиннер для процесса скачивания
+    spinner $download_pid "Скачивание статических файлов selfsteal сайта..."
     
     # Запуск сервиса
     mkdir -p logs
@@ -1761,31 +1809,23 @@ setup_node() {
 
     # Проверка наличия предыдущей установки
     if [ -d "$REMNANODE_ROOT_DIR" ]; then
-        show_warning "Обнаружена предыдущая установка RemnaWave Node."
+        show_warning "Обнаружена предыдущая установка Remnawave Node."
         if prompt_yes_no "Для продолжения требуется удалить предыдущую установку, подтверждаете удаление?" "$ORANGE"; then
             # Остановка основного контейнера
             if [ -f "$REMNANODE_DIR/docker-compose.yml" ]; then
-                show_info "Останавливаем RemnaWave Node..."
                 cd $REMNANODE_DIR && docker compose -f docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер RemnaWave Node"
+                spinner $! "Останавливаем контейнер Remnawave Node"
             fi
 
             # Остановка контейнера selfsteal
             if [ -f "$SELFSTEAL_DIR/docker-compose.yml" ]; then
-                show_info "Останавливаем Selfsteal..."
                 cd $SELFSTEAL_DIR && docker compose -f docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер Selfsteal"
             fi
 
             # Удаление директории
-            show_info "Удаление файлов RemnaWave Node..."
             rm -rf $REMNANODE_ROOT_DIR >/dev/null 2>&1 &
             spinner $! "Удаляем каталог $REMNANODE_ROOT_DIR"
-
-            # Удаление томов Docker (если они есть)
-            show_info "Удаление томов Docker..."
-            docker volume rm remnanode-data selfsteal-data >/dev/null 2>&1 &
-            spinner $! "Удаляем тома Docker: remnanode-data и selfsteal-data"
 
             show_success "Проведено удаление предыдущей установки."
         else
@@ -1842,6 +1882,7 @@ setup_node() {
     NODE_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "node" && echo "running" || echo "stopped")
 
     if [ "$NODE_STATUS" = "running" ]; then
+        echo -e "${BOLD_GREEN}✓ Нода Remnawave успешно установлена и запущена!${NC}"
         echo -e "${LIGHT_GREEN}• Порт ноды: ${BOLD_GREEN}$NODE_PORT${NC}"
         echo -e "${LIGHT_GREEN}• Директория ноды: ${BOLD_GREEN}$REMNANODE_DIR${NC}"
         echo ""
