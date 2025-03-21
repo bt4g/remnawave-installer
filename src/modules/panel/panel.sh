@@ -90,6 +90,11 @@ install_panel() {
                 cd $REMNAWAVE_DIR && docker compose -f subscription-page/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер remnawave-subscription-page"
             fi
+            # Проверка наличия ноды и её остановка
+            if [ -f "$LOCAL_REMNANODE_DIR/docker-compose.yml" ]; then
+                cd $LOCAL_REMNANODE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Останавливаем контейнер ноды Remnawave"
+            fi
             # Проверка наличия панели и её остановка
             if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &

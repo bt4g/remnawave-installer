@@ -21,7 +21,7 @@ install_panel_all_in_one() {
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнеры панели Remnawave"
             fi
-            # Проверка наличия панели и её остановка
+            # Проверка наличия ноды и её остановка
             if [ -f "$LOCAL_REMNANODE_DIR/docker-compose.yml" ]; then
                 cd $LOCAL_REMNANODE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер ноды Remnawave"
