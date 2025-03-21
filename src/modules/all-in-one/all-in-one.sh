@@ -166,6 +166,9 @@ install_panel_all_in_one() {
         echo ""
     fi
 
+    # Перезапуск панели
+    restart_panel
+
     # Сохранение учетных данных в файл
     CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
     echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
