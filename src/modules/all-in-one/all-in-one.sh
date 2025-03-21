@@ -167,7 +167,7 @@ install_panel_all_in_one() {
     fi
 
     # Перезапуск панели
-    restart_panel
+    restart_panel "true"
 
     # Сохранение учетных данных в файл
     CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"

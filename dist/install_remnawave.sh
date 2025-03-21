@@ -31,19 +31,19 @@ display_panel_installation_complete_message() {
     local secure_panel_url="https://$SCRIPT_PANEL_DOMAIN/auth/login?caddy=$PANEL_SECRET_KEY"
     local effective_width=$((${#secure_panel_url} + 3))
     local border_line=$(printf '─%.0s' $(seq 1 $effective_width))
-    
+
     print_text_line() {
         local text="$1"
         local padding=$((effective_width - ${#text} - 1))
         echo -e "\033[1m│ $text$(printf '%*s' $padding)│\033[0m"
     }
-    
+
     print_empty_line() {
         echo -e "\033[1m│$(printf '%*s' $effective_width)│\033[0m"
     }
-    
+
     echo -e "\033[1m┌${border_line}┐\033[0m"
-    
+
     print_text_line "Ваш домен для панели:"
     print_text_line "https://$SCRIPT_PANEL_DOMAIN"
     print_empty_line
@@ -117,11 +117,11 @@ register_user() {
 
     local response=$(
         curl -s "$api_url" \
-        -H "Host: $panel_domain" \
-        -H "X-Forwarded-For: $panel_url" \
-        -H "X-Forwarded-Proto: https" \
-        -H "Content-Type: application/json" \
-        --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
+            -H "Host: $panel_domain" \
+            -H "X-Forwarded-For: $panel_url" \
+            -H "X-Forwarded-Proto: https" \
+            -H "Content-Type: application/json" \
+            --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
     )
 
     if [ -z "$response" ]; then
@@ -139,6 +139,7 @@ register_user() {
 }
 
 restart_panel() {
+    local no_wait=${1:-false} # Optional parameter to skip waiting for user input
     echo ""
     # Проверка существования директории панели
     if [ ! -d ~/remnawave/panel ]; then
@@ -182,8 +183,10 @@ restart_panel() {
             show_info "Панель перезапущена"
         fi
     fi
-    echo -e "${BOLD_GREEN}Нажмите Enter, чтобы продолжить...${NC}"
-    read
+    if [ "$no_wait" != "true" ]; then
+        echo -e "${BOLD_GREEN}Нажмите Enter, чтобы продолжить...${NC}"
+        read
+    fi
 }
 
 start_container() {
@@ -2555,7 +2558,7 @@ install_panel_all_in_one() {
     fi
 
     # Перезапуск панели
-    restart_panel
+    restart_panel "true"
 
     # Сохранение учетных данных в файл
     CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
