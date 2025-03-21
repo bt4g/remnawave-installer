@@ -4,76 +4,7 @@
 #                              УСТАНОВКА ПАНЕЛИ REMNAWAVE
 # ===================================================================================
 
-wait_for_panel() {
-    local panel_url="$1"
-    local max_wait=180
-    local temp_file=$(mktemp)
-
-    # Запускаем проверку доступности сервера в фоновом процессе
-    {
-        local start_time=$(date +%s)
-        local end_time=$((start_time + max_wait))
-
-        while [ $(date +%s) -lt $end_time ]; do
-            if curl -s --connect-timeout 1 "http://$panel_url/api/auth/register" >/dev/null; then
-                echo "success" >"$temp_file"
-                exit 0
-            fi
-            sleep 1
-        done
-        echo "timeout" >"$temp_file"
-        exit 1
-    } &
-    local check_pid=$!
-
-    spinner "$check_pid" "Ожидание инициализации панели..."
-
-    if [ "$(cat "$temp_file")" = "success" ]; then
-        show_success "Панель готова к работе!"
-        rm -f "$temp_file"
-        return 0
-    else
-        show_warning "Превышено максимальное время ожидания ($max_wait секунд)."
-        show_info "Пробуем продолжить регистрацию в любом случае..."
-        rm -f "$temp_file"
-        return 1
-    fi
-}
-
-register_user() {
-    local panel_url="$1"
-    local panel_domain="$2"
-    local username="$3"
-    local password="$4"
-    local api_url="http://${panel_url}/api/auth/register"
-
-    local reg_token=""
-    local reg_error=""
-
-    local response=$(
-        curl -s "$api_url" \
-            -H "Host: $panel_domain" \
-            -H "X-Forwarded-For: $panel_url" \
-            -H "X-Forwarded-Proto: https" \
-            -H "Content-Type: application/json" \
-            --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
-    )
-
-    if [ -z "$response" ]; then
-        reg_error="Пустой ответ сервера"
-        return 1
-    elif [[ "$response" == *"accessToken"* ]]; then
-        # Успешная регистрация
-        reg_token=$(echo "$response" | jq -r '.response.accessToken')
-        echo "$reg_token"
-        return 0
-    else
-        echo "$response"
-        return 1
-    fi
-}
-
-install_panel() {
+install_panel_all_in_one() {
     clear_screen
 
     # Проверка наличия предыдущей установки
@@ -85,15 +16,15 @@ install_panel() {
                 cd $REMNAWAVE_DIR && docker compose -f caddy/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер Caddy"
             fi
-            # Проверка наличия страницы подписки и её остановка
-            if [ -f "$REMNAWAVE_DIR/subscription-page/docker-compose.yml" ]; then
-                cd $REMNAWAVE_DIR && docker compose -f subscription-page/docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер remnawave-subscription-page"
-            fi
             # Проверка наличия панели и её остановка
             if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнеры панели Remnawave"
+            fi
+            # Проверка наличия панели и её остановка
+            if [ -f "$LOCAL_REMNANODE_DIR/docker-compose.yml" ]; then
+                cd $LOCAL_REMNANODE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Останавливаем контейнер ноды Remnawave"
             fi
             # Удаление директории
             rm -rf $REMNAWAVE_DIR >/dev/null 2>&1 &
@@ -145,17 +76,14 @@ install_panel() {
     fi
 
     # Запрашиваем основной домен для панели с валидацией
-    SCRIPT_PANEL_DOMAIN=$(prompt_domain "Введите основной домен для вашей панели (например, panel.example.com)")
-
-    # Запрашиваем домен для подписок с валидацией
-    SCRIPT_SUB_DOMAIN=$(prompt_domain "Введите домен для подписок (например, subs.example.com)")
-
-    # Запрос на установку remnawave-subscription-page
-    if prompt_yes_no "Установить remnawave-subscription-page (https://remna.st/subscription-templating/installation)?"; then
-        INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE="y"
-    else
-        INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE="n"
-    fi
+    SCRIPT_PANEL_DOMAIN=$(prompt_domain "Введите основной домен для вашей панели, подписок и selfsteal (например, panel.example.com)")
+    SCRIPT_SUB_DOMAIN="$SCRIPT_PANEL_DOMAIN"
+    # Запрос порта Selfsteal с валидацией и дефолтным значением 9443
+    SELF_STEAL_PORT=$(read_port "Введите порт для Caddy - не должен быть 443, не будет доступен снаружи (можно оставить по умолчанию)" "9443")
+    echo ""
+    # Запрос порта API ноды с валидацией и дефолтным значением 3001
+    NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "3001")
+    echo ""
 
     # Выбор способа создания пароля
     draw_section_header "Выберите способ создания пароля" 50
@@ -181,7 +109,7 @@ install_panel() {
         "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
         "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
         "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
-        "SUB_PUBLIC_DOMAIN" "$SCRIPT_SUB_DOMAIN" \
+        "SUB_PUBLIC_DOMAIN" "$SCRIPT_PANEL_DOMAIN/sub" \
         "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
         "POSTGRES_USER" "$DB_USER" \
         "POSTGRES_PASSWORD" "$DB_PASSWORD" \
@@ -201,19 +129,10 @@ install_panel() {
     create_makefile "$REMNAWAVE_DIR/panel"
 
     # ===================================================================================
-    # Установка remnawave-subscription-page
-    # ===================================================================================
-
-    # Установка remnawave-subscription-page, если пользователь согласился
-    if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
-        setup_remnawave-subscription-page
-    fi
-
-    # ===================================================================================
     # Установка Caddy для панели и подписок
     # ===================================================================================
 
-    setup_caddy_for_panel "$PANEL_SECRET_KEY"
+    setup_caddy_all_in_one "$PANEL_SECRET_KEY" "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT"
 
     # Запуск всех контейнеров
     show_info "Запуск контейнеров..." "$BOLD_GREEN"
@@ -224,19 +143,27 @@ install_panel() {
     # Запуск Caddy
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
 
-    # Запуск remnawave-subscription-page (если был выбран)
-    if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
-        start_container "$REMNAWAVE_DIR/subscription-page" "remnawave/subscription-page" "Subscription page"
-    fi
-
     wait_for_panel "127.0.0.1:3000"
 
     REG_TOKEN=$(register_user "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$SUPERADMIN_USERNAME" "$SUPERADMIN_PASSWORD")
 
     if [ -n "$REG_TOKEN" ]; then
-        vless_configuration "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$REG_TOKEN"
+        vless_configuration_all_in_one "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$REG_TOKEN" "$SELF_STEAL_PORT" "$NODE_PORT"
     else
         show_error "Не удалось зарегистрировать пользователя."
+        exit 1
+    fi
+
+    setup_node_all_in_one "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT" "127.0.0.1:3000" "$REG_TOKEN" "$NODE_PORT"
+    # Запуск ноды
+    start_container "$LOCAL_REMNANODE_DIR" "remnawave/node" "Remnawave Node"
+
+    # Проверяем, запущена ли нода
+    NODE_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "node" && echo "running" || echo "stopped")
+
+    if [ "$NODE_STATUS" = "running" ]; then
+        echo -e "${BOLD_GREEN}✓ Нода Remnawave успешно установлена и запущена!${NC}"
+        echo ""
     fi
 
     # Сохранение учетных данных в файл

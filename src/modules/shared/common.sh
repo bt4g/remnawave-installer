@@ -20,6 +20,119 @@ REMNAWAVE_DIR="$HOME/remnawave"
 REMNANODE_ROOT_DIR="$HOME/remnanode"
 REMNANODE_DIR="$HOME/remnanode/node"
 SELFSTEAL_DIR="$HOME/remnanode/selfsteal"
+LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node" # Директория локальной ноды (вместе с панелью)
+
+# Отображение сообщения об успешной установке панели
+display_panel_installation_complete_message() {
+    local secure_panel_url="https://$SCRIPT_PANEL_DOMAIN/auth/login?caddy=$PANEL_SECRET_KEY"
+    local effective_width=$((${#secure_panel_url} + 3))
+    local border_line=$(printf '─%.0s' $(seq 1 $effective_width))
+    
+    print_text_line() {
+        local text="$1"
+        local padding=$((effective_width - ${#text} - 1))
+        echo -e "\033[1m│ $text$(printf '%*s' $padding)│\033[0m"
+    }
+    
+    print_empty_line() {
+        echo -e "\033[1m│$(printf '%*s' $effective_width)│\033[0m"
+    }
+    
+    echo -e "\033[1m┌${border_line}┐\033[0m"
+    
+    print_text_line "Ваш домен для панели:"
+    print_text_line "https://$SCRIPT_PANEL_DOMAIN"
+    print_empty_line
+    print_text_line "Ссылка для безопасного входа (c секретным ключом):"
+    print_text_line "$secure_panel_url"
+    print_empty_line
+    print_text_line "Ваш домен для подписок:"
+    print_text_line "https://$SCRIPT_SUB_DOMAIN"
+    print_empty_line
+    print_text_line "Логин администратора: $SUPERADMIN_USERNAME"
+    print_text_line "Пароль администратора: $SUPERADMIN_PASSWORD"
+    print_empty_line
+    echo -e "\033[1m└${border_line}┘\033[0m"
+
+    echo
+    show_success "Данные сохранены в файле: $CREDENTIALS_FILE"
+    echo -e "${BOLD_BLUE}Директория установки: ${NC}$REMNAWAVE_DIR/"
+    echo
+
+    cd ~
+
+    echo -e "${BOLD_GREEN}Установка завершена. Нажмите Enter, чтобы продолжить...${NC}"
+    read -r
+}
+
+wait_for_panel() {
+    local panel_url="$1"
+    local max_wait=180
+    local temp_file=$(mktemp)
+
+    # Запускаем проверку доступности сервера в фоновом процессе
+    {
+        local start_time=$(date +%s)
+        local end_time=$((start_time + max_wait))
+
+        while [ $(date +%s) -lt $end_time ]; do
+            if curl -s --connect-timeout 1 "http://$panel_url/api/auth/register" >/dev/null; then
+                echo "success" >"$temp_file"
+                exit 0
+            fi
+            sleep 1
+        done
+        echo "timeout" >"$temp_file"
+        exit 1
+    } &
+    local check_pid=$!
+
+    spinner "$check_pid" "Ожидание инициализации панели..."
+
+    if [ "$(cat "$temp_file")" = "success" ]; then
+        show_success "Панель готова к работе!"
+        rm -f "$temp_file"
+        return 0
+    else
+        show_warning "Превышено максимальное время ожидания ($max_wait секунд)."
+        show_info "Пробуем продолжить регистрацию в любом случае..."
+        rm -f "$temp_file"
+        return 1
+    fi
+}
+
+register_user() {
+    local panel_url="$1"
+    local panel_domain="$2"
+    local username="$3"
+    local password="$4"
+    local api_url="http://${panel_url}/api/auth/register"
+
+    local reg_token=""
+    local reg_error=""
+
+    local response=$(
+        curl -s "$api_url" \
+        -H "Host: $panel_domain" \
+        -H "X-Forwarded-For: $panel_url" \
+        -H "X-Forwarded-Proto: https" \
+        -H "Content-Type: application/json" \
+        --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
+    )
+
+    if [ -z "$response" ]; then
+        reg_error="Пустой ответ сервера"
+        return 1
+    elif [[ "$response" == *"accessToken"* ]]; then
+        # Успешная регистрация
+        reg_token=$(echo "$response" | jq -r '.response.accessToken')
+        echo "$reg_token"
+        return 0
+    else
+        echo "$response"
+        return 1
+    fi
+}
 
 restart_panel() {
     echo ""

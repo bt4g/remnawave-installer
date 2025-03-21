@@ -24,6 +24,119 @@ REMNAWAVE_DIR="$HOME/remnawave"
 REMNANODE_ROOT_DIR="$HOME/remnanode"
 REMNANODE_DIR="$HOME/remnanode/node"
 SELFSTEAL_DIR="$HOME/remnanode/selfsteal"
+LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node" # Директория локальной ноды (вместе с панелью)
+
+# Отображение сообщения об успешной установке панели
+display_panel_installation_complete_message() {
+    local secure_panel_url="https://$SCRIPT_PANEL_DOMAIN/auth/login?caddy=$PANEL_SECRET_KEY"
+    local effective_width=$((${#secure_panel_url} + 3))
+    local border_line=$(printf '─%.0s' $(seq 1 $effective_width))
+    
+    print_text_line() {
+        local text="$1"
+        local padding=$((effective_width - ${#text} - 1))
+        echo -e "\033[1m│ $text$(printf '%*s' $padding)│\033[0m"
+    }
+    
+    print_empty_line() {
+        echo -e "\033[1m│$(printf '%*s' $effective_width)│\033[0m"
+    }
+    
+    echo -e "\033[1m┌${border_line}┐\033[0m"
+    
+    print_text_line "Ваш домен для панели:"
+    print_text_line "https://$SCRIPT_PANEL_DOMAIN"
+    print_empty_line
+    print_text_line "Ссылка для безопасного входа (c секретным ключом):"
+    print_text_line "$secure_panel_url"
+    print_empty_line
+    print_text_line "Ваш домен для подписок:"
+    print_text_line "https://$SCRIPT_SUB_DOMAIN"
+    print_empty_line
+    print_text_line "Логин администратора: $SUPERADMIN_USERNAME"
+    print_text_line "Пароль администратора: $SUPERADMIN_PASSWORD"
+    print_empty_line
+    echo -e "\033[1m└${border_line}┘\033[0m"
+
+    echo
+    show_success "Данные сохранены в файле: $CREDENTIALS_FILE"
+    echo -e "${BOLD_BLUE}Директория установки: ${NC}$REMNAWAVE_DIR/"
+    echo
+
+    cd ~
+
+    echo -e "${BOLD_GREEN}Установка завершена. Нажмите Enter, чтобы продолжить...${NC}"
+    read -r
+}
+
+wait_for_panel() {
+    local panel_url="$1"
+    local max_wait=180
+    local temp_file=$(mktemp)
+
+    # Запускаем проверку доступности сервера в фоновом процессе
+    {
+        local start_time=$(date +%s)
+        local end_time=$((start_time + max_wait))
+
+        while [ $(date +%s) -lt $end_time ]; do
+            if curl -s --connect-timeout 1 "http://$panel_url/api/auth/register" >/dev/null; then
+                echo "success" >"$temp_file"
+                exit 0
+            fi
+            sleep 1
+        done
+        echo "timeout" >"$temp_file"
+        exit 1
+    } &
+    local check_pid=$!
+
+    spinner "$check_pid" "Ожидание инициализации панели..."
+
+    if [ "$(cat "$temp_file")" = "success" ]; then
+        show_success "Панель готова к работе!"
+        rm -f "$temp_file"
+        return 0
+    else
+        show_warning "Превышено максимальное время ожидания ($max_wait секунд)."
+        show_info "Пробуем продолжить регистрацию в любом случае..."
+        rm -f "$temp_file"
+        return 1
+    fi
+}
+
+register_user() {
+    local panel_url="$1"
+    local panel_domain="$2"
+    local username="$3"
+    local password="$4"
+    local api_url="http://${panel_url}/api/auth/register"
+
+    local reg_token=""
+    local reg_error=""
+
+    local response=$(
+        curl -s "$api_url" \
+        -H "Host: $panel_domain" \
+        -H "X-Forwarded-For: $panel_url" \
+        -H "X-Forwarded-Proto: https" \
+        -H "Content-Type: application/json" \
+        --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
+    )
+
+    if [ -z "$response" ]; then
+        reg_error="Пустой ответ сервера"
+        return 1
+    elif [[ "$response" == *"accessToken"* ]]; then
+        # Успешная регистрация
+        reg_token=$(echo "$response" | jq -r '.response.accessToken')
+        echo "$reg_token"
+        return 0
+    else
+        echo "$response"
+        return 1
+    fi
+}
 
 restart_panel() {
     echo ""
@@ -1092,59 +1205,6 @@ EOF
     mkdir -p $REMNAWAVE_DIR/caddy/logs
 }
 
-# Включение модуля: ui.sh
-
-# Функции отображения сообщений и пользовательского интерфейса
-
-# Отображение сообщения об успешной установке панели
-display_panel_installation_complete_message() {
-    local PANEL_SECRET_KEY=$1
-    
-    echo ""
-    echo -e "${BOLD_GREEN}Панель Remnawave успешно установлена!${NC}"
-    echo ""
-    
-    local secure_panel_url="https://$SCRIPT_PANEL_DOMAIN/auth/login?caddy=$PANEL_SECRET_KEY"
-    local effective_width=$((${#secure_panel_url} + 3))
-    local border_line=$(printf '─%.0s' $(seq 1 $effective_width))
-    
-    print_text_line() {
-        local text="$1"
-        local padding=$((effective_width - ${#text} - 1))
-        echo -e "\033[1m│ $text$(printf '%*s' $padding)│\033[0m"
-    }
-    
-    print_empty_line() {
-        echo -e "\033[1m│$(printf '%*s' $effective_width)│\033[0m"
-    }
-    
-    echo -e "\033[1m┌${border_line}┐\033[0m"
-    
-    print_text_line "Ваш домен для панели:"
-    print_text_line "https://$SCRIPT_PANEL_DOMAIN"
-    print_empty_line
-    print_text_line "Ссылка для безопасного входа (c секретным ключом):"
-    print_text_line "$secure_panel_url"
-    print_empty_line
-    print_text_line "Ваш домен для подписок:"
-    print_text_line "https://$SCRIPT_SUB_DOMAIN"
-    print_empty_line
-    print_text_line "Логин администратора: $SUPERADMIN_USERNAME"
-    print_text_line "Пароль администратора: $SUPERADMIN_PASSWORD"
-    print_empty_line
-    echo -e "\033[1m└${border_line}┘\033[0m"
-
-    echo
-    show_success "Данные сохранены в файле: $CREDENTIALS_FILE"
-    echo -e "${BOLD_BLUE}Директория установки: ${NC}$REMNAWAVE_DIR/"
-    echo
-
-    cd ~
-
-    echo -e "${BOLD_GREEN}Установка завершена. Нажмите Enter, чтобы продолжить...${NC}"
-    read -r
-}
-
 # Включение модуля: vless-configuration.sh
 
 vless_configuration() {
@@ -1674,7 +1734,7 @@ install_panel() {
     # Установка безопасных прав на файл с учетными данными
     chmod 600 "$CREDENTIALS_FILE"
 
-    display_panel_installation_complete_message "$PANEL_SECRET_KEY"
+    display_panel_installation_complete_message
 }
 
 # Включение модуля: selfsteal.sh
@@ -1895,6 +1955,621 @@ setup_node() {
 
 }
 
+# Включение модуля: setup-node-all-in-one.sh
+
+# ===================================================================================
+#                              УСТАНОВКА НОДЫ REMNAWAVE
+# ===================================================================================
+
+setup_node_all_in_one() {
+    local SCRIPT_SUB_DOMAIN=$1
+    local SELF_STEAL_PORT=$2
+    local panel_url=$3
+    local token=$4
+    local NODE_PORT=$5
+
+    mkdir -p "$LOCAL_REMNANODE_DIR" && cd "$LOCAL_REMNANODE_DIR"
+    curl -sS https://raw.githubusercontent.com/remnawave/node/refs/heads/main/docker-compose-prod.yml >docker-compose.yml
+
+    # Создание Makefile для ноды
+    create_makefile "$LOCAL_REMNANODE_DIR"
+
+    # Получение публичного ключа в фоновом режиме
+    curl -s -X GET "http://$panel_url/api/keygen/get" \
+        -H "Authorization: Bearer $token" \
+        -H "Content-Type: application/json" \
+        -H "Host: $SCRIPT_SUB_DOMAIN" \
+        -H "X-Forwarded-For: $panel_url" \
+        -H "X-Forwarded-Proto: https" >/tmp/api_response.txt 2>&1 &
+    spinner $! "Получение публичного ключа..."
+    api_response=$(cat /tmp/api_response.txt)
+    rm -f /tmp/api_response.txt
+
+    if [ -z "$api_response" ]; then
+        echo -e "${BOLD_RED}Ошибка: Не удалось получить публичный ключ.${NC}"
+        return 1
+    fi
+
+    pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
+    if [ -z "$pubkey" ]; then
+        echo -e "${BOLD_RED}Ошибка: Не удалось извлечь публичный ключ из ответа.${NC}"
+        return 1
+    fi
+
+    local CERTIFICATE="SSL_CERT=\"$pubkey\""
+
+    echo -e "### APP ###\nAPP_PORT=$NODE_PORT\n$CERTIFICATE" >.env
+}
+
+# Включение модуля: setup-caddy-all-in-one.sh
+
+# Настройка Caddy для панели Remnawave
+setup_caddy_all_in_one() {
+	local PANEL_SECRET_KEY=$1
+	local SCRIPT_SUB_DOMAIN=$2
+	local SELF_STEAL_PORT=$3
+
+	cd $REMNAWAVE_DIR/caddy
+
+	SCRIPT_SUB_BACKEND_URL="127.0.0.1:3000"
+	local REWRITE_RULE="rewrite * /api{uri}"
+
+	# Создание .env файла для Caddy
+	cat >.env <<EOF
+SCRIPT_SUB_DOMAIN=$SCRIPT_SUB_DOMAIN
+PORT=$SELF_STEAL_PORT
+PANEL_SECRET_KEY=$PANEL_SECRET_KEY
+SUB_BACKEND_URL=$SCRIPT_SUB_BACKEND_URL
+BACKEND_URL=127.0.0.1:3000
+EOF
+
+	SCRIPT_SUB_DOMAIN='$SCRIPT_SUB_DOMAIN'
+	PORT='$PORT'
+	BACKEND_URL='$BACKEND_URL'
+	SUB_BACKEND_URL='$SUB_BACKEND_URL'
+	PANEL_SECRET_KEY='$PANEL_SECRET_KEY'
+
+	# Создание Caddyfile
+	cat >Caddyfile <<EOF
+{
+	https_port {$PORT}
+	default_bind 127.0.0.1
+	servers {
+		listener_wrappers {
+			proxy_protocol {
+				allow 127.0.0.1/32
+			}
+			tls
+		}
+	}
+	auto_https disable_redirects
+}
+
+http://{$SCRIPT_SUB_DOMAIN} {
+	bind 0.0.0.0
+	redir https://{$SCRIPT_SUB_DOMAIN}{uri} permanent
+}
+
+https://{$SCRIPT_SUB_DOMAIN} {
+	@has_token_param {
+		query caddy={$PANEL_SECRET_KEY}
+	}
+	handle @has_token_param {
+		header +Set-Cookie "caddy={$PANEL_SECRET_KEY}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=31536000"
+	}
+
+	handle_path /sub/* {
+		handle {
+			rewrite * /api/sub{uri}
+			reverse_proxy {$BACKEND_URL} {
+				@notfound status 404
+
+				handle_response @notfound {
+					root * /var/www/html
+					try_files {path} /index.html
+					file_server
+				}
+				header_up X-Real-IP {remote}
+				header_up Host {host}
+			}
+		}
+	}
+
+	@unauthorized {
+		not header Cookie *caddy={$PANEL_SECRET_KEY}*
+		not query caddy={$PANEL_SECRET_KEY}
+	}
+
+	handle @unauthorized {
+		root * /var/www/html
+		try_files {path} /index.html
+		file_server
+	}
+
+	reverse_proxy {$BACKEND_URL} {
+		header_up X-Real-IP {remote}
+		header_up Host {host}
+	}
+}
+
+:{$PORT} {
+	tls internal
+	respond 204
+}
+
+:80 {
+	bind 0.0.0.0
+	respond 204
+}
+EOF
+
+	# Создание docker-compose.yml для Caddy
+	cat >docker-compose.yml <<'EOF'
+services:
+  caddy:
+    image: caddy:2.9.1
+    container_name: caddy-remnawave
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./html:/var/www/html
+      - ./logs:/var/log/caddy
+      - caddy_data_panel:/data
+      - caddy_config_panel:/config
+    env_file:
+      - .env
+    network_mode: "host"
+volumes:
+  caddy_data_panel:
+  caddy_config_panel:
+EOF
+
+	# Создание Makefile
+	create_makefile "$REMNAWAVE_DIR/caddy"
+
+	# Создание директории для логов
+	mkdir -p $REMNAWAVE_DIR/caddy/logs
+
+	mkdir -p $REMNAWAVE_DIR/caddy/html/assets
+
+	# Запускаем процесс скачивания файлов в фоне с перенаправлением вывода
+	(
+		# Скачивание index.html
+		curl -s -o ./html/index.html https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/index.html
+
+		# Скачивание файлов assets
+		curl -s -o ./html/assets/index-BilmB03J.css https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-BilmB03J.css
+		curl -s -o ./html/assets/index-CRT2NuFx.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-CRT2NuFx.js
+		curl -s -o ./html/assets/index-legacy-D44yECni.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-legacy-D44yECni.js
+		curl -s -o ./html/assets/polyfills-legacy-B97CwC2N.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/polyfills-legacy-B97CwC2N.js
+		curl -s -o ./html/assets/vendor-DHVSyNSs.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/vendor-DHVSyNSs.js
+		curl -s -o ./html/assets/vendor-legacy-Cq-AagHX.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/vendor-legacy-Cq-AagHX.js
+	) >/dev/null 2>&1 &
+
+	download_pid=$!
+}
+
+# Включение модуля: vless-configuration-all-in-one.sh
+
+vless_configuration_all_in_one() {
+  local panel_url="$1"
+  local SCRIPT_SUB_DOMAIN="$2"
+  local token="$3"
+  local SELF_STEAL_PORT="$4"
+  local NODE_PORT="$5"
+  local api_url="http://${panel_url}/api/auth/register"
+
+  local config_file="$REMNAWAVE_DIR/panel/config.json"
+  local node_name="VLESS-NODE"
+
+  # Генерация ключей x25519 с помощью Docker
+  docker run --rm ghcr.io/xtls/xray-core x25519 >/tmp/xray_keys.txt 2>&1 &
+  spinner $! "Генерация ключей x25519..."
+  keys=$(cat /tmp/xray_keys.txt)
+  private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
+  public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
+  rm -f /tmp/xray_keys.txt
+
+  if [ -z "$private_key" ] || [ -z "$public_key" ]; then
+    echo -e "${BOLD_RED}Ошибка: Не удалось сгенерировать ключи.${NC}"
+  fi
+
+  short_id=$(openssl rand -hex 8)
+  cat >"$config_file" <<EOL
+{
+  "log": {
+    "loglevel": "debug"
+  },
+  "inbounds": [
+    {
+      "tag": "VLESS TCP REALITY",
+      "port": 443,
+      "listen": "0.0.0.0",
+      "protocol": "vless",
+      "settings": {
+        "clients": [],
+        "decryption": "none"
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "dest": "127.0.0.1:$SELF_STEAL_PORT",
+          "show": false,
+          "xver": 1,
+          "shortIds": [
+            "$short_id"
+          ],
+          "publicKey": "$public_key",
+          "privateKey": "$private_key",
+          "serverNames": [
+              "$SCRIPT_SUB_DOMAIN"
+          ]
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "DIRECT",
+      "protocol": "freedom"
+    },
+    {
+      "tag": "BLOCK",
+      "protocol": "blackhole"
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "ip": [
+          "geoip:private"
+        ],
+        "type": "field",
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "geosite:private"
+        ],
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "protocol": [
+          "bittorrent"
+        ],
+        "outboundTag": "BLOCK"
+      }
+    ]
+  }
+}
+EOL
+
+  # Подготовка данных для обновления конфигурации Xray
+  local new_config=$(cat "$config_file")
+  # Запускаем curl в фоновом режиме и перенаправляем вывод в временный файл
+  curl -s -X POST "http://$panel_url/api/xray/update-config" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -H "Host: $SCRIPT_SUB_DOMAIN" \
+    -H "X-Forwarded-For: $panel_url" \
+    -H "X-Forwarded-Proto: https" \
+    -d "$new_config" >/tmp/update_response.txt 2>&1 &
+  spinner $! "Обновление конфигурации Xray..."
+  local update_response=$(cat /tmp/update_response.txt)
+  rm -f /tmp/update_response.txt
+
+  if [ -z "$update_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при обновлении Xray конфига.${NC}"
+  fi
+
+  if echo "$update_response" | jq -e '.response.config' >/dev/null; then
+    : # echo -e "${BOLD_GREEN}Конфигурация Xray успешно обновлена.${NC}"
+  else
+    echo -e "${BOLD_RED}Ошибка: Не удалось обновить конфигурацию Xray.${NC}"
+  fi
+
+  local new_node_data=$(
+    cat <<EOF
+{
+    "name": "$node_name",
+    "address": "172.17.0.1",
+    "port": $NODE_PORT,
+    "isTrafficTrackingActive": false,
+    "trafficLimitBytes": 0,
+    "notifyPercent": 0,
+    "trafficResetDay": 31,
+    "excludedInbounds": [],
+    "countryCode": "XX",
+    "consumptionMultiplier": 1.0
+}
+EOF
+  )
+  # Создание ноды в фоновом режиме
+  curl -s -X POST "http://$panel_url/api/nodes/create" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -H "Host: $SCRIPT_SUB_DOMAIN" \
+    -H "X-Forwarded-For: $panel_url" \
+    -H "X-Forwarded-Proto: https" \
+    -d "$new_node_data" >/tmp/node_response.txt 2>&1 &
+  spinner $! "Создание ноды..."
+  node_response=$(cat /tmp/node_response.txt)
+  rm -f /tmp/node_response.txt
+
+  if [ -z "$node_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании ноды.${NC}"
+  fi
+
+  if echo "$node_response" | jq -e '.response.uuid' >/dev/null; then
+    : # echo -e "${BOLD_GREEN}Нода успешно создана.${NC}"
+  else
+    echo -e "${BOLD_RED}Ошибка: Не удалось создать ноду, ответ:${NC}"
+    echo
+    echo "Был направлен запрос с телом:"
+    echo "$new_node_data"
+    echo
+    echo "Ответ:"
+    echo
+    echo "$node_response"
+  fi
+
+  # Получение inbounds в фоновом режиме
+  curl -s -X GET "http://$panel_url/api/inbounds" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -H "Host: $SCRIPT_SUB_DOMAIN" \
+    -H "X-Forwarded-For: $panel_url" \
+    -H "X-Forwarded-Proto: https" >/tmp/inbounds_response.txt 2>&1 &
+  spinner $! "Получение списка inbounds..."
+  inbounds_response=$(cat /tmp/inbounds_response.txt)
+  rm -f /tmp/inbounds_response.txt
+
+  if [ -z "$inbounds_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при получении inbounds.${NC}"
+  fi
+
+  inbound_uuid=$(echo "$inbounds_response" | jq -r '.response[0].uuid')
+  if [ -z "$inbound_uuid" ]; then
+    echo -e "${BOLD_RED}Ошибка: Не удалось извлечь UUID из ответа.${NC}"
+  fi
+
+  host_data=$(
+    cat <<EOF
+{
+    "inboundUuid": "$inbound_uuid",
+    "remark": "VLESS TCP REALITY",
+    "address": "$SCRIPT_SUB_DOMAIN",
+    "port": 443,
+    "path": "",
+    "sni": "$SCRIPT_SUB_DOMAIN",
+    "host": "$SCRIPT_SUB_DOMAIN",
+    "alpn": "h2",
+    "fingerprint": "chrome",
+    "allowInsecure": false,
+    "isDisabled": false
+}
+EOF
+  )
+
+  # Создание хоста в фоновом режиме
+  curl -s -X POST "http://$panel_url/api/hosts/create" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -H "Host: $SCRIPT_SUB_DOMAIN" \
+    -H "X-Forwarded-For: $panel_url" \
+    -H "X-Forwarded-Proto: https" \
+    -d "$host_data" >/tmp/host_response.txt 2>&1 &
+  spinner $! "Создание хоста с UUID: $inbound_uuid..."
+  host_response=$(cat /tmp/host_response.txt)
+  rm -f /tmp/host_response.txt
+
+  if [ -z "$host_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании хоста.${NC}"
+  fi
+
+  if echo "$host_response" | jq -e '.response.uuid' >/dev/null; then
+    : # echo -e "${BOLD_GREEN}Хост успешно создан.${NC}"
+  else
+    echo -e "${BOLD_RED}Ошибка: Не удалось создать хост.${NC}"
+  fi
+
+}
+
+# Включение модуля: all-in-one.sh
+
+# ===================================================================================
+#                              УСТАНОВКА ПАНЕЛИ REMNAWAVE
+# ===================================================================================
+
+install_panel_all_in_one() {
+    clear_screen
+
+    # Проверка наличия предыдущей установки
+    if [ -d "$REMNAWAVE_DIR" ]; then
+        show_warning "Обнаружена предыдущая установка RemnaWave."
+        if prompt_yes_no "Для продолжения требуется удалить предыдущую установку, подтверждаете удаление?" "$ORANGE"; then
+            # Проверка наличия Caddy и его остановка
+            if [ -f "$REMNAWAVE_DIR/caddy/docker-compose.yml" ]; then
+                cd $REMNAWAVE_DIR && docker compose -f caddy/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Останавливаем контейнер Caddy"
+            fi
+            # Проверка наличия панели и её остановка
+            if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
+                cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Останавливаем контейнеры панели Remnawave"
+            fi
+            # Проверка наличия панели и её остановка
+            if [ -f "$LOCAL_REMNANODE_DIR/docker-compose.yml" ]; then
+                cd $LOCAL_REMNANODE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Останавливаем контейнер ноды Remnawave"
+            fi
+            # Удаление директории
+            rm -rf $REMNAWAVE_DIR >/dev/null 2>&1 &
+            spinner $! "Удаляем каталог $REMNAWAVE_DIR"
+            # Удаление томов Docker
+            docker volume rm remnawave-db-data remnawave-redis-data >/dev/null 2>&1 &
+            spinner $! "Удаляем тома Docker: remnawave-db-data и remnawave-redis-data"
+            show_success "Проведено удаление предыдущей установки."
+        else
+            return 0
+        fi
+    fi
+
+    # Установка общих зависимостей
+    install_dependencies
+
+    # Создаем базовую директорию для всего проекта
+    mkdir -p $REMNAWAVE_DIR/{panel,caddy}
+
+    # Переходим в директорию панели
+    cd $REMNAWAVE_DIR/panel
+
+    # Генерация JWT секретов с помощью openssl
+    JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
+    JWT_API_TOKENS_SECRET=$(openssl rand -hex 32 | tr -d '\n')
+
+    # Генерация безопасных учетных данных
+    DB_USER="remnawave_$(openssl rand -hex 4 | tr -d '\n')"
+    DB_PASSWORD=$(generate_secure_password 16)
+    DB_NAME="remnawave_db"
+    METRICS_PASS=$(generate_secure_password 16)
+
+    curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
+
+    # Спрашиваем, нужна ли интеграция с Telegram
+    if prompt_yes_no "Хотите включить интеграцию с Telegram?"; then
+        IS_TELEGRAM_ENV_VALUE="true"
+        # Если интеграция с Telegram включена, запрашиваем параметры
+        TELEGRAM_BOT_TOKEN=$(prompt_input "Введите токен вашего Telegram бота: " "$ORANGE")
+        TELEGRAM_ADMIN_ID=$(prompt_input "Введите ID администратора Telegram: " "$ORANGE")
+        NODES_NOTIFY_CHAT_ID=$(prompt_input "Введите ID чата для уведомлений: " "$ORANGE")
+    else
+        # Если интеграция с Telegram не включена, устанавливаем параметры в "change-me"
+        IS_TELEGRAM_ENV_VALUE="false"
+        show_warning "Пропуск интеграции с Telegram."
+        TELEGRAM_BOT_TOKEN="change-me"
+        TELEGRAM_ADMIN_ID="change-me"
+        NODES_NOTIFY_CHAT_ID="change-me"
+    fi
+
+    # Запрашиваем основной домен для панели с валидацией
+    SCRIPT_PANEL_DOMAIN=$(prompt_domain "Введите основной домен для вашей панели, подписок и selfsteal (например, panel.example.com)")
+    SCRIPT_SUB_DOMAIN="$SCRIPT_PANEL_DOMAIN"
+    # Запрос порта Selfsteal с валидацией и дефолтным значением 9443
+    SELF_STEAL_PORT=$(read_port "Введите порт для Caddy - не должен быть 443, не будет доступен снаружи (можно оставить по умолчанию)" "9443")
+    echo ""
+    # Запрос порта API ноды с валидацией и дефолтным значением 3001
+    NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "3001")
+    echo ""
+
+    # Выбор способа создания пароля
+    draw_section_header "Выберите способ создания пароля" 50
+
+    draw_menu_options "Ввести пароль вручную" "Автоматически сгенерировать надежный пароль"
+
+    password_option=$(prompt_menu_option "Выберите опцию" "$GREEN" 1 2)
+
+    SUPERADMIN_USERNAME=$(prompt_input "Пожалуйста, введите имя пользователя SuperAdmin: " "$ORANGE")
+
+    if [ "$password_option" = "1" ]; then
+        # Ручной ввод пароля
+        SUPERADMIN_PASSWORD=$(prompt_secure_password "Введите пароль SuperAdmin (минимум 24 символа, должен содержать буквы разного регистра и цифры): " "Повторно введите пароль SuperAdmin для подтверждения: " 24)
+    else
+        # Автоматическая генерация пароля
+        SUPERADMIN_PASSWORD=$(generate_secure_password 25)
+    fi
+
+    update_file ".env" \
+        "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
+        "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
+        "IS_TELEGRAM_ENABLED" "$IS_TELEGRAM_ENV_VALUE" \
+        "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
+        "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
+        "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
+        "SUB_PUBLIC_DOMAIN" "$SCRIPT_PANEL_DOMAIN/sub" \
+        "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
+        "POSTGRES_USER" "$DB_USER" \
+        "POSTGRES_PASSWORD" "$DB_PASSWORD" \
+        "POSTGRES_DB" "$DB_NAME" \
+        "METRICS_PASS" "$METRICS_PASS"
+
+    # Генерация секретного ключа для защиты панели управления
+    PANEL_SECRET_KEY=$(openssl rand -hex 16)
+
+    # Создаем docker-compose.yml для панели
+    curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
+
+    # Меняем образ на dev
+    # sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
+
+    # Создаем Makefile
+    create_makefile "$REMNAWAVE_DIR/panel"
+
+    # ===================================================================================
+    # Установка Caddy для панели и подписок
+    # ===================================================================================
+
+    setup_caddy_all_in_one "$PANEL_SECRET_KEY" "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT"
+
+    # Запуск всех контейнеров
+    show_info "Запуск контейнеров..." "$BOLD_GREEN"
+
+    # Запуск панели RemnaWave
+    start_container "$REMNAWAVE_DIR/panel" "remnawave/backend" "Remnawave"
+
+    # Запуск Caddy
+    start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
+
+    wait_for_panel "127.0.0.1:3000"
+
+    REG_TOKEN=$(register_user "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$SUPERADMIN_USERNAME" "$SUPERADMIN_PASSWORD")
+
+    if [ -n "$REG_TOKEN" ]; then
+        vless_configuration_all_in_one "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$REG_TOKEN" "$SELF_STEAL_PORT" "$NODE_PORT"
+    else
+        show_error "Не удалось зарегистрировать пользователя."
+        exit 1
+    fi
+
+    setup_node_all_in_one "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT" "127.0.0.1:3000" "$REG_TOKEN" "$NODE_PORT"
+    # Запуск ноды
+    start_container "$LOCAL_REMNANODE_DIR" "remnawave/node" "Remnawave Node"
+
+    # Проверяем, запущена ли нода
+    NODE_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "node" && echo "running" || echo "stopped")
+
+    if [ "$NODE_STATUS" = "running" ]; then
+        echo -e "${BOLD_GREEN}✓ Нода Remnawave успешно установлена и запущена!${NC}"
+        echo ""
+    fi
+
+    # Сохранение учетных данных в файл
+    CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
+    echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
+    echo "PANEL URL: https://$SCRIPT_PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
+    echo "" >>"$CREDENTIALS_FILE"
+    echo "SUPERADMIN USERNAME: $SUPERADMIN_USERNAME" >>"$CREDENTIALS_FILE"
+    echo "SUPERADMIN PASSWORD: $SUPERADMIN_PASSWORD" >>"$CREDENTIALS_FILE"
+    echo "" >>"$CREDENTIALS_FILE"
+    echo "SECRET KEY: $PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
+
+    # Установка безопасных прав на файл с учетными данными
+    chmod 600 "$CREDENTIALS_FILE"
+
+    display_panel_installation_complete_message
+}
+
 
 # Проверка на root права
 if [ "$(id -u)" -ne 0 ]; then
@@ -1919,11 +2594,12 @@ main() {
         echo
         echo -e "  ${GREEN}1. ${NC}Установить панель"
         echo -e "  ${GREEN}2. ${NC}Установить ноду"
-        echo -e "  ${GREEN}3. ${NC}Перезапустить панель"
-        echo -e "  ${GREEN}4. ${NC}Включить BBR"
-        echo -e "  ${GREEN}5. ${NC}Выход"
+        echo -e "  ${GREEN}3. ${NC}Установить панель и ноду на один сервер c одним доменом"
+        echo -e "  ${GREEN}4. ${NC}Перезапустить панель"
+        echo -e "  ${GREEN}5. ${NC}Включить BBR"
+        echo -e "  ${GREEN}6. ${NC}Выход"
         echo
-        echo -ne "${BOLD_BLUE_MENU}Выберите опцию (1-5): ${NC}"
+        echo -ne "${BOLD_BLUE_MENU}Выберите опцию (1-6): ${NC}"
         read choice
 
         case $choice in
@@ -1934,12 +2610,15 @@ main() {
             setup_node
             ;;
         3)
-            restart_panel
+            install_panel_all_in_one
             ;;
         4)
-            enable_bbr
+            restart_panel
             ;;
         5)
+            enable_bbr
+            ;;
+        6)
             echo "Готово."
             break
             ;;

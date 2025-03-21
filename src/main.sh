@@ -81,11 +81,12 @@ main() {
         echo
         echo -e "  ${GREEN}1. ${NC}Установить панель"
         echo -e "  ${GREEN}2. ${NC}Установить ноду"
-        echo -e "  ${GREEN}3. ${NC}Перезапустить панель"
-        echo -e "  ${GREEN}4. ${NC}Включить BBR"
-        echo -e "  ${GREEN}5. ${NC}Выход"
+        echo -e "  ${GREEN}3. ${NC}Установить панель и ноду на один сервер c одним доменом"
+        echo -e "  ${GREEN}4. ${NC}Перезапустить панель"
+        echo -e "  ${GREEN}5. ${NC}Включить BBR"
+        echo -e "  ${GREEN}6. ${NC}Выход"
         echo
-        echo -ne "${BOLD_BLUE_MENU}Выберите опцию (1-5): ${NC}"
+        echo -ne "${BOLD_BLUE_MENU}Выберите опцию (1-6): ${NC}"
         read choice
 
         case $choice in
@@ -96,12 +97,15 @@ main() {
             setup_node
             ;;
         3)
-            restart_panel
+            install_panel_all_in_one
             ;;
         4)
-            enable_bbr
+            restart_panel
             ;;
         5)
+            enable_bbr
+            ;;
+        6)
             echo "Готово."
             break
             ;;
