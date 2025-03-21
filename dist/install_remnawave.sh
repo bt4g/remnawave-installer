@@ -2554,6 +2554,9 @@ install_panel_all_in_one() {
         echo ""
     fi
 
+    # Перезапуск панели
+    restart_panel
+
     # Сохранение учетных данных в файл
     CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
     echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
@@ -2592,9 +2595,9 @@ main() {
 
         echo -e "${BOLD_BLUE_MENU}Пожалуйста, выберите компонент для установки:${NC}"
         echo
-        echo -e "  ${GREEN}1. ${NC}Установить панель"
-        echo -e "  ${GREEN}2. ${NC}Установить ноду"
-        echo -e "  ${GREEN}3. ${NC}Установить панель и ноду на один сервер c одним доменом"
+        echo -e "  ${GREEN}1. ${NC}Установка панели"
+        echo -e "  ${GREEN}2. ${NC}Установка ноды"
+        echo -e "  ${GREEN}3. ${NC}Упрощенная установка (панель + нода)"
         echo -e "  ${GREEN}4. ${NC}Перезапустить панель"
         echo -e "  ${GREEN}5. ${NC}Включить BBR"
         echo -e "  ${GREEN}6. ${NC}Выход"
