@@ -52,11 +52,11 @@ register_user() {
 
     local response=$(
         curl -s "$api_url" \
-            -H "Host: $panel_domain" \
-            -H "X-Forwarded-For: $panel_url" \
-            -H "X-Forwarded-Proto: https" \
-            -H "Content-Type: application/json" \
-            --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
+        -H "Host: $panel_domain" \
+        -H "X-Forwarded-For: $panel_url" \
+        -H "X-Forwarded-Proto: https" \
+        -H "Content-Type: application/json" \
+        --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
     )
 
     if [ -z "$response" ]; then
@@ -76,41 +76,7 @@ register_user() {
 install_panel() {
     clear_screen
 
-    # Проверка наличия предыдущей установки
-    if [ -d "$REMNAWAVE_DIR" ]; then
-        show_warning "Обнаружена предыдущая установка RemnaWave."
-        if prompt_yes_no "Для продолжения требуется удалить предыдущую установку, подтверждаете удаление?" "$ORANGE"; then
-            # Проверка наличия Caddy и его остановка
-            if [ -f "$REMNAWAVE_DIR/caddy/docker-compose.yml" ]; then
-                cd $REMNAWAVE_DIR && docker compose -f caddy/docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер Caddy"
-            fi
-            # Проверка наличия страницы подписки и её остановка
-            if [ -f "$REMNAWAVE_DIR/subscription-page/docker-compose.yml" ]; then
-                cd $REMNAWAVE_DIR && docker compose -f subscription-page/docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер remnawave-subscription-page"
-            fi
-            # Проверка наличия ноды и её остановка
-            if [ -f "$LOCAL_REMNANODE_DIR/docker-compose.yml" ]; then
-                cd $LOCAL_REMNANODE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер ноды Remnawave"
-            fi
-            # Проверка наличия панели и её остановка
-            if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
-                cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнеры панели Remnawave"
-            fi
-            # Удаление директории
-            rm -rf $REMNAWAVE_DIR >/dev/null 2>&1 &
-            spinner $! "Удаляем каталог $REMNAWAVE_DIR"
-            # Удаление томов Docker
-            docker volume rm remnawave-db-data remnawave-redis-data >/dev/null 2>&1 &
-            spinner $! "Удаляем тома Docker: remnawave-db-data и remnawave-redis-data"
-            show_success "Проведено удаление предыдущей установки."
-        else
-            return 0
-        fi
-    fi
+    remove_previous_installation
 
     # Установка общих зависимостей
     install_dependencies
@@ -162,36 +128,22 @@ install_panel() {
         INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE="n"
     fi
 
-    # Выбор способа создания пароля
-    draw_section_header "Выберите способ создания пароля" 50
-
-    draw_menu_options "Ввести пароль вручную" "Автоматически сгенерировать надежный пароль"
-
-    password_option=$(prompt_menu_option "Выберите опцию" "$GREEN" 1 2)
-
-    SUPERADMIN_USERNAME=$(prompt_input "Пожалуйста, введите имя пользователя SuperAdmin: " "$ORANGE")
-
-    if [ "$password_option" = "1" ]; then
-        # Ручной ввод пароля
-        SUPERADMIN_PASSWORD=$(prompt_secure_password "Введите пароль SuperAdmin (минимум 24 символа, должен содержать буквы разного регистра и цифры): " "Повторно введите пароль SuperAdmin для подтверждения: " 24)
-    else
-        # Автоматическая генерация пароля
-        SUPERADMIN_PASSWORD=$(generate_secure_password 25)
-    fi
+    SUPERADMIN_USERNAME=$(generate_readable_login)
+    SUPERADMIN_PASSWORD=$(generate_secure_password 25)
 
     update_file ".env" \
-        "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
-        "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
-        "IS_TELEGRAM_ENABLED" "$IS_TELEGRAM_ENV_VALUE" \
-        "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
-        "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
-        "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
-        "SUB_PUBLIC_DOMAIN" "$SCRIPT_SUB_DOMAIN" \
-        "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
-        "POSTGRES_USER" "$DB_USER" \
-        "POSTGRES_PASSWORD" "$DB_PASSWORD" \
-        "POSTGRES_DB" "$DB_NAME" \
-        "METRICS_PASS" "$METRICS_PASS"
+    "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
+    "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
+    "IS_TELEGRAM_ENABLED" "$IS_TELEGRAM_ENV_VALUE" \
+    "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
+    "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
+    "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
+    "SUB_PUBLIC_DOMAIN" "$SCRIPT_SUB_DOMAIN" \
+    "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
+    "POSTGRES_USER" "$DB_USER" \
+    "POSTGRES_PASSWORD" "$DB_PASSWORD" \
+    "POSTGRES_DB" "$DB_NAME" \
+    "METRICS_PASS" "$METRICS_PASS"
 
     # Генерация секретного ключа для защиты панели управления
     PANEL_SECRET_KEY=$(openssl rand -hex 16)

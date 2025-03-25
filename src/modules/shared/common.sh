@@ -22,6 +22,65 @@ REMNANODE_DIR="$HOME/remnanode/node"
 SELFSTEAL_DIR="$HOME/remnanode/selfsteal"
 LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node" # Директория локальной ноды (вместе с панелью)
 
+# Функция для проверки и удаления предыдущей установки
+remove_previous_installation() {
+    # Проверка наличия предыдущей установки
+    local containers=("remnawave-subscription-page" "remnawave" "remnawave-db" "remnawave-redis" "remnanode" "caddy-remnawave")
+    local container_exists=false
+
+    # Проверка существования любого из контейнеров
+    for container in "${containers[@]}"; do
+        if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "$container"; then
+            container_exists=true
+            break
+        fi
+    done
+
+    if [ -d "$REMNAWAVE_DIR" ] || [ "$container_exists" = true ]; then
+        show_warning "Обнаружена предыдущая установка RemnaWave."
+        if prompt_yes_no "Для продолжения требуется удалить предыдущие установки Remnawave. Подтверждаете удаление?" "$ORANGE"; then
+            # Проверка наличия Caddy и его остановка
+            if [ -f "$REMNAWAVE_DIR/caddy/docker-compose.yml" ]; then
+                cd $REMNAWAVE_DIR && docker compose -f caddy/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Останавливаем контейнер Caddy"
+            fi
+            # Проверка наличия страницы подписки и её остановка
+            if [ -f "$REMNAWAVE_DIR/subscription-page/docker-compose.yml" ]; then
+                cd $REMNAWAVE_DIR && docker compose -f subscription-page/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Останавливаем контейнер remnawave-subscription-page"
+            fi
+            # Проверка наличия ноды и её остановка
+            if [ -f "$LOCAL_REMNANODE_DIR/docker-compose.yml" ]; then
+                cd $LOCAL_REMNANODE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Останавливаем контейнер ноды Remnawave"
+            fi
+            # Проверка наличия панели и её остановка
+            if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
+                cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Останавливаем контейнеры панели Remnawave"
+            fi
+
+            # Проверка наличия оставшихся контейнеров и их остановка
+            for container in "${containers[@]}"; do
+                if docker ps -a --format '{{.Names}}' | grep -q "^$container$"; then
+                    docker stop "$container" >/dev/null 2>&1 && docker rm "$container" >/dev/null 2>&1 &
+                    spinner $! "Останавливаем и удаляем контейнер $container"
+                fi
+            done
+
+            # Удаление директории
+            rm -rf $REMNAWAVE_DIR >/dev/null 2>&1 &
+            spinner $! "Удаляем каталог $REMNAWAVE_DIR"
+            # Удаление томов Docker
+            docker volume rm remnawave-db-data remnawave-redis-data >/dev/null 2>&1 &
+            spinner $! "Удаляем тома Docker: remnawave-db-data и remnawave-redis-data"
+            show_success "Проведено удаление предыдущей установки."
+        else
+            return 0
+        fi
+    fi
+}
+
 # Отображение сообщения об успешной установке панели
 display_panel_installation_complete_message() {
     local secure_panel_url="https://$SCRIPT_PANEL_DOMAIN/auth/login?caddy=$PANEL_SECRET_KEY"
@@ -136,7 +195,6 @@ register_user() {
 
 restart_panel() {
     local no_wait=${1:-false} # Optional parameter to skip waiting for user input
-    echo ""
     # Проверка существования директории панели
     if [ ! -d ~/remnawave/panel ]; then
         show_error "Ошибка: директория панели не найдена по пути ~/remnawave/panel!"
@@ -155,8 +213,6 @@ restart_panel() {
                 SUBSCRIPTION_PAGE_EXISTS=true
             fi
 
-            show_info "Останавливаем контейнеры..."
-
             # Останавливаем страницу подписки, если она существует
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
                 cd ~/remnawave/subscription-page && docker compose down >/dev/null 2>&1 &
@@ -165,16 +221,16 @@ restart_panel() {
 
             # Останавливаем панель
             cd ~/remnawave/panel && docker compose down >/dev/null 2>&1 &
-            spinner $! "Останавливаем контейнеры панели Remnawave"
+            spinner $! "Перезапуск панели..."
 
             # Запускаем панель
             cd ~/remnawave/panel && docker compose up -d >/dev/null 2>&1 &
-            spinner $! "Запускаем контейнеры панели Remnawave"
+            spinner $! "Перезапуск панели..."
 
             # Запускаем страницу подписки, если она существует
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
                 cd ~/remnawave/subscription-page && docker compose up -d >/dev/null 2>&1 &
-                spinner $! "Запускаем контейнер remnawave-subscription-page"
+                spinner $! "Перезапуск панели..."
             fi
             show_info "Панель перезапущена"
         fi
@@ -392,41 +448,6 @@ validate_domain() {
     return 0
 }
 
-# Функция для валидации и очистки порта
-# Оставляет только числовые символы и проверяет, что значение в диапазоне 1-65535
-# Использование:
-#   validate_port "8080"
-validate_port() {
-    local input="$1"
-    local default_port="$2"
-
-    # Удаляем все символы, кроме цифр
-    local cleaned_port=$(echo "$input" | tr -cd '0-9')
-
-    # Проверка на пустую строку после очистки
-    if [ -z "$cleaned_port" ] && [ -n "$default_port" ]; then
-        echo "$default_port"
-        return 0
-    elif [ -z "$cleaned_port" ]; then
-        echo ""
-        return 1
-    fi
-
-    # Проверка на диапазон портов
-    if [ "$cleaned_port" -lt 1 ] || [ "$cleaned_port" -gt 65535 ]; then
-        if [ -n "$default_port" ]; then
-            echo "$default_port"
-            return 0
-        else
-            echo ""
-            return 1
-        fi
-    fi
-
-    echo "$cleaned_port"
-    return 0
-}
-
 # Безопасное чтение пользовательского ввода с валидацией
 # Использование:
 #   read_domain "Введите домен:" "example.com"
@@ -476,46 +497,172 @@ read_domain() {
     echo "$result"
 }
 
-# Безопасное чтение порта с валидацией
+# Функция для валидации и очистки порта
+# Оставляет только числовые символы и проверяет, что значение в диапазоне 1-65535
+# Использование:
+#   validate_port "8080"
+validate_port() {
+    local input="$1"
+    local default_port="$2"
+
+    # Удаляем все символы, кроме цифр
+    local cleaned_port=$(echo "$input" | tr -cd '0-9')
+
+    # Проверка на пустую строку после очистки
+    if [ -z "$cleaned_port" ] && [ -n "$default_port" ]; then
+        echo "$default_port"
+        return 0
+    elif [ -z "$cleaned_port" ]; then
+        echo ""
+        return 1
+    fi
+
+    # Проверка на диапазон портов
+    if [ "$cleaned_port" -lt 1 ] || [ "$cleaned_port" -gt 65535 ]; then
+        if [ -n "$default_port" ]; then
+            echo "$default_port"
+            return 0
+        else
+            echo ""
+            return 1
+        fi
+    fi
+
+    echo "$cleaned_port"
+    return 0
+}
+
+# Проверка, свободен ли порт
+is_port_available() {
+    local port=$1
+    # Пытаемся запустить временный сервер на порту
+    # Если возвращает 0, порт свободен, если 1 - занят
+    (echo >/dev/tcp/localhost/$port) >/dev/null 2>&1
+    if [ $? -eq 1 ]; then
+        return 0 # Порт свободен
+    else
+        return 1 # Порт занят
+    fi
+}
+
+# Нахождение свободного порта, начиная с указанного
+find_available_port() {
+    local port="$1"
+
+    # Пробуем последовательно, пока не найдём свободный
+    while true; do
+        if is_port_available "$port"; then
+            show_info_e "Порт $port доступен."
+            echo "$port"
+            return 0
+        fi
+        ((port++))
+        # На всякий случай, ограничимся 65535
+        if [ "$port" -gt 65535 ]; then
+            show_info_e "Не удалось найти свободный порт!"
+            return 1
+        fi
+    done
+}
+
+# Функция безопасного чтения порта с валидацией
 # Использование:
 #   read_port "Введите порт:" "8080"
+#   read_port "Введите порт:" "8080" true    # Пропустить проверку доступности порта
 read_port() {
     local prompt="$1"
-    local default_value="$2"
-    local max_attempts="${3:-3}"
+    local default_value="${2:-}"
+    local skip_availability_check="${3:-false}"
     local result=""
     local attempts=0
+    local max_attempts=3
 
     while [ $attempts -lt $max_attempts ]; do
-        # Показываем подсказку с дефолтным значением, если оно есть
+        # Отображение приглашения с дефолтным значением
         if [ -n "$default_value" ]; then
-            read -p "${ORANGE}${prompt} [$default_value]:${NC}" input
+            prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
+            read -p "$prompt_formatted_text" result
         else
-            read -p "${ORANGE}${prompt}:${NC}" input
+            prompt_formatted_text="${ORANGE}${prompt}:${NC}"
+            read -p "$prompt_formatted_text" result
         fi
 
         # Если ввод пустой и есть дефолтное значение, используем его
-        if [ -z "$input" ] && [ -n "$default_value" ]; then
+        if [ -z "$result" ] && [ -n "$default_value" ]; then
             result="$default_value"
-            break
         fi
 
-        # Валидируем ввод
-        result=$(validate_port "$input" "$default_value")
+        # Валидация порта - сохраняем результат в переменную
+        result=$(validate_port "$result")
         local status=$?
 
         if [ $status -eq 0 ]; then
-            break
+            # Проверяем, свободен ли порт (если проверка не отключена)
+            if [ "$skip_availability_check" = true ] || is_port_available "$result"; then
+                break
+            else
+                show_info_e "Порт ${result} уже занят."
+                prompt_formatted_text="${ORANGE}Хотите автоматически найти свободный порт? [y/N]:${NC}"
+                read -p "$prompt_formatted_text" answer
+                if [[ "$answer" =~ ^[yY] ]]; then
+                    result="$(find_available_port "$result")"
+                    break
+                else
+                    show_info_e "Пожалуйста, выберите другой порт."
+                    ((attempts++))
+                fi
+            fi
         else
-            echo -e "${BOLD_RED}Некорректный порт. Пожалуйста, введите число от 1 до 65535.${NC}" >&2
+            # В зависимости от кода возврата выводим сообщение
+            case $status in
+            1) show_info_e "Некорректный ввод (не число). Пожалуйста, введите корректный порт." ;;
+            2) show_info_e "Некорректный порт. Введите число от 1 до 65535." ;;
+            esac
             ((attempts++))
         fi
     done
 
     if [ $attempts -eq $max_attempts ]; then
-        echo -e "${BOLD_RED}Превышено максимальное количество попыток. Используется значение по умолчанию: $default_value${NC}" >&2
-        result="$default_value"
+        show_info_e "Превышено максимальное количество попыток. Используем порт по умолчанию."
+        if [ -n "$default_value" ]; then
+            result="$default_value"
+            if [ "$skip_availability_check" = false ] && ! is_port_available "$result"; then
+                result="$(find_available_port "$result")"
+            fi
+        else
+            # Если нет дефолтного значения, используем случайный свободный порт
+            local random_start=$((RANDOM % 10000 + 10000))
+            result="$(find_available_port "$random_start")"
+        fi
     fi
 
+    # Здесь ОДИН раз выводим результат
     echo "$result"
+}
+
+generate_readable_login() {
+    # Согласные и гласные буквы для более читаемых комбинаций
+    consonants="bcdfghjklmnpqrstvwxz"
+    vowels="aeiouy"
+
+    # Случайная длина от 6 до 10 символов
+    length=$((6 + RANDOM % 5))
+
+    # Инициализация пустой строки для логина
+    login=""
+
+    # Генерация логина, чередуя согласные и гласные
+    for ((i = 0; i < length; i++)); do
+        if ((i % 2 == 0)); then
+            # Выбираем случайную согласную
+            rand_index=$((RANDOM % ${#consonants}))
+            login="${login}${consonants:rand_index:1}"
+        else
+            # Выбираем случайную гласную
+            rand_index=$((RANDOM % ${#vowels}))
+            login="${login}${vowels:rand_index:1}"
+        fi
+    done
+
+    echo "$login"
 }

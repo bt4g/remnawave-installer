@@ -150,33 +150,36 @@ prompt_menu_option() {
     echo "$selected_option"
 }
 
-# Отображение сообщения об успехе
 show_success() {
     local message="$1"
     echo -e "${BOLD_GREEN}✓ ${message}${NC}"
     echo ""
 }
 
-# Отображение сообщения об ошибке
 show_error() {
     local message="$1"
     echo -e "${BOLD_RED}✗ ${message}${NC}"
     echo ""
 }
 
-# Отображение предупреждения
 show_warning() {
     local message="$1"
     echo -e "${BOLD_YELLOW}⚠  ${message}${NC}"
     echo ""
 }
 
-# Отображение информационного сообщения
 show_info() {
     local message="$1"
     local color="${2:-$ORANGE}"
     echo -e "${color}${message}${NC}"
     echo ""
+}
+
+show_info_e() {
+    local message="$1"
+    local color="${2:-$ORANGE}"
+    echo -e "${color}${message}${NC}" >&2
+    echo "" >&2
 }
 
 # Отображение разделителя
