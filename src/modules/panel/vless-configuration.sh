@@ -18,8 +18,8 @@ vless_configuration() {
   # Запрос IP адреса или домена сервера с нодой с валидацией и дефолтным значением Selfsteal домена
   NODE_HOST=$(read_domain "Введите IP адрес или домен сервера с нодой (если отличается от Selfsteal домена)" "$SELF_STEAL_DOMAIN")
 
-  # Запрос порта API ноды с валидацией и дефолтным значением 3000
-  NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "3000" true)
+  # Запрос порта API ноды с валидацией и дефолтным значением 2222
+  NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "2222" true)
   
   local config_file="$REMNAWAVE_DIR/panel/config.json"
   local node_name="VLESS-NODE"
