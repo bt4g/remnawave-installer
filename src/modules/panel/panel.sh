@@ -117,9 +117,21 @@ install_panel() {
 
     # Запрашиваем основной домен для панели с валидацией
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Введите основной домен для вашей панели (например, panel.example.com)")
+    check_domain_points_to_server "$SCRIPT_PANEL_DOMAIN"
+    domain_check_result=$?
+    if [ $domain_check_result -eq 2 ]; then
+        # Пользователь решил прервать установку
+        return 1
+    fi
 
     # Запрашиваем домен для подписок с валидацией
     SCRIPT_SUB_DOMAIN=$(prompt_domain "Введите домен для подписок (например, subs.example.com)")
+    check_domain_points_to_server "$SCRIPT_SUB_DOMAIN"
+    domain_check_result=$?
+    if [ $domain_check_result -eq 2 ]; then
+        # Пользователь решил прервать установку
+        return 1
+    fi
 
     # Запрос на установку remnawave-subscription-page
     if prompt_yes_no "Установить remnawave-subscription-page (https://remna.st/subscription-templating/installation)?"; then

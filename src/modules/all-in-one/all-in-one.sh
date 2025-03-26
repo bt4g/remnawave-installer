@@ -48,6 +48,12 @@ install_panel_all_in_one() {
 
     # Запрашиваем основной домен для панели с валидацией
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Введите основной домен для вашей панели, подписок и selfsteal (например, panel.example.com)")
+    check_domain_points_to_server "$SCRIPT_PANEL_DOMAIN"
+    domain_check_result=$?
+    if [ $domain_check_result -eq 2 ]; then
+        # Пользователь решил прервать установку
+        return 1
+    fi
     SCRIPT_SUB_DOMAIN="$SCRIPT_PANEL_DOMAIN"
     # Запрос порта Selfsteal с валидацией и дефолтным значением 9443
     SELF_STEAL_PORT=$(read_port "Введите порт для Caddy - не должен быть 443, (можно оставить по умолчанию)" "9443")

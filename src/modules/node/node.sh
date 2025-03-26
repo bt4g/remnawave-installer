@@ -48,6 +48,13 @@ setup_node() {
         return 1
     fi
 
+    check_domain_points_to_server "$SELF_STEAL_DOMAIN"
+    domain_check_result=$?
+    if [ $domain_check_result -eq 2 ]; then
+        # Пользователь решил прервать установку
+        return 1
+    fi
+
     # Запрос порта Selfsteal с валидацией и дефолтным значением
     SELF_STEAL_PORT=$(read_port "Введите Selfsteal порт (можно оставить по умолчанию)" "9443")
 

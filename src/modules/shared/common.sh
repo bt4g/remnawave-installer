@@ -172,11 +172,11 @@ register_user() {
 
     local response=$(
         curl -s "$api_url" \
-            -H "Host: $panel_domain" \
-            -H "X-Forwarded-For: $panel_url" \
-            -H "X-Forwarded-Proto: https" \
-            -H "Content-Type: application/json" \
-            --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
+        -H "Host: $panel_domain" \
+        -H "X-Forwarded-For: $panel_url" \
+        -H "X-Forwarded-Proto: https" \
+        -H "Content-Type: application/json" \
+        --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
     )
 
     if [ -z "$response" ]; then
@@ -665,4 +665,43 @@ generate_readable_login() {
     done
 
     echo "$login"
+}
+
+# Функция для проверки, указывает ли домен на текущий сервер
+check_domain_points_to_server() {
+    local domain="$1"
+    local show_warning="${2:-true}" # По умолчанию показывать предупреждение
+
+    # Получаем IP домена
+    local domain_ip=""
+    domain_ip=$(dig +short "$domain" | grep -v ";" | head -n 1)
+
+    # Получаем публичный IP текущего сервера
+    local server_ip=""
+    server_ip=$(curl -s -4 ifconfig.me || curl -s -4 api.ipify.org || curl -s -4 ipinfo.io/ip)
+
+    # Если не смогли получить IP, выходим
+    if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
+        if [ "$show_warning" = true ]; then
+            show_warning "Не удалось определить IP-адрес домена или сервера."
+            show_warning "Убедитесь, что домен $domain правильно настроен и указывает на этот сервер ($server_ip)."
+        fi
+        return 1
+    fi
+
+    # Сравниваем IP
+    if [ "$domain_ip" != "$server_ip" ]; then
+        if [ "$show_warning" = true ]; then
+            show_warning "Домен $domain указывает на IP-адрес $domain_ip, который отличается от IP-адреса этого сервера ($server_ip)."
+            show_warning "Для корректной работы необходимо, чтобы домен указывал на текущий сервер."
+            if prompt_yes_no "Продолжить установку несмотря на неверную конфигурацию домена?" "$ORANGE"; then
+                return 1
+            else
+                return 2 # Код 2 означает, что пользователь решил прервать установку
+            fi
+        fi
+        return 1
+    fi
+
+    return 0 # Успешная проверка
 }
