@@ -72,6 +72,10 @@ remove_previous_installation() {
                 fi
             done
 
+            # Удаление оставшихся образов Docker
+            docker rmi $(docker images -q) -f >/dev/null 2>&1 &
+            spinner $! "Удаляем образы Docker"
+
             # Удаление директории
             rm -rf $REMNAWAVE_DIR >/dev/null 2>&1 &
             spinner $! "Удаляем каталог $REMNAWAVE_DIR"
