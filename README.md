@@ -108,7 +108,6 @@ bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/
    - Ноду Remnawave с Xray
    - Caddy для обработки HTTPS-запросов
    - Заглушку Self Steal
-   - Страницу подписок
 
 ## Защита панели на основе URL-параметра
 
