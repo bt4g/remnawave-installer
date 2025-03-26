@@ -2159,7 +2159,18 @@ setup_node() {
     install_dependencies
 
     mkdir -p $REMNANODE_DIR && cd $REMNANODE_DIR
-    curl -sS https://raw.githubusercontent.com/remnawave/node/refs/heads/main/docker-compose-prod.yml >docker-compose.yml
+    # Создание docker-compose.yml
+    cat >docker-compose.yml <<EOL
+services:
+  remnanode:
+    container_name: remnanode
+    hostname: remnanode
+    image: remnawave/node:latest
+    env_file:
+      - .env
+    network_mode: host
+    restart: always
+EOL
 
     # Создание Makefile для ноды
     create_makefile "$REMNANODE_DIR"
@@ -2238,7 +2249,19 @@ setup_node_all_in_one() {
     local NODE_PORT=$5
 
     mkdir -p "$LOCAL_REMNANODE_DIR" && cd "$LOCAL_REMNANODE_DIR"
-    curl -sS https://raw.githubusercontent.com/remnawave/node/refs/heads/main/docker-compose-prod.yml >docker-compose.yml
+    
+    # Создание docker-compose.yml
+    cat > docker-compose.yml << EOL
+services:
+  remnanode:
+    container_name: remnanode
+    hostname: remnanode
+    image: remnawave/node:latest
+    env_file:
+      - .env
+    network_mode: host
+    restart: always
+EOL
 
     # Создание Makefile для ноды
     create_makefile "$LOCAL_REMNANODE_DIR"
