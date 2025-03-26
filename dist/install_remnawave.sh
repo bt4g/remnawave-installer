@@ -176,11 +176,11 @@ register_user() {
 
     local response=$(
         curl -s "$api_url" \
-        -H "Host: $panel_domain" \
-        -H "X-Forwarded-For: $panel_url" \
-        -H "X-Forwarded-Proto: https" \
-        -H "Content-Type: application/json" \
-        --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
+            -H "Host: $panel_domain" \
+            -H "X-Forwarded-For: $panel_url" \
+            -H "X-Forwarded-Proto: https" \
+            -H "Content-Type: application/json" \
+            --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
     )
 
     if [ -z "$response" ]; then
@@ -671,14 +671,56 @@ generate_readable_login() {
     echo "$login"
 }
 
+# Функция проверки, находится ли IP в одном из CIDR-диапазонов (Cloudflare или любом другом, передаваемом в виде массива)
+is_ip_in_cidrs() {
+    local ip="$1"
+    shift
+    local cidrs=("$@")
+
+    # Вспомогательная функция перевода IP (формат x.x.x.x) в 32-битное число
+    function ip2dec() {
+        local a b c d
+        IFS=. read -r a b c d <<<"$1"
+        echo $(((a << 24) + (b << 16) + (c << 8) + d))
+    }
+
+    # Функция проверки, лежит ли IP в CIDR
+    function in_cidr() {
+        local ip_dec mask base_ip cidr_ip cidr_mask
+        ip_dec=$(ip2dec "$1")
+        base_ip="${2%/*}"
+        mask="${2#*/}"
+
+        cidr_ip=$(ip2dec "$base_ip")
+        cidr_mask=$((0xFFFFFFFF << (32 - mask) & 0xFFFFFFFF))
+
+        # Если (ip_dec & cidr_mask) == (cidr_ip & cidr_mask), IP попадает в диапазон
+        if (((ip_dec & cidr_mask) == (cidr_ip & cidr_mask))); then
+            return 0
+        else
+            return 1
+        fi
+    }
+
+    # Проверяем IP по всем диапазонам, если подходит под хотя бы один, возвращаем 0
+    for range in "${cidrs[@]}"; do
+        if in_cidr "$ip" "$range"; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 # Функция для проверки, указывает ли домен на текущий сервер
 check_domain_points_to_server() {
     local domain="$1"
-    local show_warning="${2:-true}" # По умолчанию показывать предупреждение
+    local show_warning="${2:-true}"   # По умолчанию показывать предупреждение
+    local allow_cf_proxy="${3:-true}" # По умолчанию разрешать проксирование Cloudflare
 
     # Получаем IP домена
     local domain_ip=""
-    domain_ip=$(dig +short "$domain" | grep -v ";" | head -n 1)
+    domain_ip=$(dig +short A "$domain" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
 
     # Получаем публичный IP текущего сервера
     local server_ip=""
@@ -688,26 +730,60 @@ check_domain_points_to_server() {
     if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
         if [ "$show_warning" = true ]; then
             show_warning "Не удалось определить IP-адрес домена или сервера."
-            show_warning "Убедитесь, что домен $domain правильно настроен и указывает на этот сервер ($server_ip)."
+            show_warning "Убедитесь, что домен $domain правильно настроен и указывает на сервер ($server_ip)."
         fi
         return 1
     fi
 
-    # Сравниваем IP
-    if [ "$domain_ip" != "$server_ip" ]; then
-        if [ "$show_warning" = true ]; then
-            show_warning "Домен $domain указывает на IP-адрес $domain_ip, который отличается от IP-адреса этого сервера ($server_ip)."
-            show_warning "Для корректной работы необходимо, чтобы домен указывал на текущий сервер."
-            if prompt_yes_no "Продолжить установку несмотря на неверную конфигурацию домена?" "$ORANGE"; then
-                return 1
-            else
-                return 2 # Код 2 означает, что пользователь решил прервать установку
+    # Загружаем актуальные Cloudflare диапазоны
+    local cf_ranges
+    cf_ranges=$(curl -s https://www.cloudflare.com/ips-v4) || true # если curl не сработал, переменная останется пустой
+
+    # Если смогли загрузить, превращаем в массив
+    local cf_array=()
+    if [ -n "$cf_ranges" ]; then
+        # Превращаем полученные строки в массив
+        IFS=$'\n' read -r -d '' -a cf_array <<<"$cf_ranges"
+    fi
+
+    # Проверяем, входит ли domain_ip в диапазоны Cloudflare
+    if [ ${#cf_array[@]} -gt 0 ] && is_ip_in_cidrs "$domain_ip" "${cf_array[@]}"; then
+        # IP Cloudflare
+        if [ "$allow_cf_proxy" = true ]; then
+            # Разрешено проксирование — всё ок
+            return 0
+        else
+            # Проксирование запрещено — предупреждаем
+            if [ "$show_warning" = true ]; then
+                echo ""
+                show_warning "Домен $domain указывает на IP Cloudflare ($domain_ip)."
+                show_warning "Отключите проксирование Cloudflare - недопустимо проксирование selfsteal домена"
+                if prompt_yes_no "Продолжить установку несмотря на неверную конфигурацию домена?" "$ORANGE"; then
+                    return 1
+                else
+                    return 2
+                fi
             fi
+            return 1
         fi
-        return 1
+    else
+        # Если не Cloudflare, проверяем, совпадает ли IP домена с IP сервера
+        if [ "$domain_ip" != "$server_ip" ]; then
+            if [ "$show_warning" = true ]; then
+                echo ""
+                show_warning "Домен $domain указывает на IP-адрес $domain_ip, который отличается от IP-адреса сервера ($server_ip)."
+                show_warning "Для корректной работы необходимо, чтобы домен указывал на текущий сервер."
+                if prompt_yes_no "Продолжить установку несмотря на неверную конфигурацию домена?" "$ORANGE"; then
+                    return 1
+                else
+                    return 2
+                fi
+            fi
+            return 1
+        fi
     fi
 
-    return 0 # Успешная проверка
+    return 0 # Всё корректно
 }
 
 # Включение модуля: ui.sh
@@ -2094,7 +2170,7 @@ setup_node() {
         return 1
     fi
 
-    check_domain_points_to_server "$SELF_STEAL_DOMAIN"
+    check_domain_points_to_server "$SELF_STEAL_DOMAIN" true false
     domain_check_result=$?
     if [ $domain_check_result -eq 2 ]; then
         # Пользователь решил прервать установку

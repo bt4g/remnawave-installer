@@ -48,7 +48,7 @@ setup_node() {
         return 1
     fi
 
-    check_domain_points_to_server "$SELF_STEAL_DOMAIN"
+    check_domain_points_to_server "$SELF_STEAL_DOMAIN" true false
     domain_check_result=$?
     if [ $domain_check_result -eq 2 ]; then
         # Пользователь решил прервать установку
