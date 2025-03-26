@@ -1477,7 +1477,7 @@ services:
   caddy:
     image: caddy:2.9.1
     container_name: caddy-remnawave
-    restart: unless-stopped
+    restart: always
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./logs:/var/log/caddy
