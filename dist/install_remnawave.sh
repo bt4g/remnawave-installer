@@ -2005,7 +2005,7 @@ install_panel() {
     curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
 
     # Меняем образ на dev
-    # sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
+    sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
     # Создаем Makefile
     create_makefile "$REMNAWAVE_DIR/panel"
@@ -2231,7 +2231,7 @@ services:
   remnanode:
     container_name: remnanode
     hostname: remnanode
-    image: remnawave/node:latest
+    image: remnawave/node:dev
     env_file:
       - .env
     network_mode: host
@@ -2268,7 +2268,7 @@ EOL
                 break
             fi
         else
-            CERTIFICATE="$CERTIFICATE$line\n"
+            CERTIFICATE="${CERTIFICATE}${line}"
         fi
     done
 
@@ -2276,7 +2276,9 @@ EOL
     read confirm
     echo
 
-    echo -e "### APP ###\nAPP_PORT=$NODE_PORT\n$CERTIFICATE" >.env
+    echo -e "### APP ###" >.env
+    echo -e "APP_PORT=$NODE_PORT" >>.env
+    echo -e "$CERTIFICATE" >>.env
 
     setup_selfsteal
 
@@ -2322,7 +2324,7 @@ services:
   remnanode:
     container_name: remnanode
     hostname: remnanode
-    image: remnawave/node:latest
+    image: remnawave/node:dev
     env_file:
       - .env
     network_mode: host
@@ -2638,7 +2640,7 @@ install_panel_all_in_one() {
     curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
 
     # Меняем образ на dev
-    # sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
+    sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
     # Создаем Makefile
     create_makefile "$REMNAWAVE_DIR/panel"

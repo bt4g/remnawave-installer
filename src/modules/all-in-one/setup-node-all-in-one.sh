@@ -19,7 +19,7 @@ services:
   remnanode:
     container_name: remnanode
     hostname: remnanode
-    image: remnawave/node:latest
+    image: remnawave/node:dev
     env_file:
       - .env
     network_mode: host

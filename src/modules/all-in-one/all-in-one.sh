@@ -86,7 +86,7 @@ install_panel_all_in_one() {
     curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
 
     # Меняем образ на dev
-    # sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
+    sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
     # Создаем Makefile
     create_makefile "$REMNAWAVE_DIR/panel"

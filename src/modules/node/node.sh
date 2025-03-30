@@ -43,7 +43,7 @@ services:
   remnanode:
     container_name: remnanode
     hostname: remnanode
-    image: remnawave/node:latest
+    image: remnawave/node:dev
     env_file:
       - .env
     network_mode: host
@@ -80,7 +80,7 @@ EOL
                 break
             fi
         else
-            CERTIFICATE="$CERTIFICATE$line\n"
+            CERTIFICATE="${CERTIFICATE}${line}"
         fi
     done
 
@@ -88,7 +88,9 @@ EOL
     read confirm
     echo
 
-    echo -e "### APP ###\nAPP_PORT=$NODE_PORT\n$CERTIFICATE" >.env
+    echo -e "### APP ###" >.env
+    echo -e "APP_PORT=$NODE_PORT" >>.env
+    echo -e "$CERTIFICATE" >>.env
 
     setup_selfsteal
 
