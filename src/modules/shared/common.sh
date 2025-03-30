@@ -394,6 +394,39 @@ EOF
 }
 
 # ===================================================================================
+#                                API REQUEST ФУНКЦИИ
+# ===================================================================================
+
+# Функция для выполнения API запроса с Bearer токеном
+# Параметры:
+#   $1 - метод (GET, POST, PUT, DELETE)
+#   $2 - полный URL
+#   $3 - Bearer токен для авторизации
+#   $4 - домен хоста (для заголовка Host)
+#   $5 - данные запроса в формате JSON (опционально, только для POST/PUT)
+make_api_request() {
+    local method=$1
+    local url=$2
+    local token=$3
+    local panel_domain=$4
+    local data=$5
+
+    local headers=(
+        -H "Authorization: Bearer $token"
+        -H "Content-Type: application/json"
+        -H "Host: $panel_domain"
+        -H "X-Forwarded-For: ${url#http://}"
+        -H "X-Forwarded-Proto: https"
+    )
+
+    if [ -n "$data" ]; then
+        curl -s -X "$method" "$url" "${headers[@]}" -d "$data"
+    else
+        curl -s -X "$method" "$url" "${headers[@]}"
+    fi
+}
+
+# ===================================================================================
 #                                ФУНКЦИИ ВАЛИДАЦИИ
 # ===================================================================================
 

@@ -29,16 +29,12 @@ EOL
     # Создание Makefile для ноды
     create_makefile "$LOCAL_REMNANODE_DIR"
 
-    # Получение публичного ключа в фоновом режиме
-    curl -s -X GET "http://$panel_url/api/keygen/get" \
-        -H "Authorization: Bearer $token" \
-        -H "Content-Type: application/json" \
-        -H "Host: $SCRIPT_SUB_DOMAIN" \
-        -H "X-Forwarded-For: $panel_url" \
-        -H "X-Forwarded-Proto: https" >/tmp/api_response.txt 2>&1 &
+    # Получение публичного ключа
+    local temp_file=$(mktemp)
+    make_api_request "GET" "http://$panel_url/api/keygen/get" "$token" "$SCRIPT_SUB_DOMAIN" > "$temp_file" 2>&1 &
     spinner $! "Получение публичного ключа..."
-    api_response=$(cat /tmp/api_response.txt)
-    rm -f /tmp/api_response.txt
+    api_response=$(cat "$temp_file")
+    rm -f "$temp_file"
 
     if [ -z "$api_response" ]; then
         echo -e "${BOLD_RED}Ошибка: Не удалось получить публичный ключ.${NC}"

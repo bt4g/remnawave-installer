@@ -106,17 +106,13 @@ EOL
 
   # Подготовка данных для обновления конфигурации Xray
   local new_config=$(cat "$config_file")
-  # Запускаем curl в фоновом режиме и перенаправляем вывод в временный файл
-  curl -s -X POST "http://$panel_url/api/xray/update-config" \
-    -H "Authorization: Bearer $token" \
-    -H "Content-Type: application/json" \
-    -H "Host: $SCRIPT_SUB_DOMAIN" \
-    -H "X-Forwarded-For: $panel_url" \
-    -H "X-Forwarded-Proto: https" \
-    -d "$new_config" >/tmp/update_response.txt 2>&1 &
+  
+  # Обновление конфигурации Xray
+  local temp_file=$(mktemp)
+  make_api_request "POST" "http://$panel_url/api/xray/update-config" "$token" "$SCRIPT_SUB_DOMAIN" "$new_config" > "$temp_file" 2>&1 &
   spinner $! "Обновление конфигурации Xray..."
-  local update_response=$(cat /tmp/update_response.txt)
-  rm -f /tmp/update_response.txt
+  local update_response=$(cat "$temp_file")
+  rm -f "$temp_file"
 
   if [ -z "$update_response" ]; then
     echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при обновлении Xray конфига.${NC}"
@@ -144,17 +140,13 @@ EOL
 }
 EOF
   )
-  # Создание ноды в фоновом режиме
-  curl -s -X POST "http://$panel_url/api/nodes/create" \
-    -H "Authorization: Bearer $token" \
-    -H "Content-Type: application/json" \
-    -H "Host: $SCRIPT_SUB_DOMAIN" \
-    -H "X-Forwarded-For: $panel_url" \
-    -H "X-Forwarded-Proto: https" \
-    -d "$new_node_data" >/tmp/node_response.txt 2>&1 &
+  
+  # Создание ноды
+  temp_file=$(mktemp)
+  make_api_request "POST" "http://$panel_url/api/nodes/create" "$token" "$SCRIPT_SUB_DOMAIN" "$new_node_data" > "$temp_file" 2>&1 &
   spinner $! "Создание ноды..."
-  node_response=$(cat /tmp/node_response.txt)
-  rm -f /tmp/node_response.txt
+  node_response=$(cat "$temp_file")
+  rm -f "$temp_file"
 
   if [ -z "$node_response" ]; then
     echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании ноды.${NC}"
@@ -173,16 +165,12 @@ EOF
     echo "$node_response"
   fi
 
-  # Получение inbounds в фоновом режиме
-  curl -s -X GET "http://$panel_url/api/inbounds" \
-    -H "Authorization: Bearer $token" \
-    -H "Content-Type: application/json" \
-    -H "Host: $SCRIPT_SUB_DOMAIN" \
-    -H "X-Forwarded-For: $panel_url" \
-    -H "X-Forwarded-Proto: https" >/tmp/inbounds_response.txt 2>&1 &
+  # Получение inbounds
+  temp_file=$(mktemp)
+  make_api_request "GET" "http://$panel_url/api/inbounds" "$token" "$SCRIPT_SUB_DOMAIN" > "$temp_file" 2>&1 &
   spinner $! "Получение списка inbounds..."
-  inbounds_response=$(cat /tmp/inbounds_response.txt)
-  rm -f /tmp/inbounds_response.txt
+  inbounds_response=$(cat "$temp_file")
+  rm -f "$temp_file"
 
   if [ -z "$inbounds_response" ]; then
     echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при получении inbounds.${NC}"
@@ -211,17 +199,12 @@ EOF
 EOF
   )
 
-  # Создание хоста в фоновом режиме
-  curl -s -X POST "http://$panel_url/api/hosts/create" \
-    -H "Authorization: Bearer $token" \
-    -H "Content-Type: application/json" \
-    -H "Host: $SCRIPT_SUB_DOMAIN" \
-    -H "X-Forwarded-For: $panel_url" \
-    -H "X-Forwarded-Proto: https" \
-    -d "$host_data" >/tmp/host_response.txt 2>&1 &
-  spinner $! "Создание хоста с UUID: $inbound_uuid..."
-  host_response=$(cat /tmp/host_response.txt)
-  rm -f /tmp/host_response.txt
+  # Создание хоста
+  temp_file=$(mktemp)
+  make_api_request "POST" "http://$panel_url/api/hosts/create" "$token" "$SCRIPT_SUB_DOMAIN" "$host_data" > "$temp_file" 2>&1 &
+  spinner $! "Создание хоста..."
+  host_response=$(cat "$temp_file")
+  rm -f "$temp_file"
 
   if [ -z "$host_response" ]; then
     echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании хоста.${NC}"
