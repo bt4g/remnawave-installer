@@ -20,10 +20,10 @@ NC=$(tput sgr0)
 VERSION="1.0"
 
 # Основные директории
-REMNAWAVE_DIR="$HOME/remnawave"
-REMNANODE_ROOT_DIR="$HOME/remnanode"
-REMNANODE_DIR="$HOME/remnanode/node"
-SELFSTEAL_DIR="$HOME/remnanode/selfsteal"
+REMNAWAVE_DIR="/opt/remnawave"
+REMNANODE_ROOT_DIR="/opt/remnanode"
+REMNANODE_DIR="/opt/remnanode/node"
+SELFSTEAL_DIR="/opt/remnanode/selfsteal"
 LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node" # Директория локальной ноды (вместе с панелью)
 
 # Функция для проверки и удаления предыдущей установки
@@ -204,12 +204,12 @@ register_user() {
 restart_panel() {
     local no_wait=${1:-false} # Optional parameter to skip waiting for user input
     # Проверка существования директории панели
-    if [ ! -d ~/remnawave/panel ]; then
-        show_error "Ошибка: директория панели не найдена по пути ~/remnawave/panel!"
+    if [ ! -d /opt/remnawave/panel ]; then
+        show_error "Ошибка: директория панели не найдена по пути /opt/remnawave/panel!"
         show_error "Сначала установите панель Remnawave."
     else
         # Проверка наличия docker-compose.yml в директории панели
-        if [ ! -f ~/remnawave/panel/docker-compose.yml ]; then
+        if [ ! -f /opt/remnawave/panel/docker-compose.yml ]; then
             show_error "Ошибка: docker-compose.yml не найден в директории панели!"
             show_error "Возможно, установка панели повреждена или не завершена."
         else
@@ -217,27 +217,27 @@ restart_panel() {
             SUBSCRIPTION_PAGE_EXISTS=false
 
             # Проверка существования директории subscription-page
-            if [ -d ~/remnawave/subscription-page ] && [ -f ~/remnawave/subscription-page/docker-compose.yml ]; then
+            if [ -d /opt/remnawave/subscription-page ] && [ -f /opt/remnawave/subscription-page/docker-compose.yml ]; then
                 SUBSCRIPTION_PAGE_EXISTS=true
             fi
 
             # Останавливаем страницу подписки, если она существует
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
-                cd ~/remnawave/subscription-page && docker compose down >/dev/null 2>&1 &
+                cd /opt/remnawave/subscription-page && docker compose down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер remnawave-subscription-page"
             fi
 
             # Останавливаем панель
-            cd ~/remnawave/panel && docker compose down >/dev/null 2>&1 &
+            cd /opt/remnawave/panel && docker compose down >/dev/null 2>&1 &
             spinner $! "Перезапуск панели..."
 
             # Запускаем панель
-            cd ~/remnawave/panel && docker compose up -d >/dev/null 2>&1 &
+            cd /opt/remnawave/panel && docker compose up -d >/dev/null 2>&1 &
             spinner $! "Перезапуск панели..."
 
             # Запускаем страницу подписки, если она существует
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
-                cd ~/remnawave/subscription-page && docker compose up -d >/dev/null 2>&1 &
+                cd /opt/remnawave/subscription-page && docker compose up -d >/dev/null 2>&1 &
                 spinner $! "Перезапуск панели..."
             fi
             show_info "Панель перезапущена"

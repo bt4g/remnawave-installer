@@ -128,18 +128,18 @@ bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/
 
 ### Для варианта "Два сервера":
 
-- **Директория панели**: `~/remnawave/panel`
-- **Директория Caddy**: `~/remnawave/caddy`
-- **Директория remnawave-subscription-page**: `~/remnawave/remnawave-subscription-page`
+- **Директория панели**: `/opt/remnawave/panel`
+- **Директория Caddy**: `/opt/remnawave/caddy`
+- **Директория remnawave-subscription-page**: `/opt/remnawave/remnawave-subscription-page`
 
-- **Директория ноды**: `~/remnanode/node`
-- **Директория сайта-заглушки**: `~/remnanode/selfsteal`
+- **Директория ноды**: `/opt/remnanode/node`
+- **Директория сайта-заглушки**: `/opt/remnanode/selfsteal`
 
 ### Для варианта "Всё в одном":
 
-- **Директория панели**: `~/remnawave/panel`
-- **Директория Caddy**: `~/remnawave/caddy`
-- **Директория ноды**: `~/remnawave/node`
+- **Директория панели**: `/opt/remnawave/panel`
+- **Директория Caddy**: `/opt/remnawave/caddy`
+- **Директория ноды**: `/opt/remnawave/node`
 
 Доступные команды:
 
