@@ -704,6 +704,306 @@ generate_readable_login() {
     echo "$login"
 }
 
+# ===================================================================================
+#                                VLESS КОНФИГУРАЦИЯ
+# ===================================================================================
+
+# Генерация ключей для VLESS Reality
+generate_vless_keys() {
+  local temp_file=$(mktemp)
+  
+  # Генерация ключей x25519 с помощью Docker
+  docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
+  spinner $! "Генерация ключей x25519..."
+  keys=$(cat "$temp_file")
+  
+  local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
+  local public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
+  rm -f "$temp_file"
+
+  if [ -z "$private_key" ] || [ -z "$public_key" ]; then
+    echo -e "${BOLD_RED}Ошибка: Не удалось сгенерировать ключи.${NC}"
+    return 1
+  fi
+  
+  # Возвращаем ключи через echo
+  echo "$private_key:$public_key"
+}
+
+# Создание VLESS конфигурации Xray
+generate_vless_config() {
+  local config_file="$1"
+  local self_steal_domain="$2"
+  local self_steal_port="$3"
+  local private_key="$4"
+  local public_key="$5"
+  
+  local short_id=$(openssl rand -hex 8)
+  
+  cat >"$config_file" <<EOL
+{
+  "log": {
+    "loglevel": "debug"
+  },
+  "inbounds": [
+    {
+      "tag": "VLESS TCP REALITY",
+      "port": 443,
+      "listen": "0.0.0.0",
+      "protocol": "vless",
+      "settings": {
+        "clients": [],
+        "decryption": "none"
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "dest": "127.0.0.1:$self_steal_port",
+          "show": false,
+          "xver": 1,
+          "shortIds": [
+            "$short_id"
+          ],
+          "publicKey": "$public_key",
+          "privateKey": "$private_key",
+          "serverNames": [
+              "$self_steal_domain"
+          ]
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "DIRECT",
+      "protocol": "freedom"
+    },
+    {
+      "tag": "BLOCK",
+      "protocol": "blackhole"
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "ip": [
+          "geoip:private"
+        ],
+        "type": "field",
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "geosite:private"
+        ],
+        "outboundTag": "BLOCK"
+      },
+      {
+        "type": "field",
+        "protocol": [
+          "bittorrent"
+        ],
+        "outboundTag": "BLOCK"
+      }
+    ]
+  }
+}
+EOL
+}
+
+# Обновление конфигурации Xray
+update_xray_config() {
+  local panel_url="$1"
+  local token="$2"
+  local panel_domain="$3"
+  local config_file="$4"
+  
+  local temp_file=$(mktemp)
+  local new_config=$(cat "$config_file")
+  
+  make_api_request "POST" "http://$panel_url/api/xray/update-config" "$token" "$panel_domain" "$new_config" > "$temp_file" 2>&1 &
+  spinner $! "Обновление конфигурации Xray..."
+  local update_response=$(cat "$temp_file")
+  rm -f "$temp_file"
+
+  if [ -z "$update_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при обновлении Xray конфига.${NC}"
+    return 1
+  fi
+
+  if echo "$update_response" | jq -e '.response.config' >/dev/null; then
+    return 0
+  else
+    echo -e "${BOLD_RED}Ошибка: Не удалось обновить конфигурацию Xray.${NC}"
+    return 1
+  fi
+}
+
+# Создание ноды
+create_vless_node() {
+  local panel_url="$1"
+  local token="$2"
+  local panel_domain="$3"
+  local node_host="$4"
+  local node_port="$5"
+  
+  local node_name="VLESS-NODE"
+  local temp_file=$(mktemp)
+  
+  local new_node_data=$(
+    cat <<EOF
+{
+    "name": "$node_name",
+    "address": "$node_host",
+    "port": $node_port,
+    "isTrafficTrackingActive": false,
+    "trafficLimitBytes": 0,
+    "notifyPercent": 0,
+    "trafficResetDay": 31,
+    "excludedInbounds": [],
+    "countryCode": "XX",
+    "consumptionMultiplier": 1.0
+}
+EOF
+  )
+  
+  make_api_request "POST" "http://$panel_url/api/nodes/create" "$token" "$panel_domain" "$new_node_data" > "$temp_file" 2>&1 &
+  spinner $! "Создание ноды..."
+  node_response=$(cat "$temp_file")
+  rm -f "$temp_file"
+
+  if [ -z "$node_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании ноды.${NC}"
+    return 1
+  fi
+
+  if echo "$node_response" | jq -e '.response.uuid' >/dev/null; then
+    return 0
+  else
+    echo -e "${BOLD_RED}Ошибка: Не удалось создать ноду, ответ:${NC}"
+    echo
+    echo "Был направлен запрос с телом:"
+    echo "$new_node_data"
+    echo
+    echo "Ответ:"
+    echo
+    echo "$node_response"
+    return 1
+  fi
+}
+
+# Получение списка inbounds
+get_inbounds() {
+  local panel_url="$1"
+  local token="$2"
+  local panel_domain="$3"
+  
+  local temp_file=$(mktemp)
+  
+  make_api_request "GET" "http://$panel_url/api/inbounds" "$token" "$panel_domain" > "$temp_file" 2>&1 &
+  spinner $! "Получение списка inbounds..."
+  inbounds_response=$(cat "$temp_file")
+  rm -f "$temp_file"
+
+  if [ -z "$inbounds_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при получении inbounds.${NC}"
+    return 1
+  fi
+
+  local inbound_uuid=$(echo "$inbounds_response" | jq -r '.response[0].uuid')
+  if [ -z "$inbound_uuid" ]; then
+    echo -e "${BOLD_RED}Ошибка: Не удалось извлечь UUID из ответа.${NC}"
+    return 1
+  fi
+  
+  # Возвращаем UUID
+  echo "$inbound_uuid"
+}
+
+# Создание хоста
+create_vless_host() {
+  local panel_url="$1"
+  local token="$2"
+  local panel_domain="$3"
+  local inbound_uuid="$4"
+  local self_steal_domain="$5"
+  
+  local temp_file=$(mktemp)
+  
+  local host_data=$(
+    cat <<EOF
+{
+    "inboundUuid": "$inbound_uuid",
+    "remark": "VLESS TCP REALITY",
+    "address": "$self_steal_domain",
+    "port": 443,
+    "path": "",
+    "sni": "$self_steal_domain",
+    "host": "$self_steal_domain",
+    "alpn": "h2",
+    "fingerprint": "chrome",
+    "allowInsecure": false,
+    "isDisabled": false
+}
+EOF
+  )
+
+  make_api_request "POST" "http://$panel_url/api/hosts/create" "$token" "$panel_domain" "$host_data" > "$temp_file" 2>&1 &
+  spinner $! "Создание хоста для UUID: $inbound_uuid..."
+  host_response=$(cat "$temp_file")
+  rm -f "$temp_file"
+
+  if [ -z "$host_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании хоста.${NC}"
+    return 1
+  fi
+
+  if echo "$host_response" | jq -e '.response.uuid' >/dev/null; then
+    return 0
+  else
+    echo -e "${BOLD_RED}Ошибка: Не удалось создать хост.${NC}"
+    return 1
+  fi
+}
+
+# Получение публичного ключа API
+get_public_key() {
+  local panel_url="$1"
+  local token="$2"
+  local panel_domain="$3"
+  
+  local temp_file=$(mktemp)
+  
+  make_api_request "GET" "http://$panel_url/api/keygen/get" "$token" "$panel_domain" > "$temp_file" 2>&1 &
+  spinner $! "Получение публичного ключа..."
+  api_response=$(cat "$temp_file")
+  rm -f "$temp_file"
+
+  if [ -z "$api_response" ]; then
+    echo -e "${BOLD_RED}Ошибка: Не удалось получить публичный ключ.${NC}"
+    return 1
+  fi
+
+  local pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
+  if [ -z "$pubkey" ]; then
+    echo -e "${BOLD_RED}Ошибка: Не удалось извлечь публичный ключ из ответа.${NC}"
+    return 1
+  fi
+  
+  # Возвращаем публичный ключ
+  echo "$pubkey"
+}
+
 # Функция проверки, находится ли IP в одном из CIDR-диапазонов (Cloudflare или любом другом, передаваемом в виде массива)
 is_ip_in_cidrs() {
     local ip="$1"
