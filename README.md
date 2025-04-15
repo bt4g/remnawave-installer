@@ -1,67 +1,69 @@
+[🇷🇺 Читать на русском](README.ru.md)
+
 ## Remnawave Installer
 
-Этот скрипт предназначен для автоматизированной установки панели и ноды **Remnawave**.
+This script is intended for the automated installation of the **Remnawave** panel and node.
 
-**ВАЖНО!** Не используйте панель в production без полного понимания, что и как работает. Этот скрипт предназначен только для демонстрации работы Remnawave, не для ее использования в бою.
+**IMPORTANT!** Do not use the panel in production without fully understanding how everything works. This script is for demonstration purposes only and not for production use.
 
-Вы можете использовать Remnawave двумя способами:
+You can use Remnawave in two ways:
 
-- **Вариант 1 (Два сервера)**: Установка панели и ноды на разных серверах (рекомендуется)
-- **Вариант 2 (Всё в одном)**: Установка панели и ноды на одном сервере (упрощенная установка)
+- **Option 1 (Two servers):** Install the panel and node on different servers (recommended)
+- **Option 2 (All-in-one):** Install the panel and node on the same server (simplified installation)
 
-### Вариант 1: Два сервера
+### Option 1: Two servers
 
-Для полноценного использования вам понадобятся два отдельных сервера:
+For full functionality, you will need two separate servers:
 
-- Сервер для панели - он будет центром управления, но не будет содержать Xray ноду
-- Сервер для ноды - он будет содержать Xray ноду и заглушку Self Steal для VLESS REALITY
+- Server for the panel — it will be the control center, but will not contain the Xray node
+- Server for the node — it will contain the Xray node and the Self Steal stub for VLESS REALITY
 
-Для этого варианта необходимо три домена (поддомена): один для панели, второй — для подписок и третий — для сайта-заглушки Self Steal, который размещается на сервере с нодой.
+This option requires three domains (subdomains): one for the panel, a second for subscriptions, and a third for the Self Steal stub site, which is hosted on the node server.
 
-**Важно про настройку DNS:**
+**Important about DNS configuration:**
 
-- Домены панели и подписок должны указывать на IP-адрес сервера с панелью
-- Домен для сайта-заглушки Self Steal должен указывать на IP-адрес сервера с нодой
+- The panel and subscription domains must point to the IP address of the panel server
+- The Self Steal stub domain must point to the IP address of the node server
 
-Рекомендуемый порядок установки:
+Recommended installation order:
 
-1. Сначала установите панель и получите публичный ключ для вашей ноды.
-2. Затем установите ноду, указав ранее полученный ключ.
+1. First, install the panel and obtain the public key for your node.
+2. Then install the node, specifying the previously obtained key.
 
-**Важно!** После завершения установки **ноды**, чтобы панель ее подхватила, потребуется выполнить перезапуск **панели** в меню скрипта установки
+**Important!** After completing the **node** installation, to make the panel recognize it, you will need to restart the **panel** from the installer script menu.
 
-### Вариант 2: Всё в одном (упрощенная установка)
+### Option 2: All-in-one (simplified installation)
 
-Для упрощенной установки вы можете развернуть и панель, и ноду на одном сервере.
+For a simplified installation, you can deploy both the panel and node on a single server.
 
-Для этого вам понадобится:
+For this you will need:
 
-- Один сервер с Ubuntu
-- Один домен, который будет использоваться для:
-  - Панели управления
-  - Подписок
-  - Self Steal (заглушка для VLESS REALITY)
+- One server with Ubuntu
+- One domain, which will be used for:
+  - The control panel
+  - Subscriptions
+  - Self Steal (stub for VLESS REALITY)
 
-Этот вариант автоматически настраивает взаимодействие между панелью и нодой, что упрощает процесс установки и управления.
-В этом варианте **недоступен** дополнительный сервис [Subscription templates](https://remna.st/subscription-templating/installation)
-Это связано с тем, что этот сервис ожидает подписки в корне, а в этом варианте подписки находятся на пути /sub/
+This option automatically configures the interaction between the panel and node, simplifying the installation and management process.
+In this option, the additional service [Subscription templates](https://remna.st/subscription-templating/installation) is **not available**
+This is because the service expects subscriptions at the root, while in this option subscriptions are located at /sub/
 
-В этой конфигурации Remnawave нода (Xray в ней) обрабатывает весь входящий трафик на 443 порту. Все запросы, которые не являются Xray-proxy-соединениями уходят в dest fallback и перенаправляются в Caddy, который затем распределяет их по нужным сервисам (панель, selfsteal, подписки в зависимости от sni). Если в этом режиме остановить локальную Remnawave ноду, то панель перестанет быть доступна.
+In this configuration, the Remnawave node (Xray within it) handles all incoming traffic on port 443. All requests that are not Xray proxy connections go to the dest fallback and are redirected to Caddy, which then distributes them to the appropriate services (panel, selfsteal, subscriptions depending on SNI). If you stop the local Remnawave node in this mode, the panel will become unavailable.
 
 ```
-Клиент → 443 порт → Xray → (Прокси-соединения)
+Client → port 443 → Xray → (Proxy connections)
                       ↓
-                     Caddy → Панель/Подписки/Selfsteal (в зависимости от SNI)
+                     Caddy → Panel/Subscriptions/Selfsteal (depending on SNI)
 ```
 
-## Системные требования
+## System Requirements
 
-- ОС: Ubuntu 22.04
-- Пользователь с правами root (sudo)
+- OS: Ubuntu 22.04
+- User with root privileges (sudo)
 
-## Установка
+## Installation
 
-Для запуска установщика выполните следующую команду в терминале:
+To launch the installer, run the following command in the terminal:
 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/dist/install_remnawave.sh)
@@ -69,91 +71,86 @@ bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/
 
 <p align="center"><img src="./assets/menu.png" alt="Remnawave Installer Menu"></p>
 
-### Установка панели Remnawave
+### Installing the Remnawave Panel
 
-1. После запуска скрипта выберите пункт **1) Установка панели Remnawave**.
-2. Скрипт автоматически установит необходимые зависимости (Docker и другие).
-3. Вам потребуется ввести:
-   - Токен Telegram-бота / ID администратора и ID чата (если включите интеграцию с Telegram)
-   - Основной **домен** для панели управления
-   - Отдельный **домен** для подписок
-   - Имя пользователя и пароль SuperAdmin (либо сгенерировать силами скрипта)
-4. Скрипт зарегистрирует SuperAdmin в панели за вас и проведёт первичную настройку:
-   - Запросит selfsteal домен для конфигурации
-   - Сгенерирует конфиг Xray VLESS.
-   - Получит публичный ключ для ноды и создаст хост
+1. After running the script, select **1) Install Remnawave Panel**.
+2. The script will automatically install the required dependencies (Docker and others).
+3. You will need to enter:
+   - Telegram bot token / Administrator ID and chat ID (if you enable Telegram integration)
+   - Main **domain** for the control panel
+   - Separate **domain** for subscriptions
+   - SuperAdmin username and password (or generate them using the script)
+4. The script will register the SuperAdmin in the panel for you and perform initial setup:
+   - Request the selfsteal domain for configuration
+   - Generate Xray VLESS config
+   - Obtain the public key for the node and create a host
 
-### Установка ноды Remnawave
+### Installing the Remnawave Node
 
-1. Выберите пункт **2) Установка ноды Remnawave**.
-2. Скрипт установит необходимые зависимости.
-3. Вам потребуется ввести:
-   - Домен для Steal-сайта.
-   - Порт для подключения ноды.
-   - Публичный ключ панели для ноды.
+1. Select **2) Install Remnawave Node**.
+2. The script will install the necessary dependencies.
+3. You will need to enter:
+   - Domain for the Steal site.
+   - Port for connecting the node.
+    - The panel's public key for the node.
 
-### Установка "Всё в одном" (панель + нода)
+### "All-in-one" Installation (panel + node)
 
-1. Выберите пункт **3) Установка "Всё в одном" (панель + нода)**.
-2. Скрипт установит необходимые зависимости (Docker и другие).
-3. Вам потребуется ввести:
-   - Токен Telegram-бота / ID администратора и ID чата (если включите интеграцию с Telegram)
-   - Ваш **домен**, который будет использоваться для панели, подписок и Self Steal
-   - Порт для подключения ноды
-   - Имя пользователя и пароль SuperAdmin (либо сгенерировать силами скрипта)
-4. Скрипт автоматически настроит и запустит:
-   - Панель управления Remnawave
-   - Ноду Remnawave с Xray
-   - Caddy для обработки HTTPS-запросов
-   - Заглушку Self Steal
+1. Select **3) All-in-one Installation (panel + node)**.
+2. The script will install the required dependencies (Docker and others).
+3. You will need to enter:
+   - Telegram bot token / Administrator ID and chat ID (if you enable Telegram integration)
+   - Your **domain**, which will be used for the panel, subscriptions, and Self Steal
+   - Port for connecting the node
+   - SuperAdmin username and password (or generate them using the script)
+4. The script will automatically configure and launch:
+   - Remnawave control panel
+   - Remnawave node with Xray
+   - Caddy for handling HTTPS requests
+   - Self Steal stub
 
-## Защита панели на основе URL-параметра
+## Panel Protection Based on URL Parameter
 
-В Caddy добавлена дополнительная защита от обнаружения панели:
+Caddy includes additional protection to prevent the panel from being discovered:
 
-- Для доступа к панели необходимо открыть страницу вида:
+- To access the panel, you must open a page like:
 
   ```
-  https://ВАШ_ДОМЕН_ПАНЕЛИ/auth/login?caddy=<SECRET_KEY>
+  https://YOUR_PANEL_DOMAIN/auth/login?caddy=<SECRET_KEY>
   ```
 
-- Параметр `?caddy=<SECRET_KEY>` устанавливает специальную Cookie `caddy=<SECRET_KEY>` в браузере.
-- Если Cookie не установлена или параметр в запросе отсутствует, при обращении к панели пользователь увидит пустую страницу или ошибку 404 (в зависимости от запрошенного пути).
+- The `?caddy=<SECRET_KEY>` parameter sets a special cookie `caddy=<SECRET_KEY>` in your browser.
+- If the cookie is not set or the parameter is missing from the request, the user will see either a blank page or a 404 error (depending on the requested path) when accessing the panel.
 
-Таким образом, даже если злоумышленник будет сканировать хост или перебирать пути, без точного параметра и/или Cookie панель останется невидимой.
+Thus, even if an attacker scans the host or tries different paths, without the exact parameter and/or cookie, the panel remains invisible.
 
-## Управление сервисами
+## Service Management
 
-После установки вы можете управлять сервисами с помощью команды `make` в соответствующих директориях:
+After installation, you can manage services using the `make` command in the corresponding directories:
 
-### Для варианта "Два сервера":
+### For the "Two servers" option:
 
-- **Директория панели**: `/opt/remnawave/panel`
-- **Директория Caddy**: `/opt/remnawave/caddy`
-- **Директория remnawave-subscription-page**: `/opt/remnawave/remnawave-subscription-page`
+- **Panel directory**: `/opt/remnawave/panel`
+- **Caddy directory**: `/opt/remnawave/caddy`
+- **remnawave-subscription-page directory**: `/opt/remnawave/remnawave-subscription-page`
 
-- **Директория ноды**: `/opt/remnanode/node`
-- **Директория сайта-заглушки**: `/opt/remnanode/selfsteal`
+- **Node directory**: `/opt/remnanode/node`
+- **Self Steal stub directory**: `/opt/remnanode/selfsteal`
 
-### Для варианта "Всё в одном":
+### For the "All-in-one" option:
 
-- **Директория панели**: `/opt/remnawave/panel`
-- **Директория Caddy**: `/opt/remnawave/caddy`
-- **Директория ноды**: `/opt/remnawave/node`
+- **Panel directory**: `/opt/remnawave/panel`
+- **Caddy directory**: `/opt/remnawave/caddy`
+- **Node directory**: `/opt/remnawave/node`
 
-Доступные команды:
+Available commands:
 
-- `make start` — Запуск и просмотр логов
-- `make stop` — Остановка
-- `make restart` — Перезапуск
-- `make logs` — Просмотр логов
+- `make start` — Start and view logs
+- `make stop` — Stop
+- `make restart` — Restart
+- `make logs` — View logs
 
-## Примечания
+## Notes
 
-- Убедитесь, что у вас настроены DNS-записи для **всех** указанных доменов, направляющие на IP-адрес соответствующего сервера.
-- При использовании варианта "Всё в одном" один домен используется для всех сервисов (панель, подписки, Self Steal).
-
-## Благодарности
-
-- [AsanFillter](https://github.com/AsanFillter/Remnawave-AutoSetup) за Remnawave-AutoSetup
-- [eGamesAPI](https://github.com/eGamesAPI/remnawave-reverse-proxy) за remnawave-reverse-proxy
+- Make sure you have configured DNS records for **all** specified domains, pointing to the IP address of the corresponding server.
+- When using the "All-in-one" option, a single domain is used for all services (panel, subscriptions, Self Steal).
