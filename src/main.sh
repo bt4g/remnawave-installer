@@ -9,67 +9,8 @@ fi
 clear
 
 # ===================================================================================
-#                              ИМПОРТ МОДУЛЕЙ
-# ===================================================================================
-# Примечание: В финальной версии скрипта при сборке через Makefile
-# эта секция будет заменена содержимым модулей
-
-# Получение директории текущего скрипта для относительных импортов
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# В режиме разработки каждый модуль загружается отдельно
-# В режиме сборки все модули уже будут включены в скрипт
-
-# Включение функций из модулей с проверками
-source "$SCRIPT_DIR/modules/shared/common.sh" || {
-    echo "Ошибка загрузки модуля common.sh"
-    exit 1
-}
-source "$SCRIPT_DIR/modules/shared/ui.sh" || {
-    echo "Ошибка загрузки модуля ui.sh"
-    exit 1
-}
-source "$SCRIPT_DIR/modules/dependencies/dependencies.sh" || {
-    echo "Ошибка загрузки модуля dependencies.sh"
-    exit 1
-}
-
-# Эти модули зависят от функций из shared модулей, поэтому загружаем их после
-source "$SCRIPT_DIR/modules/REMNAWAVE_SUBSCRIPTION_PAGE/REMNAWAVE_SUBSCRIPTION_PAGE.sh" || {
-    echo "Ошибка загрузки модуля REMNAWAVE_SUBSCRIPTION_PAGE.sh"
-    exit 1
-}
-source "$SCRIPT_DIR/modules/caddy/caddy.sh" || {
-    echo "Ошибка загрузки модуля caddy.sh"
-    exit 1
-}
-
-# Модули для панели управления
-source "$SCRIPT_DIR/modules/panel/ui.sh" || {
-    echo "Ошибка загрузки модуля panel/ui.sh"
-    exit 1
-}
-source "$SCRIPT_DIR/modules/panel/vless-configuration.sh" || {
-    echo "Ошибка загрузки модуля vless-configuration.sh"
-    exit 1
-}
-source "$SCRIPT_DIR/modules/panel/panel.sh" || {
-    echo "Ошибка загрузки модуля panel.sh"
-    exit 1
-}
-
-# Остальные модули установки компонентов
-source "$SCRIPT_DIR/modules/selfsteal/selfsteal.sh" || {
-    echo "Ошибка загрузки модуля selfsteal.sh"
-    exit 1
-}
-source "$SCRIPT_DIR/modules/node/node.sh" || {
-    echo "Ошибка загрузки модуля node.sh"
-    exit 1
-}
-
-# ===================================================================================
-#                              ГЛАВНОЕ МЕНЮ
+# Этот файл предназначен только для сборки финального скрипта.
+# Для запуска используйте только собранный скрипт dist/install_remnawave.sh
 # ===================================================================================
 
 main() {

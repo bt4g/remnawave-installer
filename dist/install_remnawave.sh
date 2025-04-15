@@ -4,7 +4,6 @@
 
 # Включение модуля: common.sh
 
-# Определение цветов для вывода
 BOLD_BLUE=$(tput setaf 4)
 BOLD_GREEN=$(tput setaf 2)
 LIGHT_GREEN=$(tput setaf 10)
@@ -16,23 +15,18 @@ GREEN=$(tput setaf 2)
 YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
-# Версия скрипта
 VERSION="1.0"
 
-# Основные директории
 REMNAWAVE_DIR="/opt/remnawave"
 REMNANODE_ROOT_DIR="/opt/remnanode"
 REMNANODE_DIR="/opt/remnanode/node"
 SELFSTEAL_DIR="/opt/remnanode/selfsteal"
 LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node" # Директория локальной ноды (вместе с панелью)
 
-# Функция для проверки и удаления предыдущей установки
 remove_previous_installation() {
-    # Проверка наличия предыдущей установки
     local containers=("remnawave-subscription-page" "remnawave" "remnawave-db" "remnawave-redis" "remnanode" "caddy-remnawave")
     local container_exists=false
 
-    # Проверка существования любого из контейнеров
     for container in "${containers[@]}"; do
         if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "$container"; then
             container_exists=true
@@ -43,28 +37,23 @@ remove_previous_installation() {
     if [ -d "$REMNAWAVE_DIR" ] || [ "$container_exists" = true ]; then
         show_warning "Обнаружена предыдущая установка RemnaWave."
         if prompt_yes_no "Для продолжения требуется удалить предыдущие установки Remnawave. Подтверждаете удаление?" "$ORANGE"; then
-            # Проверка наличия Caddy и его остановка
             if [ -f "$REMNAWAVE_DIR/caddy/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f caddy/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер Caddy"
             fi
-            # Проверка наличия страницы подписки и её остановка
             if [ -f "$REMNAWAVE_DIR/subscription-page/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f subscription-page/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер remnawave-subscription-page"
             fi
-            # Проверка наличия ноды и её остановка
             if [ -f "$LOCAL_REMNANODE_DIR/docker-compose.yml" ]; then
                 cd $LOCAL_REMNANODE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер ноды Remnawave"
             fi
-            # Проверка наличия панели и её остановка
             if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнеры панели Remnawave"
             fi
 
-            # Проверка наличия оставшихся контейнеров и их остановка
             for container in "${containers[@]}"; do
                 if docker ps -a --format '{{.Names}}' | grep -q "^$container$"; then
                     docker stop "$container" >/dev/null 2>&1 && docker rm "$container" >/dev/null 2>&1 &
@@ -72,14 +61,11 @@ remove_previous_installation() {
                 fi
             done
 
-            # Удаление оставшихся образов Docker
             docker rmi $(docker images -q) -f >/dev/null 2>&1 &
             spinner $! "Удаляем образы Docker"
 
-            # Удаление директории
             rm -rf $REMNAWAVE_DIR >/dev/null 2>&1 &
             spinner $! "Удаляем каталог $REMNAWAVE_DIR"
-            # Удаление томов Docker
             docker volume rm remnawave-db-data remnawave-redis-data >/dev/null 2>&1 &
             spinner $! "Удаляем тома Docker: remnawave-db-data и remnawave-redis-data"
             show_success "Проведено удаление предыдущей установки."
@@ -89,7 +75,6 @@ remove_previous_installation() {
     fi
 }
 
-# Отображение сообщения об успешной установке панели
 display_panel_installation_complete_message() {
     local secure_panel_url="https://$SCRIPT_PANEL_DOMAIN/auth/login?caddy=$PANEL_SECRET_KEY"
     local effective_width=$((${#secure_panel_url} + 3))
@@ -137,7 +122,6 @@ wait_for_panel() {
     local max_wait=180
     local temp_file=$(mktemp)
 
-    # Запускаем проверку доступности сервера в фоновом процессе
     {
         local start_time=$(date +%s)
         local end_time=$((start_time + max_wait))
@@ -191,7 +175,6 @@ register_user() {
         reg_error="Пустой ответ сервера"
         return 1
     elif [[ "$response" == *"accessToken"* ]]; then
-        # Успешная регистрация
         reg_token=$(echo "$response" | jq -r '.response.accessToken')
         echo "$reg_token"
         return 0
@@ -203,39 +186,31 @@ register_user() {
 
 restart_panel() {
     local no_wait=${1:-false} # Optional parameter to skip waiting for user input
-    # Проверка существования директории панели
     if [ ! -d /opt/remnawave/panel ]; then
         show_error "Ошибка: директория панели не найдена по пути /opt/remnawave/panel!"
         show_error "Сначала установите панель Remnawave."
     else
-        # Проверка наличия docker-compose.yml в директории панели
         if [ ! -f /opt/remnawave/panel/docker-compose.yml ]; then
             show_error "Ошибка: docker-compose.yml не найден в директории панели!"
             show_error "Возможно, установка панели повреждена или не завершена."
         else
-            # Переменная для отслеживания наличия директории subscription-page
             SUBSCRIPTION_PAGE_EXISTS=false
 
-            # Проверка существования директории subscription-page
             if [ -d /opt/remnawave/subscription-page ] && [ -f /opt/remnawave/subscription-page/docker-compose.yml ]; then
                 SUBSCRIPTION_PAGE_EXISTS=true
             fi
 
-            # Останавливаем страницу подписки, если она существует
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
                 cd /opt/remnawave/subscription-page && docker compose down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер remnawave-subscription-page"
             fi
 
-            # Останавливаем панель
             cd /opt/remnawave/panel && docker compose down >/dev/null 2>&1 &
             spinner $! "Перезапуск панели..."
 
-            # Запускаем панель
             cd /opt/remnawave/panel && docker compose up -d >/dev/null 2>&1 &
             spinner $! "Перезапуск панели..."
 
-            # Запускаем страницу подписки, если она существует
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
                 cd /opt/remnawave/subscription-page && docker compose up -d >/dev/null 2>&1 &
                 spinner $! "Перезапуск панели..."
@@ -255,10 +230,8 @@ start_container() {
     local service_name="$3"   # Название сервиса для вывода сообщений
     local wait_time=${4:-1}   # Время ожидания в секундах
 
-    # Переходим в нужную директорию
     cd "$directory"
 
-    # Запускаем весь процесс в фоне с помощью подоболочки
     (
         docker compose up -d >/dev/null 2>&1
         sleep $wait_time
@@ -266,17 +239,13 @@ start_container() {
 
     local bg_pid=$!
 
-    # Отображаем спиннер для всего процесса запуска и ожидания
     spinner $bg_pid "Запуск контейнера ${service_name}..."
 
-    # Проверяем статус контейнера
     if ! docker ps | grep -q "$container_name"; then
         echo -e "${BOLD_RED}Контейнер $service_name не запустился. Проверьте конфигурацию.${NC}"
         echo -e "${ORANGE}Вы можете проверить логи позже с помощью 'make logs' в директории $directory.${NC}"
         return 1
     else
-        # echo -e "${BOLD_GREEN}$service_name успешно запущен.${NC}"
-        # echo ""
         return 0
     fi
 }
@@ -290,44 +259,35 @@ generate_secure_password() {
     local number_chars='0123456789'
     local alphanumeric_chars="${uppercase_chars}${lowercase_chars}${number_chars}"
 
-    # Генерируем начальный пароль только из букв и цифр
     if command -v openssl &>/dev/null; then
         password="$(openssl rand -base64 48 | tr -dc "$alphanumeric_chars" | head -c "$length")"
     else
-        # Если openssl недоступен, fallback на /dev/urandom
         password="$(head -c 100 /dev/urandom | tr -dc "$alphanumeric_chars" | head -c "$length")"
     fi
 
-    # Проверяем наличие символов каждого типа и добавляем недостающие
-    # Если нет символа верхнего регистра, добавляем его
     if ! [[ "$password" =~ [$uppercase_chars] ]]; then
         local position=$((RANDOM % length))
         local one_uppercase="$(echo "$uppercase_chars" | fold -w1 | shuf | head -n1)"
         password="${password:0:$position}${one_uppercase}${password:$((position + 1))}"
     fi
 
-    # Если нет символа нижнего регистра, добавляем его
     if ! [[ "$password" =~ [$lowercase_chars] ]]; then
         local position=$((RANDOM % length))
         local one_lowercase="$(echo "$lowercase_chars" | fold -w1 | shuf | head -n1)"
         password="${password:0:$position}${one_lowercase}${password:$((position + 1))}"
     fi
 
-    # Если нет цифры, добавляем её
     if ! [[ "$password" =~ [$number_chars] ]]; then
         local position=$((RANDOM % length))
         local one_number="$(echo "$number_chars" | fold -w1 | shuf | head -n1)"
         password="${password:0:$position}${one_number}${password:$((position + 1))}"
     fi
 
-    # Добавляем от 1 до 3 специальных символов (в зависимости от длины пароля)
-    # но не более 25% длины пароля
     local special_count=$((length / 4))
     special_count=$((special_count > 0 ? special_count : 1))
     special_count=$((special_count < 3 ? special_count : 3))
 
     for ((i = 0; i < special_count; i++)); do
-        # Выбираем случайную позицию, избегая первого и последнего символа
         local position=$((RANDOM % (length - 2) + 1))
         local one_special="$(echo "$special_chars" | fold -w1 | shuf | head -n1)"
         password="${password:0:$position}${one_special}${password:$((position + 1))}"
@@ -336,18 +296,15 @@ generate_secure_password() {
     echo "$password"
 }
 
-# Функция для безопасного обновления .env файла с несколькими ключами
 update_file() {
     local env_file="$1"
     shift
 
-    # Проверка наличия параметров
     if [ "$#" -eq 0 ] || [ $(($# % 2)) -ne 0 ]; then
         echo "Ошибка: неверное количество аргументов. Должно быть чётное число ключей и значений." >&2
         return 1
     fi
 
-    # Преобразуем аргументы в массивы ключей и значений
     local keys=()
     local values=()
 
@@ -357,10 +314,8 @@ update_file() {
         shift 2
     done
 
-    # Создаем временный файл
     local temp_file=$(mktemp)
 
-    # Построчно обрабатываем файл и заменяем нужные строки
     while IFS= read -r line || [[ -n "$line" ]]; do
         local key_found=false
         for i in "${!keys[@]}"; do
@@ -376,11 +331,9 @@ update_file() {
         fi
     done <"$env_file"
 
-    # Заменяем оригинальный файл
     mv "$temp_file" "$env_file"
 }
 
-# Создание общего Makefile для управления сервисами
 create_makefile() {
     local directory="$1"
     cat >"$directory/Makefile" <<'EOF'
@@ -397,17 +350,7 @@ logs:
 EOF
 }
 
-# ===================================================================================
-#                                API REQUEST ФУНКЦИИ
-# ===================================================================================
 
-# Функция для выполнения API запроса с Bearer токеном
-# Параметры:
-#   $1 - метод (GET, POST, PUT, DELETE)
-#   $2 - полный URL
-#   $3 - Bearer токен для авторизации
-#   $4 - домен хоста (для заголовка Host)
-#   $5 - данные запроса в формате JSON (опционально, только для POST/PUT)
 make_api_request() {
     local method=$1
     local url=$2
@@ -430,21 +373,12 @@ make_api_request() {
     fi
 }
 
-# ===================================================================================
-#                                ФУНКЦИИ ВАЛИДАЦИИ
-# ===================================================================================
 
-# Функция для валидации и очистки доменного имени или IP-адреса
-# Оставляет только допустимые символы: буквы, цифры, точки и дефисы
-# Использование:
-#   validate_domain "example.com"
 validate_domain() {
     local input="$1"
     local max_length="${2:-253}" # Максимальная длина домена по стандарту
 
-    # Проверка на IP-адрес
     if [[ "$input" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        # Проверка каждого октета IP-адреса
         local valid_ip=true
         IFS='.' read -r -a octets <<<"$input"
         for octet in "${octets[@]}"; do
@@ -460,22 +394,17 @@ validate_domain() {
         fi
     fi
 
-    # Удаляем все символы, кроме букв, цифр, точек и дефисов
     local cleaned_domain=$(echo "$input" | tr -cd 'a-zA-Z0-9.-')
 
-    # Проверка на пустую строку после очистки
     if [ -z "$cleaned_domain" ]; then
         echo ""
         return 1
     fi
 
-    # Проверка на максимальную длину
     if [ ${#cleaned_domain} -gt $max_length ]; then
         cleaned_domain=${cleaned_domain:0:$max_length}
     fi
 
-    # Проверка формата домена (простая базовая проверка)
-    # Домен должен содержать хотя бы одну точку и не начинаться/заканчиваться точкой или дефисом
     if
         [[ ! "$cleaned_domain" =~ \. ]] ||
             [[ "$cleaned_domain" =~ ^[\.-] ]] ||
@@ -489,9 +418,6 @@ validate_domain() {
     return 0
 }
 
-# Безопасное чтение пользовательского ввода с валидацией
-# Использование:
-#   read_domain "Введите домен:" "example.com"
 read_domain() {
     local prompt="$1"
     local default_value="$2"
@@ -500,7 +426,6 @@ read_domain() {
     local attempts=0
 
     while [ $attempts -lt $max_attempts ]; do
-        # Показываем подсказку с дефолтным значением, если оно есть
         local prompt_formatted_text=""
         if [ -n "$default_value" ]; then
             prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
@@ -510,13 +435,11 @@ read_domain() {
 
         read -p "$prompt_formatted_text" input
 
-        # Если ввод пустой и есть дефолтное значение, используем его
         if [ -z "$input" ] && [ -n "$default_value" ]; then
             result="$default_value"
             break
         fi
 
-        # Валидируем ввод
         result=$(validate_domain "$input")
         local status=$?
 
@@ -538,18 +461,12 @@ read_domain() {
     echo "$result"
 }
 
-# Функция для валидации и очистки порта
-# Оставляет только числовые символы и проверяет, что значение в диапазоне 1-65535
-# Использование:
-#   validate_port "8080"
 validate_port() {
     local input="$1"
     local default_port="$2"
 
-    # Удаляем все символы, кроме цифр
     local cleaned_port=$(echo "$input" | tr -cd '0-9')
 
-    # Проверка на пустую строку после очистки
     if [ -z "$cleaned_port" ] && [ -n "$default_port" ]; then
         echo "$default_port"
         return 0
@@ -558,7 +475,6 @@ validate_port() {
         return 1
     fi
 
-    # Проверка на диапазон портов
     if [ "$cleaned_port" -lt 1 ] || [ "$cleaned_port" -gt 65535 ]; then
         if [ -n "$default_port" ]; then
             echo "$default_port"
@@ -573,11 +489,8 @@ validate_port() {
     return 0
 }
 
-# Проверка, свободен ли порт
 is_port_available() {
     local port=$1
-    # Пытаемся запустить временный сервер на порту
-    # Если возвращает 0, порт свободен, если 1 - занят
     (echo >/dev/tcp/localhost/$port) >/dev/null 2>&1
     if [ $? -eq 1 ]; then
         return 0 # Порт свободен
@@ -586,11 +499,9 @@ is_port_available() {
     fi
 }
 
-# Нахождение свободного порта, начиная с указанного
 find_available_port() {
     local port="$1"
 
-    # Пробуем последовательно, пока не найдём свободный
     while true; do
         if is_port_available "$port"; then
             show_info_e "Порт $port доступен."
@@ -598,7 +509,6 @@ find_available_port() {
             return 0
         fi
         ((port++))
-        # На всякий случай, ограничимся 65535
         if [ "$port" -gt 65535 ]; then
             show_info_e "Не удалось найти свободный порт!"
             return 1
@@ -606,10 +516,6 @@ find_available_port() {
     done
 }
 
-# Функция безопасного чтения порта с валидацией
-# Использование:
-#   read_port "Введите порт:" "8080"
-#   read_port "Введите порт:" "8080" true    # Пропустить проверку доступности порта
 read_port() {
     local prompt="$1"
     local default_value="${2:-}"
@@ -619,7 +525,6 @@ read_port() {
     local max_attempts=3
 
     while [ $attempts -lt $max_attempts ]; do
-        # Отображение приглашения с дефолтным значением
         if [ -n "$default_value" ]; then
             prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
             read -p "$prompt_formatted_text" result
@@ -628,17 +533,14 @@ read_port() {
             read -p "$prompt_formatted_text" result
         fi
 
-        # Если ввод пустой и есть дефолтное значение, используем его
         if [ -z "$result" ] && [ -n "$default_value" ]; then
             result="$default_value"
         fi
 
-        # Валидация порта - сохраняем результат в переменную
         result=$(validate_port "$result")
         local status=$?
 
         if [ $status -eq 0 ]; then
-            # Проверяем, свободен ли порт (если проверка не отключена)
             if [ "$skip_availability_check" = true ] || is_port_available "$result"; then
                 break
             else
@@ -654,7 +556,6 @@ read_port() {
                 fi
             fi
         else
-            # В зависимости от кода возврата выводим сообщение
             case $status in
             1) show_info_e "Некорректный ввод (не число). Пожалуйста, введите корректный порт." ;;
             2) show_info_e "Некорректный порт. Введите число от 1 до 65535." ;;
@@ -671,35 +572,27 @@ read_port() {
                 result="$(find_available_port "$result")"
             fi
         else
-            # Если нет дефолтного значения, используем случайный свободный порт
             local random_start=$((RANDOM % 10000 + 10000))
             result="$(find_available_port "$random_start")"
         fi
     fi
 
-    # Здесь ОДИН раз выводим результат
     echo "$result"
 }
 
 generate_readable_login() {
-    # Согласные и гласные буквы для более читаемых комбинаций
     consonants="bcdfghjklmnpqrstvwxz"
     vowels="aeiouy"
 
-    # Случайная длина от 6 до 10 символов
     length=$((6 + RANDOM % 5))
 
-    # Инициализация пустой строки для логина
     login=""
 
-    # Генерация логина, чередуя согласные и гласные
     for ((i = 0; i < length; i++)); do
         if ((i % 2 == 0)); then
-            # Выбираем случайную согласную
             rand_index=$((RANDOM % ${#consonants}))
             login="${login}${consonants:rand_index:1}"
         else
-            # Выбираем случайную гласную
             rand_index=$((RANDOM % ${#vowels}))
             login="${login}${vowels:rand_index:1}"
         fi
@@ -708,15 +601,10 @@ generate_readable_login() {
     echo "$login"
 }
 
-# ===================================================================================
-#                                VLESS КОНФИГУРАЦИЯ
-# ===================================================================================
 
-# Генерация ключей для VLESS Reality
 generate_vless_keys() {
   local temp_file=$(mktemp)
   
-  # Генерация ключей x25519 с помощью Docker
   docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
   spinner $! "Генерация ключей x25519..."
   keys=$(cat "$temp_file")
@@ -730,11 +618,9 @@ generate_vless_keys() {
     return 1
   fi
   
-  # Возвращаем ключи через echo
   echo "$private_key:$public_key"
 }
 
-# Создание VLESS конфигурации Xray
 generate_vless_config() {
   local config_file="$1"
   local self_steal_domain="$2"
@@ -825,7 +711,6 @@ generate_vless_config() {
 EOL
 }
 
-# Обновление конфигурации Xray
 update_xray_config() {
   local panel_url="$1"
   local token="$2"
@@ -853,7 +738,6 @@ update_xray_config() {
   fi
 }
 
-# Создание ноды
 create_vless_node() {
   local panel_url="$1"
   local token="$2"
@@ -906,7 +790,6 @@ EOF
   fi
 }
 
-# Получение списка inbounds
 get_inbounds() {
   local panel_url="$1"
   local token="$2"
@@ -930,11 +813,9 @@ get_inbounds() {
     return 1
   fi
   
-  # Возвращаем UUID
   echo "$inbound_uuid"
 }
 
-# Создание хоста
 create_vless_host() {
   local panel_url="$1"
   local token="$2"
@@ -980,7 +861,6 @@ EOF
   fi
 }
 
-# Получение публичного ключа API
 get_public_key() {
   local panel_url="$1"
   local token="$2"
@@ -1004,24 +884,20 @@ get_public_key() {
     return 1
   fi
   
-  # Возвращаем публичный ключ
   echo "$pubkey"
 }
 
-# Функция проверки, находится ли IP в одном из CIDR-диапазонов (Cloudflare или любом другом, передаваемом в виде массива)
 is_ip_in_cidrs() {
     local ip="$1"
     shift
     local cidrs=("$@")
 
-    # Вспомогательная функция перевода IP (формат x.x.x.x) в 32-битное число
     function ip2dec() {
         local a b c d
         IFS=. read -r a b c d <<<"$1"
         echo $(((a << 24) + (b << 16) + (c << 8) + d))
     }
 
-    # Функция проверки, лежит ли IP в CIDR
     function in_cidr() {
         local ip_dec mask base_ip cidr_ip cidr_mask
         ip_dec=$(ip2dec "$1")
@@ -1031,7 +907,6 @@ is_ip_in_cidrs() {
         cidr_ip=$(ip2dec "$base_ip")
         cidr_mask=$((0xFFFFFFFF << (32 - mask) & 0xFFFFFFFF))
 
-        # Если (ip_dec & cidr_mask) == (cidr_ip & cidr_mask), IP попадает в диапазон
         if (((ip_dec & cidr_mask) == (cidr_ip & cidr_mask))); then
             return 0
         else
@@ -1039,7 +914,6 @@ is_ip_in_cidrs() {
         fi
     }
 
-    # Проверяем IP по всем диапазонам, если подходит под хотя бы один, возвращаем 0
     for range in "${cidrs[@]}"; do
         if in_cidr "$ip" "$range"; then
             return 0
@@ -1049,21 +923,17 @@ is_ip_in_cidrs() {
     return 1
 }
 
-# Функция для проверки, указывает ли домен на текущий сервер
 check_domain_points_to_server() {
     local domain="$1"
     local show_warning="${2:-true}"   # По умолчанию показывать предупреждение
     local allow_cf_proxy="${3:-true}" # По умолчанию разрешать проксирование Cloudflare
 
-    # Получаем IP домена
     local domain_ip=""
     domain_ip=$(dig +short A "$domain" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
 
-    # Получаем публичный IP текущего сервера
     local server_ip=""
     server_ip=$(curl -s -4 ifconfig.me || curl -s -4 api.ipify.org || curl -s -4 ipinfo.io/ip)
 
-    # Если не смогли получить IP, выходим
     if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
         if [ "$show_warning" = true ]; then
             show_warning "Не удалось определить IP-адрес домена или сервера."
@@ -1072,25 +942,18 @@ check_domain_points_to_server() {
         return 1
     fi
 
-    # Загружаем актуальные Cloudflare диапазоны
     local cf_ranges
     cf_ranges=$(curl -s https://www.cloudflare.com/ips-v4) || true # если curl не сработал, переменная останется пустой
 
-    # Если смогли загрузить, превращаем в массив
     local cf_array=()
     if [ -n "$cf_ranges" ]; then
-        # Превращаем полученные строки в массив
         IFS=$'\n' read -r -d '' -a cf_array <<<"$cf_ranges"
     fi
 
-    # Проверяем, входит ли domain_ip в диапазоны Cloudflare
     if [ ${#cf_array[@]} -gt 0 ] && is_ip_in_cidrs "$domain_ip" "${cf_array[@]}"; then
-        # IP Cloudflare
         if [ "$allow_cf_proxy" = true ]; then
-            # Разрешено проксирование — всё ок
             return 0
         else
-            # Проксирование запрещено — предупреждаем
             if [ "$show_warning" = true ]; then
                 echo ""
                 show_warning "Домен $domain указывает на IP Cloudflare ($domain_ip)."
@@ -1104,7 +967,6 @@ check_domain_points_to_server() {
             return 1
         fi
     else
-        # Если не Cloudflare, проверяем, совпадает ли IP домена с IP сервера
         if [ "$domain_ip" != "$server_ip" ]; then
             if [ "$show_warning" = true ]; then
                 echo ""
@@ -1128,27 +990,21 @@ draw_info_box() {
     local title="$1"
     local subtitle="$2"
 
-    # Фиксированная ширина блока для идеального выравнивания
     local width=54
 
     echo -e "${BOLD_GREEN}"
-    # Верхняя граница
     printf "┌%s┐\n" "$(printf '─%.0s' $(seq 1 $width))"
 
-    # Центрирование заголовка
     local title_padding_left=$(((width - ${#title}) / 2))
     local title_padding_right=$((width - title_padding_left - ${#title}))
     printf "│%*s%s%*s│\n" "$title_padding_left" "" "$title" "$title_padding_right" ""
 
-    # Центрирование подзаголовка
     local subtitle_padding_left=$(((width - ${#subtitle}) / 2))
     local subtitle_padding_right=$((width - subtitle_padding_left - ${#subtitle}))
     printf "│%*s%s%*s│\n" "$subtitle_padding_left" "" "$subtitle" "$subtitle_padding_right" ""
 
-    # Пустая строка
     printf "│%*s│\n" "$width" ""
 
-    # Строка версии - аккуратная обработка цветов
     local version_text="  • Версия: "
     local version_value="$VERSION"
     local version_value_colored="${ORANGE}${version_value}${BOLD_GREEN}"
@@ -1156,27 +1012,22 @@ draw_info_box() {
     local remaining_space=$((width - ${#version_text} - version_value_length))
     printf "│%s%s%*s│\n" "$version_text" "$version_value_colored" "$remaining_space" ""
 
-    # Пустая строка
     printf "│%*s│\n" "$width" ""
 
-    # Нижняя граница
     printf "└%s┘\n" "$(printf '─%.0s' $(seq 1 $width))"
     echo -e "${NC}"
 }
 
-# Очистка экрана
 clear_screen() {
     clear
 }
 
-# Отображение заголовка раздела
 draw_section_header() {
     local title="$1"
     local width=${2:-50}
     
     echo -e "${BOLD_RED}\033[1m┌$(printf '─%.0s' $(seq 1 $width))┐\033[0m${NC}"
     
-    # Центрирование заголовка
     local padding_left=$(((width - ${#title}) / 2))
     local padding_right=$((width - padding_left - ${#title}))
     echo -e "${BOLD_RED}\033[1m│$(printf ' %.0s' $(seq 1 $padding_left))$title$(printf ' %.0s' $(seq 1 $padding_right))│\033[0m${NC}"
@@ -1185,7 +1036,6 @@ draw_section_header() {
     echo
 }
 
-# Отображение опций меню с нумерацией
 draw_menu_options() {
     local options=("$@")
     local idx=1
@@ -1197,7 +1047,6 @@ draw_menu_options() {
     echo
 }
 
-# Запрос ввода с предустановленным текстом и цветом
 prompt_input() {
     local prompt_text="$1"
     local prompt_color="${2:-$GREEN}"
@@ -1209,7 +1058,6 @@ prompt_input() {
     echo "$input_value"
 }
 
-# Запрос ввода пароля (с отключением эхо)
 prompt_password() {
     local prompt_text="$1"
     local prompt_color="${2:-$ORANGE}"
@@ -1223,7 +1071,6 @@ prompt_password() {
     echo "$password_value"
 }
 
-# Запрос выбора опции (y/n)
 prompt_yes_no() {
     local prompt_text="$1"
     local prompt_color="${2:-$GREEN}"
@@ -1236,10 +1083,8 @@ prompt_yes_no() {
     read answer
     echo >&2
     
-    # Преобразование в нижний регистр
     answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
     
-    # Если пусто, используем значение по умолчанию
     [ -z "$answer" ] && answer="$default"
     
     if [ "$answer" = "y" ] || [ "$answer" = "yes" ]; then
@@ -1249,7 +1094,6 @@ prompt_yes_no() {
     fi
 }
 
-# Выбор опции из нумерованного меню
 prompt_menu_option() {
     local prompt_text="$1"
     local prompt_color="${2:-$GREEN}"
@@ -1262,7 +1106,6 @@ prompt_menu_option() {
         read selected_option
         echo >&2
         
-        # Валидация выбора
         if [[ "$selected_option" =~ ^[0-9]+$ ]] && \
            [ "$selected_option" -ge "$min" ] && \
            [ "$selected_option" -le "$max" ]; then
@@ -1307,7 +1150,6 @@ show_info_e() {
     echo "" >&2
 }
 
-# Отображение разделителя
 draw_separator() {
     local width=${1:-50}
     local char=${2:-"-"}
@@ -1315,7 +1157,6 @@ draw_separator() {
     printf "%s\n" "$(printf "$char%.0s" $(seq 1 $width))"
 }
 
-# Отображение прогресса операции
 show_progress() {
     local message="$1"
     local progress_char=${2:-"."}
@@ -1329,7 +1170,6 @@ show_progress() {
     echo ""
 }
 
-# Запрос домена с валидацией
 prompt_domain() {
     local prompt_text="$1"
     local prompt_color="${2:-$ORANGE}"
@@ -1340,7 +1180,6 @@ prompt_domain() {
         read domain
         echo >&2
         
-        # Базовая валидация домена (может быть расширена)
         if [[ "$domain" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
             break
         else
@@ -1352,7 +1191,6 @@ prompt_domain() {
     echo ""
 }
 
-# Запрос числового значения с валидацией
 prompt_number() {
     local prompt_text="$1"
     local prompt_color="${2:-$ORANGE}"
@@ -1365,7 +1203,6 @@ prompt_number() {
         read number
         echo >&2
         
-        # Валидация числа
         if [[ "$number" =~ ^[0-9]+$ ]]; then
             if [ -n "$min" ] && [ "$number" -lt "$min" ]; then
                 echo -e "${BOLD_RED}Значение должно быть не меньше ${min}.${NC}" >&2
@@ -1386,7 +1223,6 @@ prompt_number() {
     echo "$number"
 }
 
-# Отображение ряда с заголовком и значением
 draw_info_row() {
     local label="$1"
     local value="$2"
@@ -1400,7 +1236,6 @@ draw_info_row() {
     echo -e "${label_display} ${value_display}"
 }
 
-# Центрирование текста
 center_text() {
     local text="$1"
     local width=${2:-$(tput cols)}
@@ -1409,7 +1244,6 @@ center_text() {
     printf "%${padding_left}s%s\n" "" "$text"
 }
 
-# Отображение блока с завершающим сообщением
 draw_completion_message() {
     local title="$1"
     local message="$2"
@@ -1422,42 +1256,35 @@ draw_completion_message() {
     draw_separator "$width" "="
 }
 
-# Валидация пароля на сложность
 validate_password_strength() {
     local password="$1"
     local min_length=${2:-8}
     
     local length=${#password}
     
-    # Проверка длины
     if [ "$length" -lt "$min_length" ]; then
         echo "Пароль должен содержать не менее $min_length символов."
         return 1
     fi
     
-    # Проверка наличия цифр
     if ! [[ "$password" =~ [0-9] ]]; then
         echo "Пароль должен содержать хотя бы одну цифру."
         return 1
     fi
     
-    # Проверка наличия букв нижнего регистра
     if ! [[ "$password" =~ [a-z] ]]; then
         echo "Пароль должен содержать хотя бы одну букву нижнего регистра."
         return 1
     fi
     
-    # Проверка наличия букв верхнего регистра
     if ! [[ "$password" =~ [A-Z] ]]; then
         echo "Пароль должен содержать хотя бы одну букву верхнего регистра."
         return 1
     fi
     
-    # Пароль прошел все проверки
     return 0
 }
 
-# Запрос пароля с подтверждением и проверкой сложности
 prompt_secure_password() {
     local prompt_text="$1"
     local confirm_text="${2:-Повторно введите пароль для подтверждения}"
@@ -1466,20 +1293,16 @@ prompt_secure_password() {
     local password1 password2 error_message
     
     while true; do
-        # Запрашиваем пароль
         password1=$(prompt_password "$prompt_text")
         
-        # Проверяем сложность пароля
         error_message=$(validate_password_strength "$password1" "$min_length")
         if [ $? -ne 0 ]; then
             echo -e "${BOLD_RED}${error_message} Пожалуйста, попробуйте снова.${NC}" >&2
             continue
         fi
         
-        # Запрашиваем подтверждение пароля
         password2=$(prompt_password "$confirm_text")
         
-        # Проверяем совпадение паролей
         if [ "$password1" = "$password2" ]; then
             break
         else
@@ -1490,7 +1313,6 @@ prompt_secure_password() {
     echo "$password1"
 }
 
-# Функция для отображения спиннера во время выполнения команды
 spinner() {
     local pid=$1
     local text=$2
@@ -1516,11 +1338,9 @@ spinner() {
 # Включение модуля: tools.sh
 
 enable_bbr() {
-  # Проверка существования настроек BBR в sysctl.conf
   if grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf && grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf; then
     echo ""
     show_warning "BBR уже добавлен в /etc/sysctl.conf"
-    # Проверка, активен ли BBR сейчас
     local current_cc=$(sysctl -n net.ipv4.tcp_congestion_control)
     local current_qdisc=$(sysctl -n net.core.default_qdisc)
     if [[ "$current_cc" == "bbr" && "$current_qdisc" == "fq" ]]; then
@@ -1532,10 +1352,8 @@ enable_bbr() {
     show_info "Нажмите Enter, чтобы продолжить"
     read -r
   else
-    # Установка BBR если не найден
     echo "net.core.default_qdisc=fq" >>/etc/sysctl.conf
     echo "net.ipv4.tcp_congestion_control=bbr" >>/etc/sysctl.conf
-    # Применение изменений
     sysctl -p
     show_info "BBR успешно включен. Нажмите Enter, чтобы продолжить"
     read -r
@@ -1544,7 +1362,6 @@ enable_bbr() {
 
 # Включение модуля: dependencies.sh
 
-# Функция для проверки и установки зависимостей
 check_and_install_dependency() {
     local packages=("$@")
     local failed=false
@@ -1571,52 +1388,40 @@ check_and_install_dependency() {
     return 0
 }
 
-# Установка общих зависимостей для всех компонентов
 install_dependencies() {
     show_info "Проверка зависимостей..."
-    # Ставим lsb-release, если его нет – он потребуется, чтобы определить дистрибутив
     if ! command -v lsb_release &>/dev/null; then
         sudo apt-get update >/dev/null 2>&1
         sudo apt-get install -y lsb-release >/dev/null 2>&1
     fi
 
-    # Теперь обновляем пакеты после установки lsb-release
 
     sudo apt-get update >/dev/null 2>&1
 
-    # Проверка и установка необходимых пакетов
     check_and_install_dependency "curl" "jq" "make" "dnsutils" || {
         show_error "Ошибка: Не все необходимые зависимости были установлены."
         return 1
     }
 
-    # Проверка, установлен ли Docker
     if command -v docker &>/dev/null && docker --version &>/dev/null; then
         return 0
     else
         sudo apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc >/dev/null 2>&1
         show_info "Установка Docker и других необходимых пакетов..."
 
-        # Установка предварительных зависимостей
         sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common >/dev/null 2>&1
 
-        # Создание директории для хранения ключей
         sudo mkdir -p /etc/apt/keyrings
 
-        # Добавление официального GPG-ключа Docker
-        # Путь к файлу-ключу – /etc/apt/keyrings/docker.gpg
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg 2>/dev/null ||
             {
-                # Если не удалось, пробуем удалить файл и добавить ключ снова
                 sudo rm -f /etc/apt/keyrings/docker.gpg
                 curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
                     sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null
             }
 
-        # Настройка прав доступа к ключу
         sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-        # Определяем дистрибутив и репозиторий
         DIST_ID=$(lsb_release -is | tr '[:upper:]' '[:lower:]') # ubuntu или debian
         CODENAME=$(lsb_release -cs)                             # jammy, focal, bookworm и т.д.
 
@@ -1629,26 +1434,20 @@ install_dependencies() {
             exit 1
         fi
 
-        # Добавление репозитория Docker
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] $REPO_URL $CODENAME stable" |
             sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 
-        # Обновление индексного списка пакетов
         sudo apt-get update >/dev/null 2>&1
 
-        # Установка Docker Engine, Docker CLI, containerd, плагинов Buildx и Compose
         sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1
 
-        # Проверка наличия группы docker и создание, если она не существует
         if ! getent group docker >/dev/null; then
             show_info "Создание группы docker..."
             sudo groupadd docker
         fi
 
-        # Добавление текущего пользователя в группу docker (чтобы использовать Docker без sudo)
         sudo usermod -aG docker "$USER"
 
-        # Проверка успешности установки
         if command -v docker &>/dev/null; then
             echo -e "${GREEN}Docker успешно установлен: $(docker --version)${NC}"
         else
@@ -1660,21 +1459,16 @@ install_dependencies() {
 
 # Включение модуля: remnawave-subscription-page.sh
 
-# Установка и настройка remnawave-subscription-page
 setup_remnawave-subscription-page() {
-    # echo -e "${BOLD_GREEN}Установка remnawave-subscription-page...${NC}"
 
-    # Создаем директорию для remnawave-subscription-page
     mkdir -p $REMNAWAVE_DIR/subscription-page
 
     cd $REMNAWAVE_DIR/subscription-page
 
-    # Создание .env файла
     cat >.env <<EOF
 PANEL_DOMAIN=$SCRIPT_PANEL_DOMAIN
 EOF
 
-    # Создание docker-compose.yml для remnawave-subscription-page
     cat >docker-compose.yml <<"EOF"
 services:
     remnawave-subscription-page:
@@ -1698,21 +1492,17 @@ networks:
         external: true
 EOF
 
-    # Создание Makefile для remnawave-subscription-page
     create_makefile "$REMNAWAVE_DIR/subscription-page"
 
-    # echo -e "${BOLD_GREEN}Конфигурация remnawave-subscription-page завершена.${NC}"
 }
 
 # Включение модуля: caddy.sh
 
-# Настройка Caddy для панели Remnawave
 setup_caddy_for_panel() {
     local PANEL_SECRET_KEY=$1
     
     cd $REMNAWAVE_DIR/caddy
 
-    # Определение SUB_BACKEND_URL в зависимости от установки remnawave-subscription-page
     if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
         SCRIPT_SUB_BACKEND_URL="127.0.0.1:3010"
         REWRITE_RULE=""
@@ -1721,7 +1511,6 @@ setup_caddy_for_panel() {
         REWRITE_RULE="rewrite * /api/sub{uri}"
     fi
 
-    # Создание .env файла для Caddy
     cat >.env <<EOF
 PANEL_DOMAIN=$SCRIPT_PANEL_DOMAIN
 PANEL_PORT=443
@@ -1741,7 +1530,6 @@ EOF
     SUB_PORT='$SUB_PORT'
     SUB_BACKEND_URL='$SUB_BACKEND_URL'
 
-    # Создание Caddyfile с защитой панели
     cat >Caddyfile <<EOF
 {$PANEL_DOMAIN}:{$PANEL_PORT} {
         @has_token_param {
@@ -1810,7 +1598,6 @@ EOF
 }
 EOF
 
-    # Создание docker-compose.yml для Caddy
     cat >docker-compose.yml <<'EOF'
 services:
   caddy:
@@ -1830,10 +1617,8 @@ volumes:
   caddy_config_panel:
 EOF
 
-    # Создание Makefile
     create_makefile "$REMNAWAVE_DIR/caddy"
 
-    # Создание директории для логов
     mkdir -p $REMNAWAVE_DIR/caddy/logs
 }
 
@@ -1845,24 +1630,19 @@ vless_configuration() {
   local token="$3"
   local api_url="http://${panel_url}/api/auth/register"
 
-  # Запрос домена Selfsteal с валидацией
   SELF_STEAL_DOMAIN=$(read_domain "Введите Selfsteal домен, например domain.example.com")
   if [ -z "$SELF_STEAL_DOMAIN" ]; then
     return 1
   fi
 
-  # Запрос порта Selfsteal с валидацией и дефолтным значением
   SELF_STEAL_PORT=$(read_port "Введите Selfsteal порт (можно оставить по умолчанию)" "9443" true)
 
-  # Запрос IP адреса или домена сервера с нодой с валидацией и дефолтным значением Selfsteal домена
   NODE_HOST=$(read_domain "Введите IP адрес или домен сервера с нодой (если отличается от Selfsteal домена)" "$SELF_STEAL_DOMAIN")
 
-  # Запрос порта API ноды с валидацией и дефолтным значением
   NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "2222" true)
   
   local config_file="$REMNAWAVE_DIR/panel/config.json"
   
-  # Генерация ключей x25519
   local keys_result=$(generate_vless_keys)
   if [ $? -ne 0 ]; then
     return 1
@@ -1871,31 +1651,25 @@ vless_configuration() {
   local private_key=$(echo "$keys_result" | cut -d':' -f1)
   local public_key=$(echo "$keys_result" | cut -d':' -f2)
   
-  # Создание конфигурации
   generate_vless_config "$config_file" "$SELF_STEAL_DOMAIN" "$SELF_STEAL_PORT" "$private_key" "$public_key"
   
-  # Обновление конфигурации Xray
   if ! update_xray_config "$panel_url" "$token" "$panel_domain" "$config_file"; then
     return 1
   fi
   
-  # Создание ноды
   if ! create_vless_node "$panel_url" "$token" "$panel_domain" "$NODE_HOST" "$NODE_PORT"; then
     return 1
   fi
   
-  # Получение inbound_uuid
   local inbound_uuid=$(get_inbounds "$panel_url" "$token" "$panel_domain")
   if [ -z "$inbound_uuid" ]; then
     return 1
   fi
   
-  # Создание хоста
   if ! create_vless_host "$panel_url" "$token" "$panel_domain" "$inbound_uuid" "$SELF_STEAL_DOMAIN"; then
     return 1
   fi
   
-  # Получение публичного ключа
   local pubkey=$(get_public_key "$panel_url" "$token" "$panel_domain")
   if [ -z "$pubkey" ]; then
     return 1
@@ -1910,29 +1684,21 @@ vless_configuration() {
 
 # Включение модуля: panel.sh
 
-# ===================================================================================
-#                              УСТАНОВКА ПАНЕЛИ REMNAWAVE
-# ===================================================================================
 
 install_panel() {
     clear_screen
 
     remove_previous_installation
 
-    # Установка общих зависимостей
     install_dependencies
 
-    # Создаем базовую директорию для всего проекта
     mkdir -p $REMNAWAVE_DIR/{panel,caddy}
 
-    # Переходим в директорию панели
     cd $REMNAWAVE_DIR/panel
 
-    # Генерация JWT секретов с помощью openssl
     JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
     JWT_API_TOKENS_SECRET=$(openssl rand -hex 32 | tr -d '\n')
 
-    # Генерация безопасных учетных данных
     DB_USER="remnawave_$(openssl rand -hex 4 | tr -d '\n')"
     DB_PASSWORD=$(generate_secure_password 16)
     DB_NAME="remnawave_db"
@@ -1940,15 +1706,12 @@ install_panel() {
 
     curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
 
-    # Спрашиваем, нужна ли интеграция с Telegram
     if prompt_yes_no "Хотите включить интеграцию с Telegram?"; then
         IS_TELEGRAM_ENV_VALUE="true"
-        # Если интеграция с Telegram включена, запрашиваем параметры
         TELEGRAM_BOT_TOKEN=$(prompt_input "Введите токен вашего Telegram бота: " "$ORANGE")
         TELEGRAM_ADMIN_ID=$(prompt_input "Введите ID администратора Telegram: " "$ORANGE")
         NODES_NOTIFY_CHAT_ID=$(prompt_input "Введите ID чата для уведомлений: " "$ORANGE")
     else
-        # Если интеграция с Telegram не включена, устанавливаем параметры в "change-me"
         IS_TELEGRAM_ENV_VALUE="false"
         show_warning "Пропуск интеграции с Telegram."
         TELEGRAM_BOT_TOKEN="change-me"
@@ -1956,25 +1719,20 @@ install_panel() {
         NODES_NOTIFY_CHAT_ID="change-me"
     fi
 
-    # Запрашиваем основной домен для панели с валидацией
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Введите основной домен для вашей панели (например, panel.example.com)")
     check_domain_points_to_server "$SCRIPT_PANEL_DOMAIN"
     domain_check_result=$?
     if [ $domain_check_result -eq 2 ]; then
-        # Пользователь решил прервать установку
         return 1
     fi
 
-    # Запрашиваем домен для подписок с валидацией
     SCRIPT_SUB_DOMAIN=$(prompt_domain "Введите домен для подписок (например, subs.example.com)")
     check_domain_points_to_server "$SCRIPT_SUB_DOMAIN"
     domain_check_result=$?
     if [ $domain_check_result -eq 2 ]; then
-        # Пользователь решил прервать установку
         return 1
     fi
 
-    # Запрос на установку remnawave-subscription-page
     if prompt_yes_no "Установить remnawave-subscription-page (https://remna.st/subscription-templating/installation)?"; then
         INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE="y"
     else
@@ -1998,43 +1756,28 @@ install_panel() {
     "POSTGRES_DB" "$DB_NAME" \
     "METRICS_PASS" "$METRICS_PASS"
 
-    # Генерация секретного ключа для защиты панели управления
     PANEL_SECRET_KEY=$(openssl rand -hex 16)
 
-    # Создаем docker-compose.yml для панели
     curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
 
-    # Меняем образ на dev
     sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
-    # Создаем Makefile
     create_makefile "$REMNAWAVE_DIR/panel"
 
-    # ===================================================================================
-    # Установка remnawave-subscription-page
-    # ===================================================================================
 
-    # Установка remnawave-subscription-page, если пользователь согласился
     if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
         setup_remnawave-subscription-page
     fi
 
-    # ===================================================================================
-    # Установка Caddy для панели и подписок
-    # ===================================================================================
 
     setup_caddy_for_panel "$PANEL_SECRET_KEY"
 
-    # Запуск всех контейнеров
     show_info "Запуск контейнеров..." "$BOLD_GREEN"
 
-    # Запуск панели RemnaWave
     start_container "$REMNAWAVE_DIR/panel" "remnawave/backend" "Remnawave"
 
-    # Запуск Caddy
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
 
-    # Запуск remnawave-subscription-page (если был выбран)
     if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
         start_container "$REMNAWAVE_DIR/subscription-page" "remnawave/subscription-page" "Subscription page"
     fi
@@ -2049,7 +1792,6 @@ install_panel() {
         show_error "Не удалось зарегистрировать пользователя."
     fi
 
-    # Сохранение учетных данных в файл
     CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
     echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
     echo "PANEL URL: https://$SCRIPT_PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
@@ -2059,7 +1801,6 @@ install_panel() {
     echo "" >>"$CREDENTIALS_FILE"
     echo "SECRET KEY: $PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
 
-    # Установка безопасных прав на файл с учетными данными
     chmod 600 "$CREDENTIALS_FILE"
 
     display_panel_installation_complete_message
@@ -2067,21 +1808,15 @@ install_panel() {
 
 # Включение модуля: selfsteal.sh
 
-# ===================================================================================
-#                              УСТАНОВКА STEAL ONESELF САЙТА
-# ===================================================================================
 
 setup_selfsteal() {
     mkdir -p $SELFSTEAL_DIR/html && cd $SELFSTEAL_DIR
     
-    # Создаем .env файл
     cat > .env << EOF
-# Домены
 SELF_STEAL_DOMAIN=$SELF_STEAL_DOMAIN
 SELF_STEAL_PORT=$SELF_STEAL_PORT
 EOF
     
-    # Создаем Caddyfile
     cat > Caddyfile << 'EOF'
 {
     https_port {$SELF_STEAL_PORT}
@@ -2120,7 +1855,6 @@ https://{$SELF_STEAL_DOMAIN} {
 }
 EOF
     
-    # Создаем docker-compose.yml
     cat > docker-compose.yml << EOF
 services:
   caddy:
@@ -2142,17 +1876,13 @@ volumes:
   caddy_config_selfsteal:
 EOF
     
-    # Создание Makefile для управления
     create_makefile "$SELFSTEAL_DIR"
     
     mkdir -p ./html/assets
     
-    # Запускаем процесс скачивания файлов в фоне с перенаправлением вывода
     (
-        # Скачивание index.html
         curl -s -o ./html/index.html https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/index.html
         
-        # Скачивание файлов assets
         curl -s -o ./html/assets/index-BilmB03J.css https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-BilmB03J.css
         curl -s -o ./html/assets/index-CRT2NuFx.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-CRT2NuFx.js
         curl -s -o ./html/assets/index-legacy-D44yECni.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-legacy-D44yECni.js
@@ -2163,15 +1893,12 @@ EOF
     
     download_pid=$!
     
-    # Запускаем спиннер для процесса скачивания
     spinner $download_pid "Скачивание статических файлов selfsteal сайта..."
     
-    # Запуск сервиса
     mkdir -p logs
     
     start_container "$SELFSTEAL_DIR" "caddy-selfsteal" "Caddy"
     
-    # Проверяем, запущен ли сервис
     CADDY_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "caddy" && echo "running" || echo "stopped")
     
     if [ "$CADDY_STATUS" = "running" ]; then
@@ -2188,30 +1915,23 @@ EOF
 
 # Включение модуля: node.sh
 
-# ===================================================================================
-#                              УСТАНОВКА НОДЫ REMNAWAVE
-# ===================================================================================
 
 setup_node() {
     clear
 
-    # Проверка наличия предыдущей установки
     if [ -d "$REMNANODE_ROOT_DIR" ]; then
         show_warning "Обнаружена предыдущая установка Remnawave Node."
         if prompt_yes_no "Для продолжения требуется удалить предыдущую установку, подтверждаете удаление?" "$ORANGE"; then
-            # Остановка основного контейнера
             if [ -f "$REMNANODE_DIR/docker-compose.yml" ]; then
                 cd $REMNANODE_DIR && docker compose -f docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер Remnawave Node"
             fi
 
-            # Остановка контейнера selfsteal
             if [ -f "$SELFSTEAL_DIR/docker-compose.yml" ]; then
                 cd $SELFSTEAL_DIR && docker compose -f docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнер Selfsteal"
             fi
 
-            # Удаление директории
             rm -rf $REMNANODE_ROOT_DIR >/dev/null 2>&1 &
             spinner $! "Удаляем каталог $REMNANODE_ROOT_DIR"
 
@@ -2221,11 +1941,9 @@ setup_node() {
         fi
     fi
 
-    # Установка общих зависимостей
     install_dependencies
 
     mkdir -p $REMNANODE_DIR && cd $REMNANODE_DIR
-    # Создание docker-compose.yml
     cat >docker-compose.yml <<EOL
 services:
   remnanode:
@@ -2238,10 +1956,8 @@ services:
     restart: always
 EOL
 
-    # Создание Makefile для ноды
     create_makefile "$REMNANODE_DIR"
 
-    # Запрос домена Selfsteal с валидацией
     SELF_STEAL_DOMAIN=$(read_domain "Введите Selfsteal домен, например domain.example.com")
     if [ -z "$SELF_STEAL_DOMAIN" ]; then
         return 1
@@ -2250,14 +1966,11 @@ EOL
     check_domain_points_to_server "$SELF_STEAL_DOMAIN" true false
     domain_check_result=$?
     if [ $domain_check_result -eq 2 ]; then
-        # Пользователь решил прервать установку
         return 1
     fi
 
-    # Запрос порта Selfsteal с валидацией и дефолтным значением
     SELF_STEAL_PORT=$(read_port "Введите Selfsteal порт (можно оставить по умолчанию)" "9443")
 
-    # Запрос порта API ноды с валидацией и дефолтным значением
     NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "2222")
 
     echo -e "${ORANGE}Введите сертификат сервера, НЕ удаляя SSL_CERT= (вставьте содержимое и 2 раза нажмите Enter): ${NC}"
@@ -2286,7 +1999,6 @@ EOL
 
     unset CERTIFICATE
 
-    # Проверяем, запущена ли нода
     NODE_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "node" && echo "running" || echo "stopped")
 
     if [ "$NODE_STATUS" = "running" ]; then
@@ -2305,9 +2017,6 @@ EOL
 
 # Включение модуля: setup-node-all-in-one.sh
 
-# ===================================================================================
-#                              УСТАНОВКА НОДЫ REMNAWAVE
-# ===================================================================================
 
 setup_node_all_in_one() {
     local SCRIPT_SUB_DOMAIN=$1
@@ -2318,7 +2027,6 @@ setup_node_all_in_one() {
 
     mkdir -p "$LOCAL_REMNANODE_DIR" && cd "$LOCAL_REMNANODE_DIR"
     
-    # Создание docker-compose.yml
     cat > docker-compose.yml << EOL
 services:
   remnanode:
@@ -2331,10 +2039,8 @@ services:
     restart: always
 EOL
 
-    # Создание Makefile для ноды
     create_makefile "$LOCAL_REMNANODE_DIR"
 
-    # Получение публичного ключа
     local temp_file=$(mktemp)
     make_api_request "GET" "http://$panel_url/api/keygen/get" "$token" "$SCRIPT_SUB_DOMAIN" > "$temp_file" 2>&1 &
     spinner $! "Получение публичного ключа..."
@@ -2359,7 +2065,6 @@ EOL
 
 # Включение модуля: setup-caddy-all-in-one.sh
 
-# Настройка Caddy для панели Remnawave
 setup_caddy_all_in_one() {
 	local PANEL_SECRET_KEY=$1
 	local SCRIPT_SUB_DOMAIN=$2
@@ -2370,7 +2075,6 @@ setup_caddy_all_in_one() {
 	SCRIPT_SUB_BACKEND_URL="127.0.0.1:3000"
 	local REWRITE_RULE="rewrite * /api{uri}"
 
-	# Создание .env файла для Caddy
 	cat >.env <<EOF
 SCRIPT_SUB_DOMAIN=$SCRIPT_SUB_DOMAIN
 PORT=$SELF_STEAL_PORT
@@ -2385,7 +2089,6 @@ EOF
 	SUB_BACKEND_URL='$SUB_BACKEND_URL'
 	PANEL_SECRET_KEY='$PANEL_SECRET_KEY'
 
-	# Создание Caddyfile
 	cat >Caddyfile <<EOF
 {
 	https_port {$PORT}
@@ -2459,7 +2162,6 @@ https://{$SCRIPT_SUB_DOMAIN} {
 }
 EOF
 
-	# Создание docker-compose.yml для Caddy
 	cat >docker-compose.yml <<'EOF'
 services:
   caddy:
@@ -2480,20 +2182,15 @@ volumes:
   caddy_config_panel:
 EOF
 
-	# Создание Makefile
 	create_makefile "$REMNAWAVE_DIR/caddy"
 
-	# Создание директории для логов
 	mkdir -p $REMNAWAVE_DIR/caddy/logs
 
 	mkdir -p $REMNAWAVE_DIR/caddy/html/assets
 
-	# Запускаем процесс скачивания файлов в фоне с перенаправлением вывода
 	(
-		# Скачивание index.html
 		curl -s -o ./html/index.html https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/index.html
 
-		# Скачивание файлов assets
 		curl -s -o ./html/assets/index-BilmB03J.css https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-BilmB03J.css
 		curl -s -o ./html/assets/index-CRT2NuFx.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-CRT2NuFx.js
 		curl -s -o ./html/assets/index-legacy-D44yECni.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-legacy-D44yECni.js
@@ -2515,10 +2212,8 @@ vless_configuration_all_in_one() {
   local NODE_PORT="$5"
   local config_file="$REMNAWAVE_DIR/panel/config.json"
 
-  # В режиме all-in-one мы используем локальный host IP для ноды
   NODE_HOST="172.17.0.1"
 
-  # Генерация ключей
   local keys_result=$(generate_vless_keys)
   if [ $? -ne 0 ]; then
     return 1
@@ -2527,26 +2222,21 @@ vless_configuration_all_in_one() {
   local private_key=$(echo "$keys_result" | cut -d':' -f1)
   local public_key=$(echo "$keys_result" | cut -d':' -f2)
 
-  # Создание конфигурации
   generate_vless_config "$config_file" "$panel_domain" "$SELF_STEAL_PORT" "$private_key" "$public_key"
 
-  # Обновление конфигурации Xray
   if ! update_xray_config "$panel_url" "$token" "$panel_domain" "$config_file"; then
     return 1
   fi
 
-  # Создание ноды
   if ! create_vless_node "$panel_url" "$token" "$panel_domain" "$NODE_HOST" "$NODE_PORT"; then
     return 1
   fi
 
-  # Получение inbound_uuid
   local inbound_uuid=$(get_inbounds "$panel_url" "$token" "$panel_domain")
   if [ -z "$inbound_uuid" ]; then
     return 1
   fi
 
-  # Создание хоста
   if ! create_vless_host "$panel_url" "$token" "$panel_domain" "$inbound_uuid" "$panel_domain"; then
     return 1
   fi
@@ -2554,29 +2244,21 @@ vless_configuration_all_in_one() {
 
 # Включение модуля: all-in-one.sh
 
-# ===================================================================================
-#                              УСТАНОВКА ПАНЕЛИ REMNAWAVE
-# ===================================================================================
 
 install_panel_all_in_one() {
     clear_screen
 
     remove_previous_installation
 
-    # Установка общих зависимостей
     install_dependencies
 
-    # Создаем базовую директорию для всего проекта
     mkdir -p $REMNAWAVE_DIR/{panel,caddy}
 
-    # Переходим в директорию панели
     cd $REMNAWAVE_DIR/panel
 
-    # Генерация JWT секретов с помощью openssl
     JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
     JWT_API_TOKENS_SECRET=$(openssl rand -hex 32 | tr -d '\n')
 
-    # Генерация безопасных учетных данных
     DB_USER="remnawave_$(openssl rand -hex 4 | tr -d '\n')"
     DB_PASSWORD=$(generate_secure_password 16)
     DB_NAME="remnawave_db"
@@ -2584,15 +2266,12 @@ install_panel_all_in_one() {
 
     curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
 
-    # Спрашиваем, нужна ли интеграция с Telegram
     if prompt_yes_no "Хотите включить интеграцию с Telegram?"; then
         IS_TELEGRAM_ENV_VALUE="true"
-        # Если интеграция с Telegram включена, запрашиваем параметры
         TELEGRAM_BOT_TOKEN=$(prompt_input "Введите токен вашего Telegram бота: " "$ORANGE")
         TELEGRAM_ADMIN_ID=$(prompt_input "Введите ID администратора Telegram: " "$ORANGE")
         NODES_NOTIFY_CHAT_ID=$(prompt_input "Введите ID чата для уведомлений: " "$ORANGE")
     else
-        # Если интеграция с Telegram не включена, устанавливаем параметры в "change-me"
         IS_TELEGRAM_ENV_VALUE="false"
         show_warning "Пропуск интеграции с Telegram."
         TELEGRAM_BOT_TOKEN="change-me"
@@ -2600,19 +2279,15 @@ install_panel_all_in_one() {
         NODES_NOTIFY_CHAT_ID="change-me"
     fi
 
-    # Запрашиваем основной домен для панели с валидацией
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Введите основной домен для вашей панели, подписок и selfsteal (например, panel.example.com)")
     check_domain_points_to_server "$SCRIPT_PANEL_DOMAIN"
     domain_check_result=$?
     if [ $domain_check_result -eq 2 ]; then
-        # Пользователь решил прервать установку
         return 1
     fi
     SCRIPT_SUB_DOMAIN="$SCRIPT_PANEL_DOMAIN"
-    # Запрос порта Selfsteal с валидацией и дефолтным значением 9443
     SELF_STEAL_PORT=$(read_port "Введите порт для Caddy - не должен быть 443, (можно оставить по умолчанию)" "9443")
     echo ""
-    # Запрос порта API ноды с валидацией и дефолтным значением 2222
     NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "2222")
     echo ""
 
@@ -2633,31 +2308,21 @@ install_panel_all_in_one() {
         "POSTGRES_DB" "$DB_NAME" \
         "METRICS_PASS" "$METRICS_PASS"
 
-    # Генерация секретного ключа для защиты панели управления
     PANEL_SECRET_KEY=$(openssl rand -hex 16)
 
-    # Создаем docker-compose.yml для панели
     curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
 
-    # Меняем образ на dev
     sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
-    # Создаем Makefile
     create_makefile "$REMNAWAVE_DIR/panel"
 
-    # ===================================================================================
-    # Установка Caddy для панели и подписок
-    # ===================================================================================
 
     setup_caddy_all_in_one "$PANEL_SECRET_KEY" "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT"
 
-    # Запуск всех контейнеров
     show_info "Запуск контейнеров..." "$BOLD_GREEN"
 
-    # Запуск панели RemnaWave
     start_container "$REMNAWAVE_DIR/panel" "remnawave/backend" "Remnawave"
 
-    # Запуск Caddy
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
 
     wait_for_panel "127.0.0.1:3000"
@@ -2672,10 +2337,8 @@ install_panel_all_in_one() {
     fi
 
     setup_node_all_in_one "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT" "127.0.0.1:3000" "$REG_TOKEN" "$NODE_PORT"
-    # Запуск ноды
     start_container "$LOCAL_REMNANODE_DIR" "remnawave/node" "Remnawave Node"
 
-    # Проверяем, запущена ли нода
     NODE_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "node" && echo "running" || echo "stopped")
 
     if [ "$NODE_STATUS" = "running" ]; then
@@ -2684,12 +2347,10 @@ install_panel_all_in_one() {
     fi
 
     show_info "Первичный перезапуск панели"
-    # Перезапуск панели
     restart_panel "true"
 
     wait_for_panel "127.0.0.1:3000"
 
-    # Сохранение учетных данных в файл
     CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
     echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
     echo "PANEL URL: https://$SCRIPT_PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
@@ -2699,14 +2360,12 @@ install_panel_all_in_one() {
     echo "" >>"$CREDENTIALS_FILE"
     echo "SECRET KEY: $PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
 
-    # Установка безопасных прав на файл с учетными данными
     chmod 600 "$CREDENTIALS_FILE"
 
     display_panel_installation_complete_message
 }
 
 
-# Проверка на root права
 if [ "$(id -u)" -ne 0 ]; then
     echo "Ошибка: Этот скрипт должен быть запущен от имени root (sudo)"
     exit 1
@@ -2714,11 +2373,6 @@ fi
 
 clear
 
-
-
-# ===================================================================================
-#                              ГЛАВНОЕ МЕНЮ
-# ===================================================================================
 
 main() {
 
@@ -2767,5 +2421,4 @@ main() {
     done
 }
 
-# Запуск основной функции
 main

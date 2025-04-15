@@ -44,16 +44,12 @@ build: $(BUILD_DIR)
 	@# Добавляем содержимое модулей, удаляя шебанг из каждого файла
 	@for module in $(MODULES); do \
 		echo "# Включение модуля: $$(basename $$module)" >> $(BUILD_DIR)/$(TARGET); \
-		tail -n +2 $$module >> $(BUILD_DIR)/$(TARGET); \
+		tail -n +2 $$module | grep -v '^[[:space:]]*#' >> $(BUILD_DIR)/$(TARGET); \
 		echo '' >> $(BUILD_DIR)/$(TARGET); \
 	done
 	
-	@# Добавляем main.sh, пропуская блок импорта модулей
-	@head -n 10 $(SRC_DIR)/main.sh | tail -n +2 >> $(BUILD_DIR)/$(TARGET)
-	@echo '' >> $(BUILD_DIR)/$(TARGET)
-	
-	@# Добавляем остальную часть main.sh после блока импортов
-	@tail -n +70 $(SRC_DIR)/main.sh >> $(BUILD_DIR)/$(TARGET)
+	@# Добавляем main.sh
+	@tail -n +2 $(SRC_DIR)/main.sh | grep -v '^[[:space:]]*#' >> $(BUILD_DIR)/$(TARGET)
 	
 	@# Делаем скрипт исполняемым
 	@chmod +x $(BUILD_DIR)/$(TARGET)
