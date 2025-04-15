@@ -6,10 +6,11 @@ check_and_install_dependency() {
     local failed=false
 
     for package_name in "${packages[@]}"; do
-        if ! command -v "$package_name" &>/dev/null; then
+        if ! dpkg-query -W -f='${Status}' "$package_name" 2>/dev/null | grep -q "install ok installed"; then
             show_info "Установка пакета $package_name..."
             sudo apt-get install -y "$package_name" >/dev/null 2>&1
-            if ! command -v "$package_name" &>/dev/null; then
+
+            if ! dpkg-query -W -f='${Status}' "$package_name" 2>/dev/null | grep -q "install ok installed"; then
                 show_error "Ошибка: Не удалось установить $package_name. Установите его вручную."
                 show_error "Для работы скрипта требуется пакет $package_name."
                 sleep 2
@@ -36,10 +37,11 @@ install_dependencies() {
     fi
 
     # Теперь обновляем пакеты после установки lsb-release
+
     sudo apt-get update >/dev/null 2>&1
 
     # Проверка и установка необходимых пакетов
-    check_and_install_dependency "curl" "jq" "make" || {
+    check_and_install_dependency "curl" "jq" "make" "dnsutils" || {
         show_error "Ошибка: Не все необходимые зависимости были установлены."
         return 1
     }
