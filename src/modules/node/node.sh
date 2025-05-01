@@ -1,43 +1,41 @@
-#!/bin/bash
-
 # ===================================================================================
-#                              УСТАНОВКА НОДЫ REMNAWAVE
+#                              REMNAWAVE NODE INSTALLATION
 # ===================================================================================
 
 setup_node() {
     clear
 
-    # Проверка наличия предыдущей установки
+    # Check for previous installation
     if [ -d "$REMNANODE_ROOT_DIR" ]; then
-        show_warning "Обнаружена предыдущая установка Remnawave Node."
-        if prompt_yes_no "Для продолжения требуется удалить предыдущую установку, подтверждаете удаление?" "$ORANGE"; then
-            # Остановка основного контейнера
+        show_warning "Previous Remnawave Node installation detected."
+        if prompt_yes_no "To continue, the previous installation must be removed. Do you confirm removal?" "$ORANGE"; then
+            # Stop main container
             if [ -f "$REMNANODE_DIR/docker-compose.yml" ]; then
                 cd $REMNANODE_DIR && docker compose -f docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер Remnawave Node"
+                spinner $! "Stopping Remnawave Node container"
             fi
 
-            # Остановка контейнера selfsteal
+            # Stop selfsteal container
             if [ -f "$SELFSTEAL_DIR/docker-compose.yml" ]; then
                 cd $SELFSTEAL_DIR && docker compose -f docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер Selfsteal"
+                spinner $! "Stopping Selfsteal container"
             fi
 
-            # Удаление директории
+            # Remove directory
             rm -rf $REMNANODE_ROOT_DIR >/dev/null 2>&1 &
-            spinner $! "Удаляем каталог $REMNANODE_ROOT_DIR"
+            spinner $! "Removing directory $REMNANODE_ROOT_DIR"
 
-            show_success "Проведено удаление предыдущей установки."
+            show_success "Previous installation removed."
         else
             return 0
         fi
     fi
 
-    # Установка общих зависимостей
+    # Install common dependencies
     install_dependencies
 
     mkdir -p $REMNANODE_DIR && cd $REMNANODE_DIR
-    # Создание docker-compose.yml
+    # Create docker-compose.yml
     cat >docker-compose.yml <<EOL
 services:
   remnanode:
@@ -50,11 +48,11 @@ services:
     restart: always
 EOL
 
-    # Создание Makefile для ноды
+    # Create Makefile for the node
     create_makefile "$REMNANODE_DIR"
 
-    # Запрос домена Selfsteal с валидацией
-    SELF_STEAL_DOMAIN=$(read_domain "Введите Selfsteal домен, например domain.example.com")
+    # Request Selfsteal domain with validation
+    SELF_STEAL_DOMAIN=$(read_domain "Enter Selfsteal domain, e.g. domain.example.com")
     if [ -z "$SELF_STEAL_DOMAIN" ]; then
         return 1
     fi
@@ -62,17 +60,17 @@ EOL
     check_domain_points_to_server "$SELF_STEAL_DOMAIN" true false
     domain_check_result=$?
     if [ $domain_check_result -eq 2 ]; then
-        # Пользователь решил прервать установку
+        # User chose to abort installation
         return 1
     fi
 
-    # Запрос порта Selfsteal с валидацией и дефолтным значением
-    SELF_STEAL_PORT=$(read_port "Введите Selfsteal порт (можно оставить по умолчанию)" "9443")
+    # Request Selfsteal port with validation and default value
+    SELF_STEAL_PORT=$(read_port "Enter Selfsteal port (default can be used)" "9443")
 
-    # Запрос порта API ноды с валидацией и дефолтным значением
-    NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "2222")
+    # Request node API port with validation and default value
+    NODE_PORT=$(read_port "Enter node API port (default can be used)" "2222")
 
-    echo -e "${ORANGE}Введите сертификат сервера, НЕ удаляя SSL_CERT= (вставьте содержимое и 2 раза нажмите Enter): ${NC}"
+    echo -e "${ORANGE}Enter the server certificate, DO NOT remove SSL_CERT= (paste the content and press Enter twice): ${NC}"
     CERTIFICATE=""
     while IFS= read -r line; do
         if [ -z "$line" ]; then
@@ -84,7 +82,7 @@ EOL
         fi
     done
 
-    echo -ne "${BOLD_RED}Вы уверены, что сертификат правильный? (y/n): ${NC}"
+    echo -ne "${BOLD_RED}Are you sure the certificate is correct? (y/n): ${NC}"
     read confirm
     echo
 
@@ -98,19 +96,19 @@ EOL
 
     unset CERTIFICATE
 
-    # Проверяем, запущена ли нода
+    # Check if the node is running
     NODE_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "node" && echo "running" || echo "stopped")
 
     if [ "$NODE_STATUS" = "running" ]; then
-        echo -e "${BOLD_GREEN}✓ Нода Remnawave успешно установлена и запущена!${NC}"
-        echo -e "${LIGHT_GREEN}• Порт ноды: ${BOLD_GREEN}$NODE_PORT${NC}"
-        echo -e "${LIGHT_GREEN}• Директория ноды: ${BOLD_GREEN}$REMNANODE_DIR${NC}"
+        echo -e "${BOLD_GREEN}✓ Remnawave Node successfully installed and started!${NC}"
+        echo -e "${LIGHT_GREEN}• Node port: ${BOLD_GREEN}$NODE_PORT${NC}"
+        echo -e "${LIGHT_GREEN}• Node directory: ${BOLD_GREEN}$REMNANODE_DIR${NC}"
         echo ""
     fi
 
     unset NODE_PORT
 
-    echo -e "\n${BOLD_GREEN}Нажмите Enter, чтобы вернуться в главное меню...${NC}"
+    echo -e "\n${BOLD_GREEN}Press Enter to return to the main menu...${NC}"
     read -r
 
 }

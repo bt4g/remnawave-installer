@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ===================================================================================
-#                              УСТАНОВКА ПАНЕЛИ REMNAWAVE
+#                              REMNAWAVE PANEL INSTALLATION
 # ===================================================================================
 
 install_panel() {
@@ -9,20 +9,20 @@ install_panel() {
 
     remove_previous_installation
 
-    # Установка общих зависимостей
+    # Install common dependencies
     install_dependencies
 
-    # Создаем базовую директорию для всего проекта
+    # Create base directory for the whole project
     mkdir -p $REMNAWAVE_DIR/{panel,caddy}
 
-    # Переходим в директорию панели
+    # Go to the panel directory
     cd $REMNAWAVE_DIR/panel
 
-    # Генерация JWT секретов с помощью openssl
+    # Generate JWT secrets using openssl
     JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
     JWT_API_TOKENS_SECRET=$(openssl rand -hex 32 | tr -d '\n')
 
-    # Генерация безопасных учетных данных
+    # Generate secure credentials
     DB_USER="remnawave_$(openssl rand -hex 4 | tr -d '\n')"
     DB_PASSWORD=$(generate_secure_password 16)
     DB_NAME="remnawave_db"
@@ -30,42 +30,42 @@ install_panel() {
 
     curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
 
-    # Спрашиваем, нужна ли интеграция с Telegram
-    if prompt_yes_no "Хотите включить интеграцию с Telegram?"; then
+    # Ask if Telegram integration is needed
+    if prompt_yes_no "Do you want to enable Telegram integration?"; then
         IS_TELEGRAM_ENV_VALUE="true"
-        # Если интеграция с Telegram включена, запрашиваем параметры
-        TELEGRAM_BOT_TOKEN=$(prompt_input "Введите токен вашего Telegram бота: " "$ORANGE")
-        TELEGRAM_ADMIN_ID=$(prompt_input "Введите ID администратора Telegram: " "$ORANGE")
-        NODES_NOTIFY_CHAT_ID=$(prompt_input "Введите ID чата для уведомлений: " "$ORANGE")
+        # If Telegram integration is enabled, ask for parameters
+        TELEGRAM_BOT_TOKEN=$(prompt_input "Enter your Telegram bot token: " "$ORANGE")
+        TELEGRAM_ADMIN_ID=$(prompt_input "Enter the Telegram admin ID: " "$ORANGE")
+        NODES_NOTIFY_CHAT_ID=$(prompt_input "Enter the chat ID for notifications: " "$ORANGE")
     else
-        # Если интеграция с Telegram не включена, устанавливаем параметры в "change-me"
+        # If Telegram integration is not enabled, set parameters to 'change-me'
         IS_TELEGRAM_ENV_VALUE="false"
-        show_warning "Пропуск интеграции с Telegram."
+        show_warning "Skipping Telegram integration."
         TELEGRAM_BOT_TOKEN="change-me"
         TELEGRAM_ADMIN_ID="change-me"
         NODES_NOTIFY_CHAT_ID="change-me"
     fi
 
-    # Запрашиваем основной домен для панели с валидацией
-    SCRIPT_PANEL_DOMAIN=$(prompt_domain "Введите основной домен для вашей панели (например, panel.example.com)")
+    # Ask for the main panel domain with validation
+    SCRIPT_PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel (for example, panel.example.com)")
     check_domain_points_to_server "$SCRIPT_PANEL_DOMAIN"
     domain_check_result=$?
     if [ $domain_check_result -eq 2 ]; then
-        # Пользователь решил прервать установку
+        # User chose to abort installation
         return 1
     fi
 
-    # Запрашиваем домен для подписок с валидацией
-    SCRIPT_SUB_DOMAIN=$(prompt_domain "Введите домен для подписок (например, subs.example.com)")
+    # Ask for the subscription domain with validation
+    SCRIPT_SUB_DOMAIN=$(prompt_domain "Enter the domain for subscriptions (for example, subs.example.com)")
     check_domain_points_to_server "$SCRIPT_SUB_DOMAIN"
     domain_check_result=$?
     if [ $domain_check_result -eq 2 ]; then
-        # Пользователь решил прервать установку
+        # User chose to abort installation
         return 1
     fi
 
-    # Запрос на установку remnawave-subscription-page
-    if prompt_yes_no "Установить remnawave-subscription-page (https://remna.st/subscription-templating/installation)?"; then
+    # Ask about installing remnawave-subscription-page
+    if prompt_yes_no "Install remnawave-subscription-page (https://remna.st/subscription-templating/installation)?"; then
         INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE="y"
     else
         INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE="n"
@@ -88,43 +88,43 @@ install_panel() {
     "POSTGRES_DB" "$DB_NAME" \
     "METRICS_PASS" "$METRICS_PASS"
 
-    # Генерация секретного ключа для защиты панели управления
+    # Generate a secret key to protect the admin panel
     PANEL_SECRET_KEY=$(openssl rand -hex 16)
 
-    # Создаем docker-compose.yml для панели
+    # Create docker-compose.yml for the panel
     curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
 
-    # Меняем образ на dev
+    # Change image to dev
     sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
-    # Создаем Makefile
+    # Create Makefile
     create_makefile "$REMNAWAVE_DIR/panel"
 
     # ===================================================================================
-    # Установка remnawave-subscription-page
+    # Install remnawave-subscription-page
     # ===================================================================================
 
-    # Установка remnawave-subscription-page, если пользователь согласился
+    # Install remnawave-subscription-page if the user agreed
     if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
         setup_remnawave-subscription-page
     fi
 
     # ===================================================================================
-    # Установка Caddy для панели и подписок
+    # Install Caddy for panel and subscriptions
     # ===================================================================================
 
     setup_caddy_for_panel "$PANEL_SECRET_KEY"
 
-    # Запуск всех контейнеров
-    show_info "Запуск контейнеров..." "$BOLD_GREEN"
+    # Start all containers
+    show_info "Starting containers..." "$BOLD_GREEN"
 
-    # Запуск панели RemnaWave
+    # Start RemnaWave panel
     start_container "$REMNAWAVE_DIR/panel" "remnawave/backend" "Remnawave"
 
-    # Запуск Caddy
+    # Start Caddy
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
 
-    # Запуск remnawave-subscription-page (если был выбран)
+    # Start remnawave-subscription-page (if selected)
     if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
         start_container "$REMNAWAVE_DIR/subscription-page" "remnawave/subscription-page" "Subscription page"
     fi
@@ -136,10 +136,10 @@ install_panel() {
     if [ -n "$REG_TOKEN" ]; then
         vless_configuration "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$REG_TOKEN"
     else
-        show_error "Не удалось зарегистрировать пользователя."
+        show_error "Failed to register user."
     fi
 
-    # Сохранение учетных данных в файл
+    # Save credentials to file
     CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
     echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
     echo "PANEL URL: https://$SCRIPT_PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
@@ -149,7 +149,7 @@ install_panel() {
     echo "" >>"$CREDENTIALS_FILE"
     echo "SECRET KEY: $PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
 
-    # Установка безопасных прав на файл с учетными данными
+    # Set secure permissions on the credentials file
     chmod 600 "$CREDENTIALS_FILE"
 
     display_panel_installation_complete_message

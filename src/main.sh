@@ -1,33 +1,33 @@
 #!/bin/bash
 
-# Проверка на root права
+# Root privileges check
 if [ "$(id -u)" -ne 0 ]; then
-    echo "Ошибка: Этот скрипт должен быть запущен от имени root (sudo)"
+    echo "Error: This script must be run as root (sudo)"
     exit 1
 fi
 
 clear
 
 # ===================================================================================
-# Этот файл предназначен только для сборки финального скрипта.
-# Для запуска используйте только собранный скрипт dist/install_remnawave.sh
+# This file is intended ONLY for building the final script.
+# To run, use ONLY the built script dist/install_remnawave.sh
 # ===================================================================================
 
 main() {
 
     while true; do
-    draw_info_box "Панель Remnawave" "Автоматическая установка by uphantom"
+    draw_info_box "Remnawave Panel" "Automatic installation by uphantom"
 
-        echo -e "${BOLD_BLUE_MENU}Пожалуйста, выберите компонент для установки:${NC}"
+        echo -e "${BOLD_BLUE_MENU}Please select a component to install:${NC}"
         echo
-        echo -e "  ${GREEN}1. ${NC}Установка панели"
-        echo -e "  ${GREEN}2. ${NC}Установка ноды"
-        echo -e "  ${GREEN}3. ${NC}Упрощенная установка (панель + нода)"
-        echo -e "  ${GREEN}4. ${NC}Перезапустить панель"
-        echo -e "  ${GREEN}5. ${NC}Включить BBR"
-        echo -e "  ${GREEN}6. ${NC}Выход"
+        echo -e "  ${GREEN}1. ${NC}Install panel"
+        echo -e "  ${GREEN}2. ${NC}Install node"
+        echo -e "  ${GREEN}3. ${NC}Simple installation (panel + node)"
+        echo -e "  ${GREEN}4. ${NC}Restart panel"
+        echo -e "  ${GREEN}5. ${NC}Enable BBR"
+        echo -e "  ${GREEN}6. ${NC}Exit"
         echo
-        echo -ne "${BOLD_BLUE_MENU}Выберите опцию (1-6): ${NC}"
+        echo -ne "${BOLD_BLUE_MENU}Select an option (1-6): ${NC}"
         read choice
 
         case $choice in
@@ -47,18 +47,18 @@ main() {
             enable_bbr
             ;;
         6)
-            echo "Готово."
+            echo "Done."
             break
             ;;
         *)
             clear
-            draw_info_box "Панель Remnawave" "Расширенная настройка $VERSION"
-            echo -e "${BOLD_RED}Неверный выбор, пожалуйста, попробуйте снова.${NC}"
+            draw_info_box "Remnawave Panel" "Advanced configuration $VERSION"
+            echo -e "${BOLD_RED}Invalid choice, please try again.${NC}"
             sleep 1
             ;;
         esac
     done
 }
 
-# Запуск основной функции
+# Run main function
 main

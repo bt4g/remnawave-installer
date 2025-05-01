@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Настройка Caddy для панели Remnawave
+# Caddy setup for Remnawave panel
 setup_caddy_for_panel() {
     local PANEL_SECRET_KEY=$1
     
     cd $REMNAWAVE_DIR/caddy
 
-    # Определение SUB_BACKEND_URL в зависимости от установки remnawave-subscription-page
+    # Define SUB_BACKEND_URL depending on whether remnawave-subscription-page is installed
     if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
         SCRIPT_SUB_BACKEND_URL="127.0.0.1:3010"
         REWRITE_RULE=""
@@ -15,7 +15,7 @@ setup_caddy_for_panel() {
         REWRITE_RULE="rewrite * /api/sub{uri}"
     fi
 
-    # Создание .env файла для Caddy
+    # Create .env file for Caddy
     cat >.env <<EOF
 PANEL_DOMAIN=$SCRIPT_PANEL_DOMAIN
 PANEL_PORT=443
@@ -35,7 +35,7 @@ EOF
     SUB_PORT='$SUB_PORT'
     SUB_BACKEND_URL='$SUB_BACKEND_URL'
 
-    # Создание Caddyfile с защитой панели
+    # Create Caddyfile with panel protection
     cat >Caddyfile <<EOF
 {$PANEL_DOMAIN}:{$PANEL_PORT} {
         @has_token_param {
@@ -104,7 +104,7 @@ EOF
 }
 EOF
 
-    # Создание docker-compose.yml для Caddy
+    # Create docker-compose.yml for Caddy
     cat >docker-compose.yml <<'EOF'
 services:
   caddy:
@@ -124,9 +124,9 @@ volumes:
   caddy_config_panel:
 EOF
 
-    # Создание Makefile
+    # Create Makefile
     create_makefile "$REMNAWAVE_DIR/caddy"
 
-    # Создание директории для логов
+    # Create directory for logs
     mkdir -p $REMNAWAVE_DIR/caddy/logs
 }

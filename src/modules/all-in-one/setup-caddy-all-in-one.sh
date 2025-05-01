@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Настройка Caddy для панели Remnawave
+# Setting up Caddy for the Remnawave panel
 setup_caddy_all_in_one() {
 	local PANEL_SECRET_KEY=$1
 	local SCRIPT_SUB_DOMAIN=$2
@@ -11,7 +11,7 @@ setup_caddy_all_in_one() {
 	SCRIPT_SUB_BACKEND_URL="127.0.0.1:3000"
 	local REWRITE_RULE="rewrite * /api{uri}"
 
-	# Создание .env файла для Caddy
+	# Creating the .env file for Caddy
 	cat >.env <<EOF
 SCRIPT_SUB_DOMAIN=$SCRIPT_SUB_DOMAIN
 PORT=$SELF_STEAL_PORT
@@ -26,7 +26,7 @@ EOF
 	SUB_BACKEND_URL='$SUB_BACKEND_URL'
 	PANEL_SECRET_KEY='$PANEL_SECRET_KEY'
 
-	# Создание Caddyfile
+	# Creating the Caddyfile
 	cat >Caddyfile <<EOF
 {
 	https_port {$PORT}
@@ -100,7 +100,7 @@ https://{$SCRIPT_SUB_DOMAIN} {
 }
 EOF
 
-	# Создание docker-compose.yml для Caddy
+	# Creating docker-compose.yml for Caddy
 	cat >docker-compose.yml <<'EOF'
 services:
   caddy:
@@ -121,20 +121,20 @@ volumes:
   caddy_config_panel:
 EOF
 
-	# Создание Makefile
+	# Creating Makefile
 	create_makefile "$REMNAWAVE_DIR/caddy"
 
-	# Создание директории для логов
+	# Creating directory for logs
 	mkdir -p $REMNAWAVE_DIR/caddy/logs
 
 	mkdir -p $REMNAWAVE_DIR/caddy/html/assets
 
-	# Запускаем процесс скачивания файлов в фоне с перенаправлением вывода
+	# Start downloading files in the background with output redirection
 	(
-		# Скачивание index.html
+		# Download index.html
 		curl -s -o ./html/index.html https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/index.html
 
-		# Скачивание файлов assets
+		# Download assets files
 		curl -s -o ./html/assets/index-BilmB03J.css https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-BilmB03J.css
 		curl -s -o ./html/assets/index-CRT2NuFx.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-CRT2NuFx.js
 		curl -s -o ./html/assets/index-legacy-D44yECni.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-legacy-D44yECni.js

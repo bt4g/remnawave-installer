@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # ===================================================================================
-#                              УСТАНОВКА STEAL ONESELF САЙТА
+#                              INSTALLATION OF STEAL ONESELF SITE
 # ===================================================================================
 
 setup_selfsteal() {
     mkdir -p $SELFSTEAL_DIR/html && cd $SELFSTEAL_DIR
     
-    # Создаем .env файл
+    # Create .env file
     cat > .env << EOF
-# Домены
+# Domains
 SELF_STEAL_DOMAIN=$SELF_STEAL_DOMAIN
 SELF_STEAL_PORT=$SELF_STEAL_PORT
 EOF
     
-    # Создаем Caddyfile
+    # Create Caddyfile
     cat > Caddyfile << 'EOF'
 {
     https_port {$SELF_STEAL_PORT}
@@ -53,7 +53,7 @@ https://{$SELF_STEAL_DOMAIN} {
 }
 EOF
     
-    # Создаем docker-compose.yml
+    # Create docker-compose.yml
     cat > docker-compose.yml << EOF
 services:
   caddy:
@@ -75,17 +75,17 @@ volumes:
   caddy_config_selfsteal:
 EOF
     
-    # Создание Makefile для управления
+    # Create Makefile for management
     create_makefile "$SELFSTEAL_DIR"
     
     mkdir -p ./html/assets
     
-    # Запускаем процесс скачивания файлов в фоне с перенаправлением вывода
+    # Start the process of downloading files in the background with output redirected
     (
-        # Скачивание index.html
+        # Download index.html
         curl -s -o ./html/index.html https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/index.html
         
-        # Скачивание файлов assets
+        # Download asset files
         curl -s -o ./html/assets/index-BilmB03J.css https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-BilmB03J.css
         curl -s -o ./html/assets/index-CRT2NuFx.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-CRT2NuFx.js
         curl -s -o ./html/assets/index-legacy-D44yECni.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-legacy-D44yECni.js
@@ -96,22 +96,22 @@ EOF
     
     download_pid=$!
     
-    # Запускаем спиннер для процесса скачивания
-    spinner $download_pid "Скачивание статических файлов selfsteal сайта..."
+    # Start spinner for the download process
+    spinner $download_pid "Downloading static files for the selfsteal site..."
     
-    # Запуск сервиса
+    # Start the service
     mkdir -p logs
     
     start_container "$SELFSTEAL_DIR" "caddy-selfsteal" "Caddy"
     
-    # Проверяем, запущен ли сервис
+    # Check if the service is running
     CADDY_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "caddy" && echo "running" || echo "stopped")
     
     if [ "$CADDY_STATUS" = "running" ]; then
-        echo -e "${BOLD_GREEN}✓ Caddy для сайта-заглушки успешно установлен и запущен!${NC}"
-        echo -e "${LIGHT_GREEN}• Домен: ${BOLD_GREEN}$SELF_STEAL_DOMAIN${NC}"
-        echo -e "${LIGHT_GREEN}• Порт: ${BOLD_GREEN}$SELF_STEAL_PORT${NC}"
-        echo -e "${LIGHT_GREEN}• Директория: ${BOLD_GREEN}$SELFSTEAL_DIR${NC}"
+        echo -e "${BOLD_GREEN}✓ Caddy for the selfsteal site successfully installed and started!${NC}"
+        echo -e "${LIGHT_GREEN}• Domain: ${BOLD_GREEN}$SELF_STEAL_DOMAIN${NC}"
+        echo -e "${LIGHT_GREEN}• Port: ${BOLD_GREEN}$SELF_STEAL_PORT${NC}"
+        echo -e "${LIGHT_GREEN}• Directory: ${BOLD_GREEN}$SELFSTEAL_DIR${NC}"
         echo ""
     fi
     

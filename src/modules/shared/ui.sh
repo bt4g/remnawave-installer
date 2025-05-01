@@ -1,57 +1,57 @@
-# Отрисовка информационного блока
+# Draw information box
 draw_info_box() {
     local title="$1"
     local subtitle="$2"
 
-    # Фиксированная ширина блока для идеального выравнивания
+    # Fixed block width for ideal alignment
     local width=54
 
     echo -e "${BOLD_GREEN}"
-    # Верхняя граница
+    # Top border
     printf "┌%s┐\n" "$(printf '─%.0s' $(seq 1 $width))"
 
-    # Центрирование заголовка
+    # Centring title
     local title_padding_left=$(((width - ${#title}) / 2))
     local title_padding_right=$((width - title_padding_left - ${#title}))
     printf "│%*s%s%*s│\n" "$title_padding_left" "" "$title" "$title_padding_right" ""
 
-    # Центрирование подзаголовка
+    # Centring subtitle
     local subtitle_padding_left=$(((width - ${#subtitle}) / 2))
     local subtitle_padding_right=$((width - subtitle_padding_left - ${#subtitle}))
     printf "│%*s%s%*s│\n" "$subtitle_padding_left" "" "$subtitle" "$subtitle_padding_right" ""
 
-    # Пустая строка
+    # Empty line
     printf "│%*s│\n" "$width" ""
 
-    # Строка версии - аккуратная обработка цветов
-    local version_text="  • Версия: "
+    # Version line - careful color handling
+    local version_text="  • Version: "
     local version_value="$VERSION"
     local version_value_colored="${ORANGE}${version_value}${BOLD_GREEN}"
     local version_value_length=${#version_value}
     local remaining_space=$((width - ${#version_text} - version_value_length))
     printf "│%s%s%*s│\n" "$version_text" "$version_value_colored" "$remaining_space" ""
 
-    # Пустая строка
+    # Empty line
     printf "│%*s│\n" "$width" ""
 
-    # Нижняя граница
+    # Bottom border
     printf "└%s┘\n" "$(printf '─%.0s' $(seq 1 $width))"
     echo -e "${NC}"
 }
 
-# Очистка экрана
+# Clear screen
 clear_screen() {
     clear
 }
 
-# Отображение заголовка раздела
+# Display section header
 draw_section_header() {
     local title="$1"
     local width=${2:-50}
     
     echo -e "${BOLD_RED}\033[1m┌$(printf '─%.0s' $(seq 1 $width))┐\033[0m${NC}"
     
-    # Центрирование заголовка
+    # Centring title
     local padding_left=$(((width - ${#title}) / 2))
     local padding_right=$((width - padding_left - ${#title}))
     echo -e "${BOLD_RED}\033[1m│$(printf ' %.0s' $(seq 1 $padding_left))$title$(printf ' %.0s' $(seq 1 $padding_right))│\033[0m${NC}"
@@ -60,7 +60,7 @@ draw_section_header() {
     echo
 }
 
-# Отображение опций меню с нумерацией
+# Display menu options with numbering
 draw_menu_options() {
     local options=("$@")
     local idx=1
@@ -72,7 +72,7 @@ draw_menu_options() {
     echo
 }
 
-# Запрос ввода с предустановленным текстом и цветом
+# Request input with preset text and color
 prompt_input() {
     local prompt_text="$1"
     local prompt_color="${2:-$GREEN}"
@@ -84,7 +84,7 @@ prompt_input() {
     echo "$input_value"
 }
 
-# Запрос ввода пароля (с отключением эхо)
+# Request password input (with echo disabled)
 prompt_password() {
     local prompt_text="$1"
     local prompt_color="${2:-$ORANGE}"
@@ -98,7 +98,7 @@ prompt_password() {
     echo "$password_value"
 }
 
-# Запрос выбора опции (y/n)
+# Request yes/no option selection
 prompt_yes_no() {
     local prompt_text="$1"
     local prompt_color="${2:-$GREEN}"
@@ -111,10 +111,10 @@ prompt_yes_no() {
     read answer
     echo >&2
     
-    # Преобразование в нижний регистр
+    # Convert to lowercase
     answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
     
-    # Если пусто, используем значение по умолчанию
+    # If empty, use default value
     [ -z "$answer" ] && answer="$default"
     
     if [ "$answer" = "y" ] || [ "$answer" = "yes" ]; then
@@ -124,7 +124,7 @@ prompt_yes_no() {
     fi
 }
 
-# Выбор опции из нумерованного меню
+# Request selection from numbered menu
 prompt_menu_option() {
     local prompt_text="$1"
     local prompt_color="${2:-$GREEN}"
@@ -137,13 +137,13 @@ prompt_menu_option() {
         read selected_option
         echo >&2
         
-        # Валидация выбора
+        # Validation of selection
         if [[ "$selected_option" =~ ^[0-9]+$ ]] && \
            [ "$selected_option" -ge "$min" ] && \
            [ "$selected_option" -le "$max" ]; then
             break
         else
-            echo -e "${BOLD_RED}Пожалуйста, введите число от ${min} до ${max}.${NC}" >&2
+            echo -e "${BOLD_RED}Plfease enter a number between ${min} and ${max}.${NC}" >&2
         fi
     done
     
@@ -182,7 +182,7 @@ show_info_e() {
     echo "" >&2
 }
 
-# Отображение разделителя
+# Draw separator
 draw_separator() {
     local width=${1:-50}
     local char=${2:-"-"}
@@ -190,7 +190,7 @@ draw_separator() {
     printf "%s\n" "$(printf "$char%.0s" $(seq 1 $width))"
 }
 
-# Отображение прогресса операции
+# Display operation progress
 show_progress() {
     local message="$1"
     local progress_char=${2:-"."}
@@ -204,7 +204,7 @@ show_progress() {
     echo ""
 }
 
-# Запрос домена с валидацией
+# Request domain with validation
 prompt_domain() {
     local prompt_text="$1"
     local prompt_color="${2:-$ORANGE}"
@@ -215,11 +215,11 @@ prompt_domain() {
         read domain
         echo >&2
         
-        # Базовая валидация домена (может быть расширена)
+        # Base domain validation (can be expanded)
         if [[ "$domain" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
             break
         else
-            echo -e "${BOLD_RED}Неверный формат домена. Пожалуйста, попробуйте снова.${NC}" >&2
+            echo -e "${BOLD_RED}Invalid domain format. Please try again.${NC}" >&2
         fi
     done
     
@@ -227,7 +227,7 @@ prompt_domain() {
     echo ""
 }
 
-# Запрос числового значения с валидацией
+# Request numeric value with validation
 prompt_number() {
     local prompt_text="$1"
     local prompt_color="${2:-$ORANGE}"
@@ -240,28 +240,28 @@ prompt_number() {
         read number
         echo >&2
         
-        # Валидация числа
+        # Number validation
         if [[ "$number" =~ ^[0-9]+$ ]]; then
             if [ -n "$min" ] && [ "$number" -lt "$min" ]; then
-                echo -e "${BOLD_RED}Значение должно быть не меньше ${min}.${NC}" >&2
+                echo -e "${BOLD_RED}Value must be at least ${min}.${NC}" >&2
                 continue
             fi
             
             if [ -n "$max" ] && [ "$number" -gt "$max" ]; then
-                echo -e "${BOLD_RED}Значение должно быть не больше ${max}.${NC}" >&2
+                echo -e "${BOLD_RED}Value must be at most ${max}.${NC}" >&2
                 continue
             fi
             
             break
         else
-            echo -e "${BOLD_RED}Пожалуйста, введите корректное числовое значение.${NC}" >&2
+            echo -e "${BOLD_RED}Please enter a valid numeric value.${NC}" >&2
         fi
     done
     
     echo "$number"
 }
 
-# Отображение ряда с заголовком и значением
+# Display row with label and value
 draw_info_row() {
     local label="$1"
     local value="$2"
@@ -275,7 +275,7 @@ draw_info_row() {
     echo -e "${label_display} ${value_display}"
 }
 
-# Центрирование текста
+# Center text
 center_text() {
     local text="$1"
     local width=${2:-$(tput cols)}
@@ -284,7 +284,7 @@ center_text() {
     printf "%${padding_left}s%s\n" "" "$text"
 }
 
-# Отображение блока с завершающим сообщением
+# Display completion message block
 draw_completion_message() {
     local title="$1"
     local message="$2"
@@ -297,75 +297,75 @@ draw_completion_message() {
     draw_separator "$width" "="
 }
 
-# Валидация пароля на сложность
+# Validate password strength
 validate_password_strength() {
     local password="$1"
     local min_length=${2:-8}
     
     local length=${#password}
     
-    # Проверка длины
+    # Check length
     if [ "$length" -lt "$min_length" ]; then
-        echo "Пароль должен содержать не менее $min_length символов."
+        echo "Password must contain at least $min_length characters."
         return 1
     fi
     
-    # Проверка наличия цифр
+    # Check for digits
     if ! [[ "$password" =~ [0-9] ]]; then
-        echo "Пароль должен содержать хотя бы одну цифру."
+        echo "Password must contain at least one digit."
         return 1
     fi
     
-    # Проверка наличия букв нижнего регистра
+    # Check for lowercase letters
     if ! [[ "$password" =~ [a-z] ]]; then
-        echo "Пароль должен содержать хотя бы одну букву нижнего регистра."
+        echo "Password must contain at least one lowercase letter."
         return 1
     fi
     
-    # Проверка наличия букв верхнего регистра
+    # Check for uppercase letters
     if ! [[ "$password" =~ [A-Z] ]]; then
-        echo "Пароль должен содержать хотя бы одну букву верхнего регистра."
+        echo "Password must contain at least one uppercase letter."
         return 1
     fi
     
-    # Пароль прошел все проверки
+    # Password passed all checks
     return 0
 }
 
-# Запрос пароля с подтверждением и проверкой сложности
+# Request password with confirmation and strength validation
 prompt_secure_password() {
     local prompt_text="$1"
-    local confirm_text="${2:-Повторно введите пароль для подтверждения}"
+    local confirm_text="${2:-Please confirm your password}"
     local min_length=${3:-8}
     
     local password1 password2 error_message
     
     while true; do
-        # Запрашиваем пароль
+        # Request password
         password1=$(prompt_password "$prompt_text")
         
-        # Проверяем сложность пароля
+        # Check password strength
         error_message=$(validate_password_strength "$password1" "$min_length")
         if [ $? -ne 0 ]; then
-            echo -e "${BOLD_RED}${error_message} Пожалуйста, попробуйте снова.${NC}" >&2
+            echo -e "${BOLD_RED}${error_message} Please try again.${NC}" >&2
             continue
         fi
         
-        # Запрашиваем подтверждение пароля
+        # Request password confirmation
         password2=$(prompt_password "$confirm_text")
         
-        # Проверяем совпадение паролей
+        # Check password match
         if [ "$password1" = "$password2" ]; then
             break
         else
-            echo -e "${BOLD_RED}Пароли не совпадают. Пожалуйста, попробуйте снова.${NC}" >&2
+            echo -e "${BOLD_RED}Passwords do not match. Please try again.${NC}" >&2
         fi
     done
     
     echo "$password1"
 }
 
-# Функция для отображения спиннера во время выполнения команды
+# Display spinner while command is running
 spinner() {
     local pid=$1
     local text=$2

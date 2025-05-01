@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Определение цветов для вывода
+# Color definitions for output
 BOLD_BLUE=$(tput setaf 4)
 BOLD_GREEN=$(tput setaf 2)
 LIGHT_GREEN=$(tput setaf 10)
@@ -12,23 +12,23 @@ GREEN=$(tput setaf 2)
 YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
-# Версия скрипта
+# Script version
 VERSION="1.0"
 
-# Основные директории
+# Main directories
 REMNAWAVE_DIR="/opt/remnawave"
 REMNANODE_ROOT_DIR="/opt/remnanode"
 REMNANODE_DIR="/opt/remnanode/node"
 SELFSTEAL_DIR="/opt/remnanode/selfsteal"
-LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node" # Директория локальной ноды (вместе с панелью)
+LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node" # Local node directory (with panel)
 
-# Функция для проверки и удаления предыдущей установки
+# Function to check and remove previous installation
 remove_previous_installation() {
-    # Проверка наличия предыдущей установки
+    # Check for previous installation
     local containers=("remnawave-subscription-page" "remnawave" "remnawave-db" "remnawave-redis" "remnanode" "caddy-remnawave")
     local container_exists=false
 
-    # Проверка существования любого из контейнеров
+    # Check if any of the containers exist
     for container in "${containers[@]}"; do
         if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "$container"; then
             container_exists=true
@@ -37,55 +37,55 @@ remove_previous_installation() {
     done
 
     if [ -d "$REMNAWAVE_DIR" ] || [ "$container_exists" = true ]; then
-        show_warning "Обнаружена предыдущая установка RemnaWave."
-        if prompt_yes_no "Для продолжения требуется удалить предыдущие установки Remnawave. Подтверждаете удаление?" "$ORANGE"; then
-            # Проверка наличия Caddy и его остановка
+        show_warning "Previous RemnaWave installation detected."
+        if prompt_yes_no "To continue, you need to remove previous Remnawave installations. Confirm removal?" "$ORANGE"; then
+            # Check for Caddy and stop it
             if [ -f "$REMNAWAVE_DIR/caddy/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f caddy/docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер Caddy"
+                spinner $! "Stopping Caddy container"
             fi
-            # Проверка наличия страницы подписки и её остановка
+            # Check for subscription page and stop it
             if [ -f "$REMNAWAVE_DIR/subscription-page/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f subscription-page/docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер remnawave-subscription-page"
+                spinner $! "Stopping remnawave-subscription-page container"
             fi
-            # Проверка наличия ноды и её остановка
+            # Check for node and stop it
             if [ -f "$LOCAL_REMNANODE_DIR/docker-compose.yml" ]; then
                 cd $LOCAL_REMNANODE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер ноды Remnawave"
+                spinner $! "Stopping Remnawave node container"
             fi
-            # Проверка наличия панели и её остановка
+            # Check for panel and stop it
             if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнеры панели Remnawave"
+                spinner $! "Stopping Remnawave panel containers"
             fi
 
-            # Проверка наличия оставшихся контейнеров и их остановка
+            # Check for remaining containers and stop/remove them
             for container in "${containers[@]}"; do
                 if docker ps -a --format '{{.Names}}' | grep -q "^$container$"; then
                     docker stop "$container" >/dev/null 2>&1 && docker rm "$container" >/dev/null 2>&1 &
-                    spinner $! "Останавливаем и удаляем контейнер $container"
+                    spinner $! "Stopping and removing container $container"
                 fi
             done
 
-            # Удаление оставшихся образов Docker
+            # Remove remaining Docker images
             docker rmi $(docker images -q) -f >/dev/null 2>&1 &
-            spinner $! "Удаляем образы Docker"
+            spinner $! "Removing Docker images"
 
-            # Удаление директории
+            # Remove directory
             rm -rf $REMNAWAVE_DIR >/dev/null 2>&1 &
-            spinner $! "Удаляем каталог $REMNAWAVE_DIR"
-            # Удаление томов Docker
+            spinner $! "Removing directory $REMNAWAVE_DIR"
+            # Remove Docker volumes
             docker volume rm remnawave-db-data remnawave-redis-data >/dev/null 2>&1 &
-            spinner $! "Удаляем тома Docker: remnawave-db-data и remnawave-redis-data"
-            show_success "Проведено удаление предыдущей установки."
+            spinner $! "Removing Docker volumes: remnawave-db-data and remnawave-redis-data"
+            show_success "Previous installation removed."
         else
             return 0
         fi
     fi
 }
 
-# Отображение сообщения об успешной установке панели
+# Display a message about successful panel installation
 display_panel_installation_complete_message() {
     local secure_panel_url="https://$SCRIPT_PANEL_DOMAIN/auth/login?caddy=$PANEL_SECRET_KEY"
     local effective_width=$((${#secure_panel_url} + 3))
@@ -103,28 +103,28 @@ display_panel_installation_complete_message() {
 
     echo -e "\033[1m┌${border_line}┐\033[0m"
 
-    print_text_line "Ваш домен для панели:"
+    print_text_line "Your panel domain:"
     print_text_line "https://$SCRIPT_PANEL_DOMAIN"
     print_empty_line
-    print_text_line "Ссылка для безопасного входа (c секретным ключом):"
+    print_text_line "Secure login link (with secret key):"
     print_text_line "$secure_panel_url"
     print_empty_line
-    print_text_line "Ваш домен для подписок:"
+    print_text_line "Your subscription domain:"
     print_text_line "https://$SCRIPT_SUB_DOMAIN"
     print_empty_line
-    print_text_line "Логин администратора: $SUPERADMIN_USERNAME"
-    print_text_line "Пароль администратора: $SUPERADMIN_PASSWORD"
+    print_text_line "Admin login: $SUPERADMIN_USERNAME"
+    print_text_line "Admin password: $SUPERADMIN_PASSWORD"
     print_empty_line
     echo -e "\033[1m└${border_line}┘\033[0m"
 
     echo
-    show_success "Данные сохранены в файле: $CREDENTIALS_FILE"
-    echo -e "${BOLD_BLUE}Директория установки: ${NC}$REMNAWAVE_DIR/"
+    show_success "Credentials saved in file: $CREDENTIALS_FILE"
+    echo -e "${BOLD_BLUE}Installation directory: ${NC}$REMNAWAVE_DIR/"
     echo
 
     cd ~
 
-    echo -e "${BOLD_GREEN}Установка завершена. Нажмите Enter, чтобы продолжить...${NC}"
+    echo -e "${BOLD_GREEN}Installation complete. Press Enter to continue...${NC}"
     read -r
 }
 
@@ -150,15 +150,15 @@ wait_for_panel() {
     } &
     local check_pid=$!
 
-    spinner "$check_pid" "Ожидание инициализации панели..."
+    spinner "$check_pid" "Waiting for panel initialization..."
 
     if [ "$(cat "$temp_file")" = "success" ]; then
-        show_success "Панель готова к работе!"
+        show_success "Panel is ready!"
         rm -f "$temp_file"
         return 0
     else
-        show_warning "Превышено максимальное время ожидания ($max_wait секунд)."
-        show_info "Пробуем продолжить регистрацию в любом случае..."
+        show_warning "Maximum wait time exceeded ($max_wait seconds)."
+        show_info "Trying to continue registration anyway..."
         rm -f "$temp_file"
         return 1
     fi
@@ -184,10 +184,10 @@ register_user() {
     )
 
     if [ -z "$response" ]; then
-        reg_error="Пустой ответ сервера"
+        reg_error="Empty server response"
         return 1
     elif [[ "$response" == *"accessToken"* ]]; then
-        # Успешная регистрация
+        # Successful registration
         reg_token=$(echo "$response" | jq -r '.response.accessToken')
         echo "$reg_token"
         return 0
@@ -199,62 +199,62 @@ register_user() {
 
 restart_panel() {
     local no_wait=${1:-false} # Optional parameter to skip waiting for user input
-    # Проверка существования директории панели
+    # Check for panel directory
     if [ ! -d /opt/remnawave/panel ]; then
-        show_error "Ошибка: директория панели не найдена по пути /opt/remnawave/panel!"
-        show_error "Сначала установите панель Remnawave."
+        show_error "Error: panel directory not found at /opt/remnawave/panel!"
+        show_error "Please install Remnawave panel first."
     else
-        # Проверка наличия docker-compose.yml в директории панели
+        # Check for docker-compose.yml in panel directory
         if [ ! -f /opt/remnawave/panel/docker-compose.yml ]; then
-            show_error "Ошибка: docker-compose.yml не найден в директории панели!"
-            show_error "Возможно, установка панели повреждена или не завершена."
+            show_error "Error: docker-compose.yml not found in panel directory!"
+            show_error "Panel installation may be corrupted or incomplete."
         else
-            # Переменная для отслеживания наличия директории subscription-page
+            # Variable to track subscription-page directory existence
             SUBSCRIPTION_PAGE_EXISTS=false
 
-            # Проверка существования директории subscription-page
+            # Check for subscription-page directory
             if [ -d /opt/remnawave/subscription-page ] && [ -f /opt/remnawave/subscription-page/docker-compose.yml ]; then
                 SUBSCRIPTION_PAGE_EXISTS=true
             fi
 
-            # Останавливаем страницу подписки, если она существует
+            # Stop subscription page if it exists
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
                 cd /opt/remnawave/subscription-page && docker compose down >/dev/null 2>&1 &
-                spinner $! "Останавливаем контейнер remnawave-subscription-page"
+                spinner $! "Stopping remnawave-subscription-page container"
             fi
 
-            # Останавливаем панель
+            # Stop panel
             cd /opt/remnawave/panel && docker compose down >/dev/null 2>&1 &
-            spinner $! "Перезапуск панели..."
+            spinner $! "Restarting panel..."
 
-            # Запускаем панель
+            # Start panel
             cd /opt/remnawave/panel && docker compose up -d >/dev/null 2>&1 &
-            spinner $! "Перезапуск панели..."
+            spinner $! "Restarting panel..."
 
-            # Запускаем страницу подписки, если она существует
+            # Start subscription page if it exists
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
                 cd /opt/remnawave/subscription-page && docker compose up -d >/dev/null 2>&1 &
-                spinner $! "Перезапуск панели..."
+                spinner $! "Restarting panel..."
             fi
-            show_info "Панель перезапущена"
+            show_info "Panel restarted"
         fi
     fi
     if [ "$no_wait" != "true" ]; then
-        echo -e "${BOLD_GREEN}Нажмите Enter, чтобы продолжить...${NC}"
+        echo -e "${BOLD_GREEN}Press Enter to continue...${NC}"
         read
     fi
 }
 
 start_container() {
-    local directory="$1"      # Директория с docker-compose.yml
-    local container_name="$2" # Имя контейнера для проверки в docker ps
-    local service_name="$3"   # Название сервиса для вывода сообщений
-    local wait_time=${4:-1}   # Время ожидания в секундах
+    local directory="$1"      # Directory with docker-compose.yml
+    local container_name="$2" # Container name to check in docker ps
+    local service_name="$3"   # Service name for messages
+    local wait_time=${4:-1}   # Wait time in seconds
 
-    # Переходим в нужную директорию
+    # Change to the required directory
     cd "$directory"
 
-    # Запускаем весь процесс в фоне с помощью подоболочки
+    # Run the whole process in the background using a subshell
     (
         docker compose up -d >/dev/null 2>&1
         sleep $wait_time
@@ -262,16 +262,16 @@ start_container() {
 
     local bg_pid=$!
 
-    # Отображаем спиннер для всего процесса запуска и ожидания
-    spinner $bg_pid "Запуск контейнера ${service_name}..."
+    # Show spinner for the entire startup and wait process
+    spinner $bg_pid "Starting container ${service_name}..."
 
-    # Проверяем статус контейнера
+    # Check container status
     if ! docker ps | grep -q "$container_name"; then
-        echo -e "${BOLD_RED}Контейнер $service_name не запустился. Проверьте конфигурацию.${NC}"
-        echo -e "${ORANGE}Вы можете проверить логи позже с помощью 'make logs' в директории $directory.${NC}"
+        echo -e "${BOLD_RED}Container $service_name did not start. Check the configuration.${NC}"
+        echo -e "${ORANGE}You can check logs later using 'make logs' in directory $directory.${NC}"
         return 1
     else
-        # echo -e "${BOLD_GREEN}$service_name успешно запущен.${NC}"
+        # echo -e "${BOLD_GREEN}$service_name started successfully.${NC}"
         # echo ""
         return 0
     fi
@@ -286,44 +286,43 @@ generate_secure_password() {
     local number_chars='0123456789'
     local alphanumeric_chars="${uppercase_chars}${lowercase_chars}${number_chars}"
 
-    # Генерируем начальный пароль только из букв и цифр
+    # Generate the initial password from letters and digits only
     if command -v openssl &>/dev/null; then
         password="$(openssl rand -base64 48 | tr -dc "$alphanumeric_chars" | head -c "$length")"
     else
-        # Если openssl недоступен, fallback на /dev/urandom
+        # If openssl is unavailable, fallback to /dev/urandom
         password="$(head -c 100 /dev/urandom | tr -dc "$alphanumeric_chars" | head -c "$length")"
     fi
 
-    # Проверяем наличие символов каждого типа и добавляем недостающие
-    # Если нет символа верхнего регистра, добавляем его
+    # Check for presence of each character type and add missing ones
+    # If no uppercase character, add one
     if ! [[ "$password" =~ [$uppercase_chars] ]]; then
         local position=$((RANDOM % length))
         local one_uppercase="$(echo "$uppercase_chars" | fold -w1 | shuf | head -n1)"
         password="${password:0:$position}${one_uppercase}${password:$((position + 1))}"
     fi
 
-    # Если нет символа нижнего регистра, добавляем его
+    # If no lowercase character, add one
     if ! [[ "$password" =~ [$lowercase_chars] ]]; then
         local position=$((RANDOM % length))
         local one_lowercase="$(echo "$lowercase_chars" | fold -w1 | shuf | head -n1)"
         password="${password:0:$position}${one_lowercase}${password:$((position + 1))}"
     fi
 
-    # Если нет цифры, добавляем её
+    # If no digit, add one
     if ! [[ "$password" =~ [$number_chars] ]]; then
         local position=$((RANDOM % length))
         local one_number="$(echo "$number_chars" | fold -w1 | shuf | head -n1)"
         password="${password:0:$position}${one_number}${password:$((position + 1))}"
     fi
 
-    # Добавляем от 1 до 3 специальных символов (в зависимости от длины пароля)
-    # но не более 25% длины пароля
+    # Add 1 to 3 special characters (depending on password length), but no more than 25% of password length
     local special_count=$((length / 4))
     special_count=$((special_count > 0 ? special_count : 1))
     special_count=$((special_count < 3 ? special_count : 3))
 
     for ((i = 0; i < special_count; i++)); do
-        # Выбираем случайную позицию, избегая первого и последнего символа
+        # Choose a random position, avoiding first and last character
         local position=$((RANDOM % (length - 2) + 1))
         local one_special="$(echo "$special_chars" | fold -w1 | shuf | head -n1)"
         password="${password:0:$position}${one_special}${password:$((position + 1))}"
@@ -332,18 +331,18 @@ generate_secure_password() {
     echo "$password"
 }
 
-# Функция для безопасного обновления .env файла с несколькими ключами
+# Function for safely updating .env file with multiple keys
 update_file() {
     local env_file="$1"
     shift
 
-    # Проверка наличия параметров
+    # Check for parameters
     if [ "$#" -eq 0 ] || [ $(($# % 2)) -ne 0 ]; then
-        echo "Ошибка: неверное количество аргументов. Должно быть чётное число ключей и значений." >&2
+        echo "Error: invalid number of arguments. Should be even number of keys and values." >&2
         return 1
     fi
 
-    # Преобразуем аргументы в массивы ключей и значений
+    # Convert arguments to key and value arrays
     local keys=()
     local values=()
 
@@ -353,10 +352,10 @@ update_file() {
         shift 2
     done
 
-    # Создаем временный файл
+    # Create a temporary file
     local temp_file=$(mktemp)
 
-    # Построчно обрабатываем файл и заменяем нужные строки
+    # Process file line by line and replace needed lines
     while IFS= read -r line || [[ -n "$line" ]]; do
         local key_found=false
         for i in "${!keys[@]}"; do
@@ -372,11 +371,11 @@ update_file() {
         fi
     done <"$env_file"
 
-    # Заменяем оригинальный файл
+    # Replace original file
     mv "$temp_file" "$env_file"
 }
 
-# Создание общего Makefile для управления сервисами
+# Create a common Makefile for managing services
 create_makefile() {
     local directory="$1"
     cat >"$directory/Makefile" <<'EOF'
@@ -394,16 +393,16 @@ EOF
 }
 
 # ===================================================================================
-#                                API REQUEST ФУНКЦИИ
+#                                API REQUEST FUNCTIONS
 # ===================================================================================
 
-# Функция для выполнения API запроса с Bearer токеном
-# Параметры:
-#   $1 - метод (GET, POST, PUT, DELETE)
-#   $2 - полный URL
-#   $3 - Bearer токен для авторизации
-#   $4 - домен хоста (для заголовка Host)
-#   $5 - данные запроса в формате JSON (опционально, только для POST/PUT)
+# Function to perform API request with Bearer token
+# Parameters:
+#   $1 - method (GET, POST, PUT, DELETE)
+#   $2 - full URL
+#   $3 - Bearer token for authorization
+#   $4 - host domain (for Host header)
+#   $5 - request data in JSON format (optional, only for POST/PUT)
 make_api_request() {
     local method=$1
     local url=$2
@@ -427,20 +426,20 @@ make_api_request() {
 }
 
 # ===================================================================================
-#                                ФУНКЦИИ ВАЛИДАЦИИ
+#                                VALIDATION FUNCTIONS
 # ===================================================================================
 
-# Функция для валидации и очистки доменного имени или IP-адреса
-# Оставляет только допустимые символы: буквы, цифры, точки и дефисы
-# Использование:
+# Function to validate and clean domain name or IP address
+# Leaves only valid characters: letters, digits, dots, and dashes
+# Usage:
 #   validate_domain "example.com"
 validate_domain() {
     local input="$1"
-    local max_length="${2:-253}" # Максимальная длина домена по стандарту
+    local max_length="${2:-253}" # Maximum domain length by standard
 
-    # Проверка на IP-адрес
+    # Check for IP address
     if [[ "$input" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        # Проверка каждого октета IP-адреса
+        # Check each octet of IP address
         local valid_ip=true
         IFS='.' read -r -a octets <<<"$input"
         for octet in "${octets[@]}"; do
@@ -456,7 +455,7 @@ validate_domain() {
         fi
     fi
 
-    # Удаляем все символы, кроме букв, цифр, точек и дефисов
+    # Remove all characters except letters, digits, dots, and dashes
     local cleaned_domain=$(echo "$input" | tr -cd 'a-zA-Z0-9.-')
 
     # Проверка на пустую строку после очистки
@@ -465,13 +464,13 @@ validate_domain() {
         return 1
     fi
 
-    # Проверка на максимальную длину
+    # Check for maximum length
     if [ ${#cleaned_domain} -gt $max_length ]; then
         cleaned_domain=${cleaned_domain:0:$max_length}
     fi
 
-    # Проверка формата домена (простая базовая проверка)
-    # Домен должен содержать хотя бы одну точку и не начинаться/заканчиваться точкой или дефисом
+    # Check domain format (basic check)
+    # Domain must contain at least one dot and not start/end with dot or dash
     if
         [[ ! "$cleaned_domain" =~ \. ]] ||
             [[ "$cleaned_domain" =~ ^[\.-] ]] ||
@@ -485,9 +484,9 @@ validate_domain() {
     return 0
 }
 
-# Безопасное чтение пользовательского ввода с валидацией
-# Использование:
-#   read_domain "Введите домен:" "example.com"
+# Safe reading of user input with validation
+# Usage:
+#   read_domain "Enter domain:" "example.com"
 read_domain() {
     local prompt="$1"
     local default_value="$2"
@@ -496,7 +495,7 @@ read_domain() {
     local attempts=0
 
     while [ $attempts -lt $max_attempts ]; do
-        # Показываем подсказку с дефолтным значением, если оно есть
+        # Show prompt with default value if present
         local prompt_formatted_text=""
         if [ -n "$default_value" ]; then
             prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
@@ -512,40 +511,40 @@ read_domain() {
             break
         fi
 
-        # Валидируем ввод
+        # Validate input
         result=$(validate_domain "$input")
         local status=$?
 
         if [ $status -eq 0 ]; then
             break
         else
-            echo -e "${BOLD_RED}Некорректный формат домена или IP-адреса. Пожалуйста, используйте только буквы, цифры, точки и дефисы.${NC}" >&2
-            echo -e "${BOLD_RED}Домен должен содержать как минимум одну точку и не начинаться/заканчиваться точкой или дефисом.${NC}" >&2
-            echo -e "${BOLD_RED}IP-адрес должен быть в формате X.X.X.X, где X - число от 0 до 255.${NC}" >&2
+            echo -e "${BOLD_RED}Invalid domain or IP address format. Please use only letters, digits, dots, and dashes.${NC}" >&2
+            echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
+            echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
             ((attempts++))
         fi
     done
 
     if [ $attempts -eq $max_attempts ]; then
-        echo -e "${BOLD_RED}Превышено максимальное количество попыток. Используется значение по умолчанию: $default_value${NC}" >&2
+        echo -e "${BOLD_RED}Maximum number of attempts exceeded. Using default value: $default_value${NC}" >&2
         result="$default_value"
     fi
 
     echo "$result"
 }
 
-# Функция для валидации и очистки порта
-# Оставляет только числовые символы и проверяет, что значение в диапазоне 1-65535
-# Использование:
+# Function for validating and cleaning the port
+# Leaves only numeric characters and checks that the value is in the range 1-65535
+# Usage:
 #   validate_port "8080"
 validate_port() {
     local input="$1"
     local default_port="$2"
 
-    # Удаляем все символы, кроме цифр
+    # Remove all characters except digits
     local cleaned_port=$(echo "$input" | tr -cd '0-9')
 
-    # Проверка на пустую строку после очистки
+    # Check for empty string after cleaning
     if [ -z "$cleaned_port" ] && [ -n "$default_port" ]; then
         echo "$default_port"
         return 0
@@ -554,7 +553,7 @@ validate_port() {
         return 1
     fi
 
-    # Проверка на диапазон портов
+    # Check port range
     if [ "$cleaned_port" -lt 1 ] || [ "$cleaned_port" -gt 65535 ]; then
         if [ -n "$default_port" ]; then
             echo "$default_port"
@@ -569,43 +568,43 @@ validate_port() {
     return 0
 }
 
-# Проверка, свободен ли порт
+# Check if the port is available
 is_port_available() {
     local port=$1
-    # Пытаемся запустить временный сервер на порту
-    # Если возвращает 0, порт свободен, если 1 - занят
+    # Try to open a temporary server on the port
+    # If returns 0, port is available; if 1 - occupied
     (echo >/dev/tcp/localhost/$port) >/dev/null 2>&1
     if [ $? -eq 1 ]; then
-        return 0 # Порт свободен
+        return 0 # Port is available
     else
-        return 1 # Порт занят
+        return 1 # Port is occupied
     fi
 }
 
-# Нахождение свободного порта, начиная с указанного
+# Find available port, starting from the specified one
 find_available_port() {
     local port="$1"
 
-    # Пробуем последовательно, пока не найдём свободный
+    # Try sequentially until we find an available one
     while true; do
         if is_port_available "$port"; then
-            show_info_e "Порт $port доступен."
+            show_info_e "Port $port is available."
             echo "$port"
             return 0
         fi
         ((port++))
-        # На всякий случай, ограничимся 65535
+        # Limit to 65535 just in case
         if [ "$port" -gt 65535 ]; then
-            show_info_e "Не удалось найти свободный порт!"
+            show_info_e "Failed to find an available port!"
             return 1
         fi
     done
 }
 
-# Функция безопасного чтения порта с валидацией
-# Использование:
-#   read_port "Введите порт:" "8080"
-#   read_port "Введите порт:" "8080" true    # Пропустить проверку доступности порта
+# Function for safe port reading with validation
+# Usage:
+#   read_port "Enter port:" "8080"
+#   read_port "Enter port:" "8080" true    # Skip port availability check
 read_port() {
     local prompt="$1"
     local default_value="${2:-}"
@@ -615,7 +614,7 @@ read_port() {
     local max_attempts=3
 
     while [ $attempts -lt $max_attempts ]; do
-        # Отображение приглашения с дефолтным значением
+        # Display prompt with default value
         if [ -n "$default_value" ]; then
             prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
             read -p "$prompt_formatted_text" result
@@ -624,78 +623,78 @@ read_port() {
             read -p "$prompt_formatted_text" result
         fi
 
-        # Если ввод пустой и есть дефолтное значение, используем его
+        # If input is empty and default value exists, use it
         if [ -z "$result" ] && [ -n "$default_value" ]; then
             result="$default_value"
         fi
 
-        # Валидация порта - сохраняем результат в переменную
+        # Port validation - store result in variable
         result=$(validate_port "$result")
         local status=$?
 
         if [ $status -eq 0 ]; then
-            # Проверяем, свободен ли порт (если проверка не отключена)
+            # Check if port is available (if check is not disabled)
             if [ "$skip_availability_check" = true ] || is_port_available "$result"; then
                 break
             else
-                show_info_e "Порт ${result} уже занят."
-                prompt_formatted_text="${ORANGE}Хотите автоматически найти свободный порт? [y/N]:${NC}"
+                show_info_e "Port ${result} is already in use."
+                prompt_formatted_text="${ORANGE}Do you want to automatically find an available port? [y/N]:${NC}"
                 read -p "$prompt_formatted_text" answer
                 if [[ "$answer" =~ ^[yY] ]]; then
                     result="$(find_available_port "$result")"
                     break
                 else
-                    show_info_e "Пожалуйста, выберите другой порт."
+                    show_info_e "Please choose another port."
                     ((attempts++))
                 fi
             fi
         else
-            # В зависимости от кода возврата выводим сообщение
+            # Display message depending on return code
             case $status in
-            1) show_info_e "Некорректный ввод (не число). Пожалуйста, введите корректный порт." ;;
-            2) show_info_e "Некорректный порт. Введите число от 1 до 65535." ;;
+            1) show_info_e "Invalid input (not a number). Please enter a valid port." ;;
+            2) show_info_e "Invalid port. Enter a number from 1 to 65535." ;;
             esac
             ((attempts++))
         fi
     done
 
     if [ $attempts -eq $max_attempts ]; then
-        show_info_e "Превышено максимальное количество попыток. Используем порт по умолчанию."
+        show_info_e "Maximum number of attempts exceeded. Using default port."
         if [ -n "$default_value" ]; then
             result="$default_value"
             if [ "$skip_availability_check" = false ] && ! is_port_available "$result"; then
                 result="$(find_available_port "$result")"
             fi
         else
-            # Если нет дефолтного значения, используем случайный свободный порт
+            # If there is no default value, use a random available port
             local random_start=$((RANDOM % 10000 + 10000))
             result="$(find_available_port "$random_start")"
         fi
     fi
 
-    # Здесь ОДИН раз выводим результат
+    # Output the result ONCE here
     echo "$result"
 }
 
 generate_readable_login() {
-    # Согласные и гласные буквы для более читаемых комбинаций
+    # Consonants and vowels for more readable combinations
     consonants="bcdfghjklmnpqrstvwxz"
     vowels="aeiouy"
 
-    # Случайная длина от 6 до 10 символов
+    # Random length from 6 to 10 characters
     length=$((6 + RANDOM % 5))
 
-    # Инициализация пустой строки для логина
+    # Initialize empty string for login
     login=""
 
-    # Генерация логина, чередуя согласные и гласные
+    # Generate login, alternating consonants and vowels
     for ((i = 0; i < length; i++)); do
         if ((i % 2 == 0)); then
-            # Выбираем случайную согласную
+            # Pick a random consonant
             rand_index=$((RANDOM % ${#consonants}))
             login="${login}${consonants:rand_index:1}"
         else
-            # Выбираем случайную гласную
+            # Pick a random vowel
             rand_index=$((RANDOM % ${#vowels}))
             login="${login}${vowels:rand_index:1}"
         fi
@@ -705,16 +704,16 @@ generate_readable_login() {
 }
 
 # ===================================================================================
-#                                VLESS КОНФИГУРАЦИЯ
+#                                VLESS CONFIGURATION
 # ===================================================================================
 
-# Генерация ключей для VLESS Reality
+# Generate keys for VLESS Reality
 generate_vless_keys() {
   local temp_file=$(mktemp)
   
-  # Генерация ключей x25519 с помощью Docker
+  # Generate x25519 keys using Docker
   docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
-  spinner $! "Генерация ключей x25519..."
+  spinner $! "Generating x25519 keys..."
   keys=$(cat "$temp_file")
   
   local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
@@ -722,15 +721,15 @@ generate_vless_keys() {
   rm -f "$temp_file"
 
   if [ -z "$private_key" ] || [ -z "$public_key" ]; then
-    echo -e "${BOLD_RED}Ошибка: Не удалось сгенерировать ключи.${NC}"
+    echo -e "${BOLD_RED}Error: Failed to generate keys.${NC}"
     return 1
   fi
   
-  # Возвращаем ключи через echo
+  # Return keys via echo
   echo "$private_key:$public_key"
 }
 
-# Создание VLESS конфигурации Xray
+# Create VLESS Xray configuration
 generate_vless_config() {
   local config_file="$1"
   local self_steal_domain="$2"
@@ -821,7 +820,7 @@ generate_vless_config() {
 EOL
 }
 
-# Обновление конфигурации Xray
+# Update Xray configuration
 update_xray_config() {
   local panel_url="$1"
   local token="$2"
@@ -832,24 +831,24 @@ update_xray_config() {
   local new_config=$(cat "$config_file")
   
   make_api_request "POST" "http://$panel_url/api/xray/update-config" "$token" "$panel_domain" "$new_config" > "$temp_file" 2>&1 &
-  spinner $! "Обновление конфигурации Xray..."
+  spinner $! "Updating Xray configuration..."
   local update_response=$(cat "$temp_file")
   rm -f "$temp_file"
 
   if [ -z "$update_response" ]; then
-    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при обновлении Xray конфига.${NC}"
+    echo -e "${BOLD_RED}Error: Empty response from server when updating Xray config.${NC}"
     return 1
   fi
 
   if echo "$update_response" | jq -e '.response.config' >/dev/null; then
     return 0
   else
-    echo -e "${BOLD_RED}Ошибка: Не удалось обновить конфигурацию Xray.${NC}"
+    echo -e "${BOLD_RED}Error: Failed to update Xray configuration.${NC}"
     return 1
   fi
 }
 
-# Создание ноды
+# Create node
 create_vless_node() {
   local panel_url="$1"
   local token="$2"
@@ -878,31 +877,31 @@ EOF
   )
   
   make_api_request "POST" "http://$panel_url/api/nodes/create" "$token" "$panel_domain" "$new_node_data" > "$temp_file" 2>&1 &
-  spinner $! "Создание ноды..."
+  spinner $! "Creating node..."
   node_response=$(cat "$temp_file")
   rm -f "$temp_file"
 
   if [ -z "$node_response" ]; then
-    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании ноды.${NC}"
+    echo -e "${BOLD_RED}Error: Empty response from server when creating node.${NC}"
     return 1
   fi
 
   if echo "$node_response" | jq -e '.response.uuid' >/dev/null; then
     return 0
   else
-    echo -e "${BOLD_RED}Ошибка: Не удалось создать ноду, ответ:${NC}"
+    echo -e "${BOLD_RED}Error: Failed to create node, response:${NC}"
     echo
-    echo "Был направлен запрос с телом:"
+    echo "Request body was:"
     echo "$new_node_data"
     echo
-    echo "Ответ:"
+    echo "Response:"
     echo
     echo "$node_response"
     return 1
   fi
 }
 
-# Получение списка inbounds
+# Get list of inbounds
 get_inbounds() {
   local panel_url="$1"
   local token="$2"
@@ -911,26 +910,26 @@ get_inbounds() {
   local temp_file=$(mktemp)
   
   make_api_request "GET" "http://$panel_url/api/inbounds" "$token" "$panel_domain" > "$temp_file" 2>&1 &
-  spinner $! "Получение списка inbounds..."
+  spinner $! "Getting list of inbounds..."
   inbounds_response=$(cat "$temp_file")
   rm -f "$temp_file"
 
   if [ -z "$inbounds_response" ]; then
-    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при получении inbounds.${NC}"
+    echo -e "${BOLD_RED}Error: Empty response from server when getting inbounds.${NC}"
     return 1
   fi
 
   local inbound_uuid=$(echo "$inbounds_response" | jq -r '.response[0].uuid')
   if [ -z "$inbound_uuid" ]; then
-    echo -e "${BOLD_RED}Ошибка: Не удалось извлечь UUID из ответа.${NC}"
+    echo -e "${BOLD_RED}Error: Failed to extract UUID from response.${NC}"
     return 1
   fi
   
-  # Возвращаем UUID
+  # Return UUID
   echo "$inbound_uuid"
 }
 
-# Создание хоста
+# Create host
 create_vless_host() {
   local panel_url="$1"
   local token="$2"
@@ -959,24 +958,24 @@ EOF
   )
 
   make_api_request "POST" "http://$panel_url/api/hosts/create" "$token" "$panel_domain" "$host_data" > "$temp_file" 2>&1 &
-  spinner $! "Создание хоста для UUID: $inbound_uuid..."
+  spinner $! "Creating host for UUID: $inbound_uuid..."
   host_response=$(cat "$temp_file")
   rm -f "$temp_file"
 
   if [ -z "$host_response" ]; then
-    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании хоста.${NC}"
+    echo -e "${BOLD_RED}Error: Empty response from server when creating host.${NC}"
     return 1
   fi
 
   if echo "$host_response" | jq -e '.response.uuid' >/dev/null; then
     return 0
   else
-    echo -e "${BOLD_RED}Ошибка: Не удалось создать хост.${NC}"
+    echo -e "${BOLD_RED}Error: Failed to create host.${NC}"
     return 1
   fi
 }
 
-# Получение публичного ключа API
+# Get public API key
 get_public_key() {
   local panel_url="$1"
   local token="$2"
@@ -985,39 +984,39 @@ get_public_key() {
   local temp_file=$(mktemp)
   
   make_api_request "GET" "http://$panel_url/api/keygen/get" "$token" "$panel_domain" > "$temp_file" 2>&1 &
-  spinner $! "Получение публичного ключа..."
+  spinner $! "Getting public key..."
   api_response=$(cat "$temp_file")
   rm -f "$temp_file"
 
   if [ -z "$api_response" ]; then
-    echo -e "${BOLD_RED}Ошибка: Не удалось получить публичный ключ.${NC}"
+    echo -e "${BOLD_RED}Error: Failed to get public key.${NC}"
     return 1
   fi
 
   local pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
   if [ -z "$pubkey" ]; then
-    echo -e "${BOLD_RED}Ошибка: Не удалось извлечь публичный ключ из ответа.${NC}"
+    echo -e "${BOLD_RED}Error: Failed to extract public key from response.${NC}"
     return 1
   fi
   
-  # Возвращаем публичный ключ
+  # Return public key
   echo "$pubkey"
 }
 
-# Функция проверки, находится ли IP в одном из CIDR-диапазонов (Cloudflare или любом другом, передаваемом в виде массива)
+# Function to check if IP is in any of the CIDR ranges (Cloudflare or any other passed as array)
 is_ip_in_cidrs() {
     local ip="$1"
     shift
     local cidrs=("$@")
 
-    # Вспомогательная функция перевода IP (формат x.x.x.x) в 32-битное число
+    # Helper function to convert IP (format x.x.x.x) to 32-bit number
     function ip2dec() {
         local a b c d
         IFS=. read -r a b c d <<<"$1"
         echo $(((a << 24) + (b << 16) + (c << 8) + d))
     }
 
-    # Функция проверки, лежит ли IP в CIDR
+    # Function to check if IP is in CIDR
     function in_cidr() {
         local ip_dec mask base_ip cidr_ip cidr_mask
         ip_dec=$(ip2dec "$1")
@@ -1035,7 +1034,7 @@ is_ip_in_cidrs() {
         fi
     }
 
-    # Проверяем IP по всем диапазонам, если подходит под хотя бы один, возвращаем 0
+    # Check IP against all ranges; if it matches at least one, return 0
     for range in "${cidrs[@]}"; do
         if in_cidr "$ip" "$range"; then
             return 0
@@ -1045,53 +1044,53 @@ is_ip_in_cidrs() {
     return 1
 }
 
-# Функция для проверки, указывает ли домен на текущий сервер
+# Function to check if the domain points to the current server
 check_domain_points_to_server() {
     local domain="$1"
-    local show_warning="${2:-true}"   # По умолчанию показывать предупреждение
-    local allow_cf_proxy="${3:-true}" # По умолчанию разрешать проксирование Cloudflare
+    local show_warning="${2:-true}"   # Show warning by default
+    local allow_cf_proxy="${3:-true}" # Allow Cloudflare proxying by default
 
-    # Получаем IP домена
+    # Get domain's IP
     local domain_ip=""
     domain_ip=$(dig +short A "$domain" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
 
-    # Получаем публичный IP текущего сервера
+    # Get public IP of the current server
     local server_ip=""
     server_ip=$(curl -s -4 ifconfig.me || curl -s -4 api.ipify.org || curl -s -4 ipinfo.io/ip)
 
-    # Если не смогли получить IP, выходим
+    # If unable to get IPs, exit
     if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
         if [ "$show_warning" = true ]; then
-            show_warning "Не удалось определить IP-адрес домена или сервера."
-            show_warning "Убедитесь, что домен $domain правильно настроен и указывает на сервер ($server_ip)."
+            show_warning "Failed to determine domain or server IP address."
+            show_warning "Make sure that the domain $domain is properly configured and points to the server ($server_ip)."
         fi
         return 1
     fi
 
-    # Загружаем актуальные Cloudflare диапазоны
+    # Load current Cloudflare ranges
     local cf_ranges
     cf_ranges=$(curl -s https://www.cloudflare.com/ips-v4) || true # если curl не сработал, переменная останется пустой
 
-    # Если смогли загрузить, превращаем в массив
+    # If loaded successfully, convert to array
     local cf_array=()
     if [ -n "$cf_ranges" ]; then
-        # Превращаем полученные строки в массив
+        # Convert received lines to array
         IFS=$'\n' read -r -d '' -a cf_array <<<"$cf_ranges"
     fi
 
-    # Проверяем, входит ли domain_ip в диапазоны Cloudflare
+    # Check if domain_ip is in Cloudflare ranges
     if [ ${#cf_array[@]} -gt 0 ] && is_ip_in_cidrs "$domain_ip" "${cf_array[@]}"; then
-        # IP Cloudflare
+        # IP is Cloudflare
         if [ "$allow_cf_proxy" = true ]; then
-            # Разрешено проксирование — всё ок
+            # Proxying allowed — all good
             return 0
         else
-            # Проксирование запрещено — предупреждаем
+            # Proxying not allowed — warn
             if [ "$show_warning" = true ]; then
                 echo ""
-                show_warning "Домен $domain указывает на IP Cloudflare ($domain_ip)."
-                show_warning "Отключите проксирование Cloudflare - недопустимо проксирование selfsteal домена"
-                if prompt_yes_no "Продолжить установку несмотря на неверную конфигурацию домена?" "$ORANGE"; then
+                show_warning "Domain $domain points to Cloudflare IP ($domain_ip)."
+                show_warning "Disable Cloudflare proxying - selfsteal domain proxying is not allowed."
+                if prompt_yes_no "Continue installation despite incorrect domain configuration?" "$ORANGE"; then
                     return 1
                 else
                     return 2
@@ -1100,13 +1099,13 @@ check_domain_points_to_server() {
             return 1
         fi
     else
-        # Если не Cloudflare, проверяем, совпадает ли IP домена с IP сервера
+        # If not Cloudflare, check if domain IP matches server IP
         if [ "$domain_ip" != "$server_ip" ]; then
             if [ "$show_warning" = true ]; then
                 echo ""
-                show_warning "Домен $domain указывает на IP-адрес $domain_ip, который отличается от IP-адреса сервера ($server_ip)."
-                show_warning "Для корректной работы необходимо, чтобы домен указывал на текущий сервер."
-                if prompt_yes_no "Продолжить установку несмотря на неверную конфигурацию домена?" "$ORANGE"; then
+                show_warning "Domain $domain points to IP address $domain_ip, which differs from the server IP ($server_ip)."
+                show_warning "For proper operation, the domain must point to the current server."
+                if prompt_yes_no "Continue installation despite incorrect domain configuration?" "$ORANGE"; then
                     return 1
                 else
                     return 2
@@ -1116,5 +1115,5 @@ check_domain_points_to_server() {
         fi
     fi
 
-    return 0 # Всё корректно
+    return 0 # All correct
 }

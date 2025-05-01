@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ===================================================================================
-#                              УСТАНОВКА ПАНЕЛИ REMNAWAVE
+#                              REMNAWAVE PANEL INSTALLATION
 # ===================================================================================
 
 install_panel_all_in_one() {
@@ -9,20 +9,20 @@ install_panel_all_in_one() {
 
     remove_previous_installation
 
-    # Установка общих зависимостей
+    # Install general dependencies
     install_dependencies
 
-    # Создаем базовую директорию для всего проекта
+    # Create the base directory for the entire project
     mkdir -p $REMNAWAVE_DIR/{panel,caddy}
 
-    # Переходим в директорию панели
+    # Go to the panel directory
     cd $REMNAWAVE_DIR/panel
 
-    # Генерация JWT секретов с помощью openssl
+    # Generate JWT secrets using openssl
     JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
     JWT_API_TOKENS_SECRET=$(openssl rand -hex 32 | tr -d '\n')
 
-    # Генерация безопасных учетных данных
+    # Generate secure credentials
     DB_USER="remnawave_$(openssl rand -hex 4 | tr -d '\n')"
     DB_PASSWORD=$(generate_secure_password 16)
     DB_NAME="remnawave_db"
@@ -30,36 +30,36 @@ install_panel_all_in_one() {
 
     curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
 
-    # Спрашиваем, нужна ли интеграция с Telegram
-    if prompt_yes_no "Хотите включить интеграцию с Telegram?"; then
+    # Ask if Telegram integration is needed
+    if prompt_yes_no "Do you want to enable Telegram integration?"; then
         IS_TELEGRAM_ENV_VALUE="true"
-        # Если интеграция с Telegram включена, запрашиваем параметры
-        TELEGRAM_BOT_TOKEN=$(prompt_input "Введите токен вашего Telegram бота: " "$ORANGE")
-        TELEGRAM_ADMIN_ID=$(prompt_input "Введите ID администратора Telegram: " "$ORANGE")
-        NODES_NOTIFY_CHAT_ID=$(prompt_input "Введите ID чата для уведомлений: " "$ORANGE")
+        # If Telegram integration is enabled, ask for parameters
+        TELEGRAM_BOT_TOKEN=$(prompt_input "Enter your Telegram bot token: " "$ORANGE")
+        TELEGRAM_ADMIN_ID=$(prompt_input "Enter the Telegram admin ID: " "$ORANGE")
+        NODES_NOTIFY_CHAT_ID=$(prompt_input "Enter the chat ID for notifications: " "$ORANGE")
     else
-        # Если интеграция с Telegram не включена, устанавливаем параметры в "change-me"
+        # If Telegram integration is not enabled, set parameters to "change-me"
         IS_TELEGRAM_ENV_VALUE="false"
-        show_warning "Пропуск интеграции с Telegram."
+        show_warning "Skipping Telegram integration."
         TELEGRAM_BOT_TOKEN="change-me"
         TELEGRAM_ADMIN_ID="change-me"
         NODES_NOTIFY_CHAT_ID="change-me"
     fi
 
-    # Запрашиваем основной домен для панели с валидацией
-    SCRIPT_PANEL_DOMAIN=$(prompt_domain "Введите основной домен для вашей панели, подписок и selfsteal (например, panel.example.com)")
+    # Ask for the main domain for the panel with validation
+    SCRIPT_PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel, subscriptions, and selfsteal (e.g., panel.example.com)")
     check_domain_points_to_server "$SCRIPT_PANEL_DOMAIN"
     domain_check_result=$?
     if [ $domain_check_result -eq 2 ]; then
-        # Пользователь решил прервать установку
+        # User decided to abort the installation
         return 1
     fi
     SCRIPT_SUB_DOMAIN="$SCRIPT_PANEL_DOMAIN"
-    # Запрос порта Selfsteal с валидацией и дефолтным значением 9443
-    SELF_STEAL_PORT=$(read_port "Введите порт для Caddy - не должен быть 443, (можно оставить по умолчанию)" "9443")
+    # Ask for Selfsteal port with validation and default value 9443
+    SELF_STEAL_PORT=$(read_port "Enter the port for Caddy - should not be 443 (you can leave the default)" "9443")
     echo ""
-    # Запрос порта API ноды с валидацией и дефолтным значением 2222
-    NODE_PORT=$(read_port "Введите порт API ноды (можно оставить по умолчанию)" "2222")
+    # Ask for API node port with validation and default value 2222
+    NODE_PORT=$(read_port "Enter the API node port (you can leave the default)" "2222")
     echo ""
 
     SUPERADMIN_USERNAME=$(generate_readable_login)
@@ -79,31 +79,31 @@ install_panel_all_in_one() {
         "POSTGRES_DB" "$DB_NAME" \
         "METRICS_PASS" "$METRICS_PASS"
 
-    # Генерация секретного ключа для защиты панели управления
+    # Generate a secret key to protect the admin panel
     PANEL_SECRET_KEY=$(openssl rand -hex 16)
 
-    # Создаем docker-compose.yml для панели
+    # Create docker-compose.yml for the panel
     curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
 
-    # Меняем образ на dev
+    # Change the image to dev
     sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
-    # Создаем Makefile
+    # Create Makefile
     create_makefile "$REMNAWAVE_DIR/panel"
 
     # ===================================================================================
-    # Установка Caddy для панели и подписок
+    # Install Caddy for the panel and subscriptions
     # ===================================================================================
 
     setup_caddy_all_in_one "$PANEL_SECRET_KEY" "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT"
 
-    # Запуск всех контейнеров
-    show_info "Запуск контейнеров..." "$BOLD_GREEN"
+    # Start all containers
+    show_info "Starting containers..." "$BOLD_GREEN"
 
-    # Запуск панели RemnaWave
+    # Start RemnaWave panel
     start_container "$REMNAWAVE_DIR/panel" "remnawave/backend" "Remnawave"
 
-    # Запуск Caddy
+    # Start Caddy
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
 
     wait_for_panel "127.0.0.1:3000"
@@ -113,29 +113,29 @@ install_panel_all_in_one() {
     if [ -n "$REG_TOKEN" ]; then
         vless_configuration_all_in_one "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$REG_TOKEN" "$SELF_STEAL_PORT" "$NODE_PORT"
     else
-        show_error "Не удалось зарегистрировать пользователя."
+        show_error "Failed to register user."
         exit 1
     fi
 
     setup_node_all_in_one "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT" "127.0.0.1:3000" "$REG_TOKEN" "$NODE_PORT"
-    # Запуск ноды
+    # Start the node
     start_container "$LOCAL_REMNANODE_DIR" "remnawave/node" "Remnawave Node"
 
-    # Проверяем, запущена ли нода
+    # Check if the node is running
     NODE_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "node" && echo "running" || echo "stopped")
 
     if [ "$NODE_STATUS" = "running" ]; then
-        echo -e "${BOLD_GREEN}✓ Нода Remnawave успешно установлена и запущена!${NC}"
+        echo -e "${BOLD_GREEN}✓ Remnawave node successfully installed and running!${NC}"
         echo ""
     fi
 
-    show_info "Первичный перезапуск панели"
-    # Перезапуск панели
+    show_info "Primary panel restart"
+    # Restart the panel
     restart_panel "true"
 
     wait_for_panel "127.0.0.1:3000"
 
-    # Сохранение учетных данных в файл
+    # Save credentials to a file
     CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
     echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
     echo "PANEL URL: https://$SCRIPT_PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
@@ -145,7 +145,7 @@ install_panel_all_in_one() {
     echo "" >>"$CREDENTIALS_FILE"
     echo "SECRET KEY: $PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
 
-    # Установка безопасных прав на файл с учетными данными
+    # Set secure permissions on the credentials file
     chmod 600 "$CREDENTIALS_FILE"
 
     display_panel_installation_complete_message
