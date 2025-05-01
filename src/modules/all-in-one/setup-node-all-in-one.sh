@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ===================================================================================
-#                              УСТАНОВКА НОДЫ REMNAWAVE
+#                              REMNAWAVE NODE INSTALLATION
 # ===================================================================================
 
 setup_node_all_in_one() {
@@ -13,7 +13,7 @@ setup_node_all_in_one() {
 
     mkdir -p "$LOCAL_REMNANODE_DIR" && cd "$LOCAL_REMNANODE_DIR"
     
-    # Создание docker-compose.yml
+    # Create docker-compose.yml
     cat > docker-compose.yml << EOL
 services:
   remnanode:
@@ -26,24 +26,24 @@ services:
     restart: always
 EOL
 
-    # Создание Makefile для ноды
+    # Create Makefile for the node
     create_makefile "$LOCAL_REMNANODE_DIR"
 
-    # Получение публичного ключа
+    # Get public key
     local temp_file=$(mktemp)
     make_api_request "GET" "http://$panel_url/api/keygen/get" "$token" "$SCRIPT_SUB_DOMAIN" > "$temp_file" 2>&1 &
-    spinner $! "Получение публичного ключа..."
+    spinner $! "Getting public key..."
     api_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$api_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Не удалось получить публичный ключ.${NC}"
+        echo -e "${BOLD_RED}Error: Failed to get public key.${NC}"
         return 1
     fi
 
     pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
     if [ -z "$pubkey" ]; then
-        echo -e "${BOLD_RED}Ошибка: Не удалось извлечь публичный ключ из ответа.${NC}"
+        echo -e "${BOLD_RED}Error: Failed to extract public key from response.${NC}"
         return 1
     fi
 
