@@ -22,6 +22,41 @@ REMNANODE_DIR="/opt/remnanode/node"
 SELFSTEAL_DIR="/opt/remnanode/selfsteal"
 LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node" # Local node directory (with panel)
 
+# ===================================================================================
+#                                API REQUEST FUNCTIONS
+# ===================================================================================
+
+# Function to perform API request with Bearer token
+# Parameters:
+#   $1 - method (GET, POST, PUT, DELETE)
+#   $2 - full URL
+#   $3 - Bearer token for authorization
+#   $4 - host domain (for Host header)
+#   $5 - request data in JSON format (optional, only for POST/PUT)
+make_api_request() {
+    local method=$1
+    local url=$2
+    local token=$3
+    local panel_domain=$4
+    local data=$5
+
+    local headers=(
+        -H "Content-Type: application/json"
+        -H "Host: $panel_domain"
+        -H "X-Forwarded-For: ${url#http://}"
+        -H "X-Forwarded-Proto: https"
+    )
+    if [ -n "$token" ]; then
+        headers+=(-H "Authorization: Bearer $token")
+    fi
+
+    if [ -n "$data" ]; then
+        curl -s -X "$method" "$url" "${headers[@]}" -d "$data"
+    else
+        curl -s -X "$method" "$url" "${headers[@]}"
+    fi
+}
+
 # Function to check and remove previous installation
 remove_previous_installation() {
     # Check for previous installation
@@ -174,14 +209,7 @@ register_user() {
     local reg_token=""
     local reg_error=""
 
-    local response=$(
-        curl -s "$api_url" \
-            -H "Host: $panel_domain" \
-            -H "X-Forwarded-For: $panel_url" \
-            -H "X-Forwarded-Proto: https" \
-            -H "Content-Type: application/json" \
-            --data-raw '{"username":"'"$username"'","password":"'"$password"'"}'
-    )
+    local response=$(make_api_request "POST" "$api_url" "" "$panel_domain" "{\"username\":\"$username\",\"password\":\"$password\"}")
 
     if [ -z "$response" ]; then
         reg_error="Empty server response"
@@ -390,39 +418,6 @@ restart:
 logs:
 	docker compose logs -f -t
 EOF
-}
-
-# ===================================================================================
-#                                API REQUEST FUNCTIONS
-# ===================================================================================
-
-# Function to perform API request with Bearer token
-# Parameters:
-#   $1 - method (GET, POST, PUT, DELETE)
-#   $2 - full URL
-#   $3 - Bearer token for authorization
-#   $4 - host domain (for Host header)
-#   $5 - request data in JSON format (optional, only for POST/PUT)
-make_api_request() {
-    local method=$1
-    local url=$2
-    local token=$3
-    local panel_domain=$4
-    local data=$5
-
-    local headers=(
-        -H "Authorization: Bearer $token"
-        -H "Content-Type: application/json"
-        -H "Host: $panel_domain"
-        -H "X-Forwarded-For: ${url#http://}"
-        -H "X-Forwarded-Proto: https"
-    )
-
-    if [ -n "$data" ]; then
-        curl -s -X "$method" "$url" "${headers[@]}" -d "$data"
-    else
-        curl -s -X "$method" "$url" "${headers[@]}"
-    fi
 }
 
 # ===================================================================================
@@ -711,9 +706,9 @@ generate_readable_login() {
 generate_vless_keys() {
     local temp_file=$(mktemp)
 
-    # Генерация ключей x25519 с помощью Docker
+    # Generate x25519 keys using Docker
     docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
-    spinner $! "Генерация ключей x25519..."
+    spinner $! "Generating x25519 keys..."
     keys=$(cat "$temp_file")
 
     local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
@@ -721,11 +716,11 @@ generate_vless_keys() {
     rm -f "$temp_file"
 
     if [ -z "$private_key" ] || [ -z "$public_key" ]; then
-        echo -e "${BOLD_RED}Ошибка: Не удалось сгенерировать ключи.${NC}"
+        echo -e "${BOLD_RED}Error: Failed to generate keys.${NC}"
         return 1
     fi
 
-    # Возвращаем ключи через echo
+    # Return keys via echo
     echo "$private_key:$public_key"
 }
 
@@ -830,20 +825,20 @@ update_xray_config() {
     local temp_file=$(mktemp)
     local new_config=$(cat "$config_file")
 
-    make_api_request "POST" "http://$panel_url/api/xray/update-config" "$token" "$panel_domain" "$new_config" >"$temp_file" 2>&1 &
-    spinner $! "Обновление конфигурации Xray..."
+    make_api_request "PUT" "http://$panel_url/api/xray" "$token" "$panel_domain" "$new_config" >"$temp_file" 2>&1 &
+    spinner $! "Updating Xray configuration..."
     local update_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$update_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при обновлении Xray конфига.${NC}"
+        echo -e "${BOLD_RED}Error: Empty response from server when updating Xray config.${NC}"
         return 1
     fi
 
     if echo "$update_response" | jq -e '.response.config' >/dev/null; then
         return 0
     else
-        echo -e "${BOLD_RED}Ошибка: Не удалось обновить конфигурацию Xray.${NC}"
+        echo -e "${BOLD_RED}Error: Failed to update Xray configuration.${NC}"
         return 1
     fi
 }
@@ -876,25 +871,25 @@ create_vless_node() {
 EOF
     )
 
-    make_api_request "POST" "http://$panel_url/api/nodes/create" "$token" "$panel_domain" "$new_node_data" >"$temp_file" 2>&1 &
-    spinner $! "Создание ноды..."
+    make_api_request "POST" "http://$panel_url/api/nodes" "$token" "$panel_domain" "$new_node_data" >"$temp_file" 2>&1 &
+    spinner $! "Creating node..."
     node_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$node_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании ноды.${NC}"
+        echo -e "${BOLD_RED}Error: Empty response from server when creating node.${NC}"
         return 1
     fi
 
     if echo "$node_response" | jq -e '.response.uuid' >/dev/null; then
         return 0
     else
-        echo -e "${BOLD_RED}Ошибка: Не удалось создать ноду, ответ:${NC}"
+        echo -e "${BOLD_RED}Error: Failed to create node, response:${NC}"
         echo
-        echo "Был направлен запрос с телом:"
+        echo "Request body was:"
         echo "$new_node_data"
         echo
-        echo "Ответ:"
+        echo "Response:"
         echo
         echo "$node_response"
         return 1
@@ -910,22 +905,22 @@ get_inbounds() {
     local temp_file=$(mktemp)
 
     make_api_request "GET" "http://$panel_url/api/inbounds" "$token" "$panel_domain" >"$temp_file" 2>&1 &
-    spinner $! "Получение списка inbounds..."
+    spinner $! "Getting list of inbounds..."
     inbounds_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$inbounds_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при получении inbounds.${NC}"
+        echo -e "${BOLD_RED}Error: Empty response from server when getting inbounds.${NC}"
         return 1
     fi
 
     local inbound_uuid=$(echo "$inbounds_response" | jq -r '.response[0].uuid')
     if [ -z "$inbound_uuid" ]; then
-        echo -e "${BOLD_RED}Ошибка: Не удалось извлечь UUID из ответа.${NC}"
+        echo -e "${BOLD_RED}Error: Failed to extract UUID from response.${NC}"
         return 1
     fi
 
-    # Возвращаем UUID
+    # Return UUID
     echo "$inbound_uuid"
 }
 
@@ -957,20 +952,20 @@ create_vless_host() {
 EOF
     )
 
-    make_api_request "POST" "http://$panel_url/api/hosts/create" "$token" "$panel_domain" "$host_data" >"$temp_file" 2>&1 &
-    spinner $! "Создание хоста для UUID: $inbound_uuid..."
+    make_api_request "POST" "http://$panel_url/api/hosts" "$token" "$panel_domain" "$host_data" >"$temp_file" 2>&1 &
+    spinner $! "Creating host for UUID: $inbound_uuid..."
     host_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$host_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании хоста.${NC}"
+        echo -e "${BOLD_RED}Error: Empty response from server when creating host.${NC}"
         return 1
     fi
 
     if echo "$host_response" | jq -e '.response.uuid' >/dev/null; then
         return 0
     else
-        echo -e "${BOLD_RED}Ошибка: Не удалось создать хост.${NC}"
+        echo -e "${BOLD_RED}Error: Failed to create host.${NC}"
         return 1
     fi
 }
@@ -983,23 +978,23 @@ get_public_key() {
 
     local temp_file=$(mktemp)
 
-    make_api_request "GET" "http://$panel_url/api/keygen/get" "$token" "$panel_domain" >"$temp_file" 2>&1 &
-    spinner $! "Получение публичного ключа..."
+    make_api_request "GET" "http://$panel_url/api/keygen" "$token" "$panel_domain" >"$temp_file" 2>&1 &
+    spinner $! "Getting public key..."
     api_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$api_response" ]; then
-        echo -e "${BOLD_RED}Ошибка: Не удалось получить публичный ключ.${NC}"
+        echo -e "${BOLD_RED}Error: Failed to get public key.${NC}"
         return 1
     fi
 
     local pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
     if [ -z "$pubkey" ]; then
-        echo -e "${BOLD_RED}Ошибка: Не удалось извлечь публичный ключ из ответа.${NC}"
+        echo -e "${BOLD_RED}Error: Failed to extract public key from response.${NC}"
         return 1
     fi
 
-    # Возвращаем публичный ключ
+    # Return public key
     echo "$pubkey"
 }
 
