@@ -31,7 +31,7 @@ EOL
 
     # Get public key
     local temp_file=$(mktemp)
-    make_api_request "GET" "http://$panel_url/api/keygen/get" "$token" "$SCRIPT_SUB_DOMAIN" > "$temp_file" 2>&1 &
+    make_api_request "GET" "http://$panel_url/api/keygen" "$token" "$SCRIPT_SUB_DOMAIN" > "$temp_file" 2>&1 &
     spinner $! "Getting public key..."
     api_response=$(cat "$temp_file")
     rm -f "$temp_file"

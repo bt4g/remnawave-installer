@@ -4,7 +4,6 @@ vless_configuration() {
   local panel_url="$1"
   local panel_domain="$2"
   local token="$3"
-  local api_url="http://${panel_url}/api/auth/register"
 
   # Request Selfsteal domain with validation
   SELF_STEAL_DOMAIN=$(read_domain "Enter Selfsteal domain, e.g. domain.example.com")
