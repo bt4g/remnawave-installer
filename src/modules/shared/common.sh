@@ -168,42 +168,6 @@ display_panel_installation_complete_message() {
     read -r
 }
 
-wait_for_panel() {
-    local panel_url="$1"
-    local max_wait=180
-    local temp_file=$(mktemp)
-
-    # Запускаем проверку доступности сервера в фоновом процессе
-    {
-        local start_time=$(date +%s)
-        local end_time=$((start_time + max_wait))
-
-        while [ $(date +%s) -lt $end_time ]; do
-            if curl -s --connect-timeout 1 "http://$panel_url/api/auth/status" >/dev/null; then
-                echo "success" >"$temp_file"
-                exit 0
-            fi
-            sleep 1
-        done
-        echo "timeout" >"$temp_file"
-        exit 1
-    } &
-    local check_pid=$!
-
-    spinner "$check_pid" "Waiting for panel initialization..."
-
-    if [ "$(cat "$temp_file")" = "success" ]; then
-        show_success "Panel is ready!"
-        rm -f "$temp_file"
-        return 0
-    else
-        show_warning "Maximum wait time exceeded ($max_wait seconds)."
-        show_info "Trying to continue registration anyway..."
-        rm -f "$temp_file"
-        return 1
-    fi
-}
-
 register_user() {
     local panel_url="$1"
     local panel_domain="$2"
@@ -213,21 +177,27 @@ register_user() {
 
     local reg_token=""
     local reg_error=""
+    local response=""
+    local max_wait=180
+    local start_time=$(date +%s)
+    local end_time=$((start_time + max_wait))
 
-    local response=$(make_api_request "POST" "$api_url" "" "$panel_domain" "{\"username\":\"$username\",\"password\":\"$password\"}")
-
-    if [ -z "$response" ]; then
-        reg_error="Empty server response"
-        return 1
-    elif [[ "$response" == *"accessToken"* ]]; then
-        # Successful registration
-        reg_token=$(echo "$response" | jq -r '.response.accessToken')
-        echo "$reg_token"
-        return 0
-    else
-        echo "$response"
-        return 1
-    fi
+    while [ $(date +%s) -lt $end_time ]; do
+        response=$(make_api_request "POST" "$api_url" "" "$panel_domain" "{\"username\":\"$username\",\"password\":\"$password\"}")
+        if [ -z "$response" ]; then
+            reg_error="Empty server response"
+        elif [[ "$response" == *"accessToken"* ]]; then
+            reg_token=$(echo "$response" | jq -r '.response.accessToken')
+            echo "$reg_token"
+            return 0
+        else
+            reg_error="$response"
+        fi
+        sleep 1
+    done
+    # Если не удалось зарегистрироваться за 180 секунд, вывести последнюю ошибку или ответ
+    echo "${reg_error:-Registration failed: unknown error}"
+    return 1
 }
 
 restart_panel() {

@@ -104,8 +104,6 @@ install_panel_all_in_one() {
     # Start Caddy
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
 
-    wait_for_panel "127.0.0.1:3000"
-
     REG_TOKEN=$(register_user "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$SUPERADMIN_USERNAME" "$SUPERADMIN_PASSWORD")
 
     if [ -n "$REG_TOKEN" ]; then
@@ -126,12 +124,6 @@ install_panel_all_in_one() {
         echo -e "${BOLD_GREEN}✓ Remnawave node successfully installed and running!${NC}"
         echo ""
     fi
-
-    show_info "Primary panel restart"
-    # Restart the panel
-    restart_panel "true"
-
-    wait_for_panel "127.0.0.1:3000"
 
     # Save credentials to a file
     CREDENTIALS_FILE="$REMNAWAVE_DIR/credentials.txt"

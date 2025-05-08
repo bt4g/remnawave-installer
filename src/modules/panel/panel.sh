@@ -129,8 +129,6 @@ install_panel() {
         start_container "$REMNAWAVE_DIR/subscription-page" "remnawave/subscription-page" "Subscription page"
     fi
 
-    wait_for_panel "127.0.0.1:3000"
-
     REG_TOKEN=$(register_user "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$SUPERADMIN_USERNAME" "$SUPERADMIN_PASSWORD")
 
     if [ -n "$REG_TOKEN" ]; then
