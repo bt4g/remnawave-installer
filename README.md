@@ -128,7 +128,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/
 
 ### Для варианта "Два сервера":
 
-- **Директория панели**: `/opt/remnawave/panel`
+- **Директория панели**: `/opt/remnawave`
 - **Директория Caddy**: `/opt/remnawave/caddy`
 - **Директория remnawave-subscription-page**: `/opt/remnawave/remnawave-subscription-page`
 
@@ -137,7 +137,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/
 
 ### Для варианта "Всё в одном":
 
-- **Директория панели**: `/opt/remnawave/panel`
+- **Директория панели**: `/opt/remnawave`
 - **Директория Caddy**: `/opt/remnawave/caddy`
 - **Директория ноды**: `/opt/remnawave/node`
 

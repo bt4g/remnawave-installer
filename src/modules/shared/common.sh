@@ -55,6 +55,11 @@ remove_previous_installation() {
                 spinner $! "Останавливаем контейнер ноды Remnawave"
             fi
             # Проверка наличия панели и её остановка
+            if [ -f "$REMNAWAVE_DIR/docker-compose.yml" ]; then
+                cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Останавливаем контейнеры панели Remnawave"
+            fi
+            # Проверка наличия панели и её остановка
             if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Останавливаем контейнеры панели Remnawave"
@@ -200,12 +205,12 @@ register_user() {
 restart_panel() {
     local no_wait=${1:-false} # Optional parameter to skip waiting for user input
     # Проверка существования директории панели
-    if [ ! -d /opt/remnawave/panel ]; then
-        show_error "Ошибка: директория панели не найдена по пути /opt/remnawave/panel!"
+    if [ ! -d /opt/remnawave ]; then
+        show_error "Ошибка: директория панели не найдена по пути /opt/remnawave!"
         show_error "Сначала установите панель Remnawave."
     else
         # Проверка наличия docker-compose.yml в директории панели
-        if [ ! -f /opt/remnawave/panel/docker-compose.yml ]; then
+        if [ ! -f /opt/remnawave/docker-compose.yml ]; then
             show_error "Ошибка: docker-compose.yml не найден в директории панели!"
             show_error "Возможно, установка панели повреждена или не завершена."
         else
@@ -224,11 +229,11 @@ restart_panel() {
             fi
 
             # Останавливаем панель
-            cd /opt/remnawave/panel && docker compose down >/dev/null 2>&1 &
+            cd /opt/remnawave && docker compose down >/dev/null 2>&1 &
             spinner $! "Перезапуск панели..."
 
             # Запускаем панель
-            cd /opt/remnawave/panel && docker compose up -d >/dev/null 2>&1 &
+            cd /opt/remnawave && docker compose up -d >/dev/null 2>&1 &
             spinner $! "Перезапуск панели..."
 
             # Запускаем страницу подписки, если она существует
@@ -710,37 +715,37 @@ generate_readable_login() {
 
 # Генерация ключей для VLESS Reality
 generate_vless_keys() {
-  local temp_file=$(mktemp)
-  
-  # Генерация ключей x25519 с помощью Docker
-  docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
-  spinner $! "Генерация ключей x25519..."
-  keys=$(cat "$temp_file")
-  
-  local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
-  local public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
-  rm -f "$temp_file"
+    local temp_file=$(mktemp)
 
-  if [ -z "$private_key" ] || [ -z "$public_key" ]; then
-    echo -e "${BOLD_RED}Ошибка: Не удалось сгенерировать ключи.${NC}"
-    return 1
-  fi
-  
-  # Возвращаем ключи через echo
-  echo "$private_key:$public_key"
+    # Генерация ключей x25519 с помощью Docker
+    docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
+    spinner $! "Генерация ключей x25519..."
+    keys=$(cat "$temp_file")
+
+    local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
+    local public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
+    rm -f "$temp_file"
+
+    if [ -z "$private_key" ] || [ -z "$public_key" ]; then
+        echo -e "${BOLD_RED}Ошибка: Не удалось сгенерировать ключи.${NC}"
+        return 1
+    fi
+
+    # Возвращаем ключи через echo
+    echo "$private_key:$public_key"
 }
 
 # Создание VLESS конфигурации Xray
 generate_vless_config() {
-  local config_file="$1"
-  local self_steal_domain="$2"
-  local self_steal_port="$3"
-  local private_key="$4"
-  local public_key="$5"
-  
-  local short_id=$(openssl rand -hex 8)
-  
-  cat >"$config_file" <<EOL
+    local config_file="$1"
+    local self_steal_domain="$2"
+    local self_steal_port="$3"
+    local private_key="$4"
+    local public_key="$5"
+
+    local short_id=$(openssl rand -hex 8)
+
+    cat >"$config_file" <<EOL
 {
   "log": {
     "loglevel": "debug"
@@ -823,45 +828,45 @@ EOL
 
 # Обновление конфигурации Xray
 update_xray_config() {
-  local panel_url="$1"
-  local token="$2"
-  local panel_domain="$3"
-  local config_file="$4"
-  
-  local temp_file=$(mktemp)
-  local new_config=$(cat "$config_file")
-  
-  make_api_request "POST" "http://$panel_url/api/xray/update-config" "$token" "$panel_domain" "$new_config" > "$temp_file" 2>&1 &
-  spinner $! "Обновление конфигурации Xray..."
-  local update_response=$(cat "$temp_file")
-  rm -f "$temp_file"
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    local config_file="$4"
 
-  if [ -z "$update_response" ]; then
-    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при обновлении Xray конфига.${NC}"
-    return 1
-  fi
+    local temp_file=$(mktemp)
+    local new_config=$(cat "$config_file")
 
-  if echo "$update_response" | jq -e '.response.config' >/dev/null; then
-    return 0
-  else
-    echo -e "${BOLD_RED}Ошибка: Не удалось обновить конфигурацию Xray.${NC}"
-    return 1
-  fi
+    make_api_request "POST" "http://$panel_url/api/xray/update-config" "$token" "$panel_domain" "$new_config" >"$temp_file" 2>&1 &
+    spinner $! "Обновление конфигурации Xray..."
+    local update_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+
+    if [ -z "$update_response" ]; then
+        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при обновлении Xray конфига.${NC}"
+        return 1
+    fi
+
+    if echo "$update_response" | jq -e '.response.config' >/dev/null; then
+        return 0
+    else
+        echo -e "${BOLD_RED}Ошибка: Не удалось обновить конфигурацию Xray.${NC}"
+        return 1
+    fi
 }
 
 # Создание ноды
 create_vless_node() {
-  local panel_url="$1"
-  local token="$2"
-  local panel_domain="$3"
-  local node_host="$4"
-  local node_port="$5"
-  
-  local node_name="VLESS-NODE"
-  local temp_file=$(mktemp)
-  
-  local new_node_data=$(
-    cat <<EOF
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    local node_host="$4"
+    local node_port="$5"
+
+    local node_name="VLESS-NODE"
+    local temp_file=$(mktemp)
+
+    local new_node_data=$(
+        cat <<EOF
 {
     "name": "$node_name",
     "address": "$node_host",
@@ -875,73 +880,73 @@ create_vless_node() {
     "consumptionMultiplier": 1.0
 }
 EOF
-  )
-  
-  make_api_request "POST" "http://$panel_url/api/nodes/create" "$token" "$panel_domain" "$new_node_data" > "$temp_file" 2>&1 &
-  spinner $! "Создание ноды..."
-  node_response=$(cat "$temp_file")
-  rm -f "$temp_file"
+    )
 
-  if [ -z "$node_response" ]; then
-    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании ноды.${NC}"
-    return 1
-  fi
+    make_api_request "POST" "http://$panel_url/api/nodes/create" "$token" "$panel_domain" "$new_node_data" >"$temp_file" 2>&1 &
+    spinner $! "Создание ноды..."
+    node_response=$(cat "$temp_file")
+    rm -f "$temp_file"
 
-  if echo "$node_response" | jq -e '.response.uuid' >/dev/null; then
-    return 0
-  else
-    echo -e "${BOLD_RED}Ошибка: Не удалось создать ноду, ответ:${NC}"
-    echo
-    echo "Был направлен запрос с телом:"
-    echo "$new_node_data"
-    echo
-    echo "Ответ:"
-    echo
-    echo "$node_response"
-    return 1
-  fi
+    if [ -z "$node_response" ]; then
+        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании ноды.${NC}"
+        return 1
+    fi
+
+    if echo "$node_response" | jq -e '.response.uuid' >/dev/null; then
+        return 0
+    else
+        echo -e "${BOLD_RED}Ошибка: Не удалось создать ноду, ответ:${NC}"
+        echo
+        echo "Был направлен запрос с телом:"
+        echo "$new_node_data"
+        echo
+        echo "Ответ:"
+        echo
+        echo "$node_response"
+        return 1
+    fi
 }
 
 # Получение списка inbounds
 get_inbounds() {
-  local panel_url="$1"
-  local token="$2"
-  local panel_domain="$3"
-  
-  local temp_file=$(mktemp)
-  
-  make_api_request "GET" "http://$panel_url/api/inbounds" "$token" "$panel_domain" > "$temp_file" 2>&1 &
-  spinner $! "Получение списка inbounds..."
-  inbounds_response=$(cat "$temp_file")
-  rm -f "$temp_file"
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
 
-  if [ -z "$inbounds_response" ]; then
-    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при получении inbounds.${NC}"
-    return 1
-  fi
+    local temp_file=$(mktemp)
 
-  local inbound_uuid=$(echo "$inbounds_response" | jq -r '.response[0].uuid')
-  if [ -z "$inbound_uuid" ]; then
-    echo -e "${BOLD_RED}Ошибка: Не удалось извлечь UUID из ответа.${NC}"
-    return 1
-  fi
-  
-  # Возвращаем UUID
-  echo "$inbound_uuid"
+    make_api_request "GET" "http://$panel_url/api/inbounds" "$token" "$panel_domain" >"$temp_file" 2>&1 &
+    spinner $! "Получение списка inbounds..."
+    inbounds_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+
+    if [ -z "$inbounds_response" ]; then
+        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при получении inbounds.${NC}"
+        return 1
+    fi
+
+    local inbound_uuid=$(echo "$inbounds_response" | jq -r '.response[0].uuid')
+    if [ -z "$inbound_uuid" ]; then
+        echo -e "${BOLD_RED}Ошибка: Не удалось извлечь UUID из ответа.${NC}"
+        return 1
+    fi
+
+    # Возвращаем UUID
+    echo "$inbound_uuid"
 }
 
 # Создание хоста
 create_vless_host() {
-  local panel_url="$1"
-  local token="$2"
-  local panel_domain="$3"
-  local inbound_uuid="$4"
-  local self_steal_domain="$5"
-  
-  local temp_file=$(mktemp)
-  
-  local host_data=$(
-    cat <<EOF
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    local inbound_uuid="$4"
+    local self_steal_domain="$5"
+
+    local temp_file=$(mktemp)
+
+    local host_data=$(
+        cat <<EOF
 {
     "inboundUuid": "$inbound_uuid",
     "remark": "VLESS TCP REALITY",
@@ -956,52 +961,52 @@ create_vless_host() {
     "isDisabled": false
 }
 EOF
-  )
+    )
 
-  make_api_request "POST" "http://$panel_url/api/hosts/create" "$token" "$panel_domain" "$host_data" > "$temp_file" 2>&1 &
-  spinner $! "Создание хоста для UUID: $inbound_uuid..."
-  host_response=$(cat "$temp_file")
-  rm -f "$temp_file"
+    make_api_request "POST" "http://$panel_url/api/hosts/create" "$token" "$panel_domain" "$host_data" >"$temp_file" 2>&1 &
+    spinner $! "Создание хоста для UUID: $inbound_uuid..."
+    host_response=$(cat "$temp_file")
+    rm -f "$temp_file"
 
-  if [ -z "$host_response" ]; then
-    echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании хоста.${NC}"
-    return 1
-  fi
+    if [ -z "$host_response" ]; then
+        echo -e "${BOLD_RED}Ошибка: Пустой ответ от сервера при создании хоста.${NC}"
+        return 1
+    fi
 
-  if echo "$host_response" | jq -e '.response.uuid' >/dev/null; then
-    return 0
-  else
-    echo -e "${BOLD_RED}Ошибка: Не удалось создать хост.${NC}"
-    return 1
-  fi
+    if echo "$host_response" | jq -e '.response.uuid' >/dev/null; then
+        return 0
+    else
+        echo -e "${BOLD_RED}Ошибка: Не удалось создать хост.${NC}"
+        return 1
+    fi
 }
 
 # Получение публичного ключа API
 get_public_key() {
-  local panel_url="$1"
-  local token="$2"
-  local panel_domain="$3"
-  
-  local temp_file=$(mktemp)
-  
-  make_api_request "GET" "http://$panel_url/api/keygen/get" "$token" "$panel_domain" > "$temp_file" 2>&1 &
-  spinner $! "Получение публичного ключа..."
-  api_response=$(cat "$temp_file")
-  rm -f "$temp_file"
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
 
-  if [ -z "$api_response" ]; then
-    echo -e "${BOLD_RED}Ошибка: Не удалось получить публичный ключ.${NC}"
-    return 1
-  fi
+    local temp_file=$(mktemp)
 
-  local pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
-  if [ -z "$pubkey" ]; then
-    echo -e "${BOLD_RED}Ошибка: Не удалось извлечь публичный ключ из ответа.${NC}"
-    return 1
-  fi
-  
-  # Возвращаем публичный ключ
-  echo "$pubkey"
+    make_api_request "GET" "http://$panel_url/api/keygen/get" "$token" "$panel_domain" >"$temp_file" 2>&1 &
+    spinner $! "Получение публичного ключа..."
+    api_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+
+    if [ -z "$api_response" ]; then
+        echo -e "${BOLD_RED}Ошибка: Не удалось получить публичный ключ.${NC}"
+        return 1
+    fi
+
+    local pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
+    if [ -z "$pubkey" ]; then
+        echo -e "${BOLD_RED}Ошибка: Не удалось извлечь публичный ключ из ответа.${NC}"
+        return 1
+    fi
+
+    # Возвращаем публичный ключ
+    echo "$pubkey"
 }
 
 # Функция проверки, находится ли IP в одном из CIDR-диапазонов (Cloudflare или любом другом, передаваемом в виде массива)

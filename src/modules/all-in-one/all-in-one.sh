@@ -12,11 +12,9 @@ install_panel_all_in_one() {
     # Установка общих зависимостей
     install_dependencies
 
-    # Создаем базовую директорию для всего проекта
-    mkdir -p $REMNAWAVE_DIR/{panel,caddy}
+    mkdir -p $REMNAWAVE_DIR/caddy
 
-    # Переходим в директорию панели
-    cd $REMNAWAVE_DIR/panel
+    cd $REMNAWAVE_DIR
 
     # Генерация JWT секретов с помощью openssl
     JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
@@ -89,7 +87,7 @@ install_panel_all_in_one() {
     # sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
     # Создаем Makefile
-    create_makefile "$REMNAWAVE_DIR/panel"
+    create_makefile "$REMNAWAVE_DIR"
 
     # ===================================================================================
     # Установка Caddy для панели и подписок
@@ -101,7 +99,7 @@ install_panel_all_in_one() {
     show_info "Запуск контейнеров..." "$BOLD_GREEN"
 
     # Запуск панели RemnaWave
-    start_container "$REMNAWAVE_DIR/panel" "remnawave/backend" "Remnawave"
+    start_container "$REMNAWAVE_DIR" "remnawave/backend" "Remnawave"
 
     # Запуск Caddy
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
@@ -136,7 +134,7 @@ install_panel_all_in_one() {
     wait_for_panel "127.0.0.1:3000"
 
     # Сохранение учетных данных в файл
-    CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
+    CREDENTIALS_FILE="$REMNAWAVE_DIR/credentials.txt"
     echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
     echo "PANEL URL: https://$SCRIPT_PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
     echo "" >>"$CREDENTIALS_FILE"
