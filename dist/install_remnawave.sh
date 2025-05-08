@@ -1938,7 +1938,7 @@ install_panel() {
     DB_NAME="remnawave_db"
     METRICS_PASS=$(generate_secure_password 16)
 
-    curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
+    curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/.env.sample
 
     # Спрашиваем, нужна ли интеграция с Telegram
     if prompt_yes_no "Хотите включить интеграцию с Telegram?"; then
@@ -2580,7 +2580,7 @@ install_panel_all_in_one() {
     DB_NAME="remnawave_db"
     METRICS_PASS=$(generate_secure_password 16)
 
-    curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
+    curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/.env.sample
 
     # Спрашиваем, нужна ли интеграция с Telegram
     if prompt_yes_no "Хотите включить интеграцию с Telegram?"; then
