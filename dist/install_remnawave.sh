@@ -74,6 +74,10 @@ remove_previous_installation() {
                 cd $LOCAL_REMNANODE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Stopping Remnawave node container"
             fi
+            if [ -f "$REMNAWAVE_DIR/docker-compose.yml" ]; then
+                cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Stopping Remnawave panel containers"
+            fi
             if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Stopping Remnawave panel containers"
@@ -204,11 +208,11 @@ register_user() {
 
 restart_panel() {
     local no_wait=${1:-false} # Optional parameter to skip waiting for user input
-    if [ ! -d /opt/remnawave/panel ]; then
-        show_error "Error: panel directory not found at /opt/remnawave/panel!"
+    if [ ! -d /opt/remnawave ]; then
+        show_error "Error: panel directory not found at /opt/remnawave!"
         show_error "Please install Remnawave panel first."
     else
-        if [ ! -f /opt/remnawave/panel/docker-compose.yml ]; then
+        if [ ! -f /opt/remnawave/docker-compose.yml ]; then
             show_error "Error: docker-compose.yml not found in panel directory!"
             show_error "Panel installation may be corrupted or incomplete."
         else
@@ -223,10 +227,10 @@ restart_panel() {
                 spinner $! "Stopping remnawave-subscription-page container"
             fi
 
-            cd /opt/remnawave/panel && docker compose down >/dev/null 2>&1 &
+            cd /opt/remnawave && docker compose down >/dev/null 2>&1 &
             spinner $! "Restarting panel..."
 
-            cd /opt/remnawave/panel && docker compose up -d >/dev/null 2>&1 &
+            cd /opt/remnawave && docker compose up -d >/dev/null 2>&1 &
             spinner $! "Restarting panel..."
 
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
@@ -1688,7 +1692,7 @@ install_panel() {
 
     mkdir -p $REMNAWAVE_DIR/{panel,caddy}
 
-    cd $REMNAWAVE_DIR/panel
+    cd $REMNAWAVE_DIR
 
     JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
     JWT_API_TOKENS_SECRET=$(openssl rand -hex 32 | tr -d '\n')
@@ -1756,7 +1760,7 @@ install_panel() {
 
     sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
-    create_makefile "$REMNAWAVE_DIR/panel"
+    create_makefile "$REMNAWAVE_DIR"
 
 
     if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
@@ -1768,7 +1772,7 @@ install_panel() {
 
     show_info "Starting containers..." "$BOLD_GREEN"
 
-    start_container "$REMNAWAVE_DIR/panel" "remnawave/backend" "Remnawave"
+    start_container "$REMNAWAVE_DIR" "remnawave/backend" "Remnawave"
 
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
 
@@ -1786,7 +1790,7 @@ install_panel() {
         show_error "Failed to register user."
     fi
 
-    CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
+    CREDENTIALS_FILE="$REMNAWAVE_DIR/credentials.txt"
     echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
     echo "PANEL URL: https://$SCRIPT_PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
     echo "" >>"$CREDENTIALS_FILE"
@@ -2243,9 +2247,9 @@ install_panel_all_in_one() {
 
     install_dependencies
 
-    mkdir -p $REMNAWAVE_DIR/{panel,caddy}
+    mkdir -p $REMNAWAVE_DIR/caddy
 
-    cd $REMNAWAVE_DIR/panel
+    cd $REMNAWAVE_DIR
 
     JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
     JWT_API_TOKENS_SECRET=$(openssl rand -hex 32 | tr -d '\n')
@@ -2305,14 +2309,14 @@ install_panel_all_in_one() {
 
     sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
-    create_makefile "$REMNAWAVE_DIR/panel"
+    create_makefile "$REMNAWAVE_DIR"
 
 
     setup_caddy_all_in_one "$PANEL_SECRET_KEY" "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT"
 
     show_info "Starting containers..." "$BOLD_GREEN"
 
-    start_container "$REMNAWAVE_DIR/panel" "remnawave/backend" "Remnawave"
+    start_container "$REMNAWAVE_DIR" "remnawave/backend" "Remnawave"
 
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
 
@@ -2342,7 +2346,7 @@ install_panel_all_in_one() {
 
     wait_for_panel "127.0.0.1:3000"
 
-    CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
+    CREDENTIALS_FILE="$REMNAWAVE_DIR/credentials.txt"
     echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
     echo "PANEL URL: https://$SCRIPT_PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
     echo "" >>"$CREDENTIALS_FILE"

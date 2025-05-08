@@ -90,6 +90,11 @@ remove_previous_installation() {
                 spinner $! "Stopping Remnawave panel containers"
             fi
             # Check for panel and stop it
+            if [ -f "$REMNAWAVE_DIR/docker-compose.yml" ]; then
+                cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Stopping Remnawave panel containers"
+            fi
+            # Check for panel and stop it
             if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Stopping Remnawave panel containers"
