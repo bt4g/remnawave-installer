@@ -90,6 +90,11 @@ remove_previous_installation() {
                 spinner $! "Stopping Remnawave node container"
             fi
             # Check for panel and stop it
+            if [ -f "$REMNAWAVE_DIR/docker-compose.yml" ]; then
+                cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
+                spinner $! "Stopping Remnawave panel containers"
+            fi
+            # Check for panel and stop it
             if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
                 cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
                 spinner $! "Stopping Remnawave panel containers"
@@ -228,12 +233,12 @@ register_user() {
 restart_panel() {
     local no_wait=${1:-false} # Optional parameter to skip waiting for user input
     # Check for panel directory
-    if [ ! -d /opt/remnawave/panel ]; then
-        show_error "Error: panel directory not found at /opt/remnawave/panel!"
+    if [ ! -d /opt/remnawave ]; then
+        show_error "Error: panel directory not found at /opt/remnawave!"
         show_error "Please install Remnawave panel first."
     else
         # Check for docker-compose.yml in panel directory
-        if [ ! -f /opt/remnawave/panel/docker-compose.yml ]; then
+        if [ ! -f /opt/remnawave/docker-compose.yml ]; then
             show_error "Error: docker-compose.yml not found in panel directory!"
             show_error "Panel installation may be corrupted or incomplete."
         else
@@ -252,11 +257,11 @@ restart_panel() {
             fi
 
             # Stop panel
-            cd /opt/remnawave/panel && docker compose down >/dev/null 2>&1 &
+            cd /opt/remnawave && docker compose down >/dev/null 2>&1 &
             spinner $! "Restarting panel..."
 
             # Start panel
-            cd /opt/remnawave/panel && docker compose up -d >/dev/null 2>&1 &
+            cd /opt/remnawave && docker compose up -d >/dev/null 2>&1 &
             spinner $! "Restarting panel..."
 
             # Start subscription page if it exists

@@ -6,7 +6,7 @@ vless_configuration_all_in_one() {
   local token="$3"
   local SELF_STEAL_PORT="$4"
   local NODE_PORT="$5"
-  local config_file="$REMNAWAVE_DIR/panel/config.json"
+  local config_file="$REMNAWAVE_DIR/config.json"
 
   # In all-in-one mode, we use the local host IP for the node
   NODE_HOST="172.17.0.1"

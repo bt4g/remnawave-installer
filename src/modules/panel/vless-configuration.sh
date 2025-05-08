@@ -20,7 +20,7 @@ vless_configuration() {
   # Request node API port with validation and default value
   NODE_PORT=$(read_port "Enter node API port (default can be used)" "2222" true)
   
-  local config_file="$REMNAWAVE_DIR/panel/config.json"
+  local config_file="$REMNAWAVE_DIR/config.json"
   
   # Generate x25519 keys
   local keys_result=$(generate_vless_keys)

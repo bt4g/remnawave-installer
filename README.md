@@ -130,7 +130,7 @@ After installation, you can manage services using the `make` command in the corr
 
 ### For the "Two servers" option:
 
-- **Panel directory**: `/opt/remnawave/panel`
+- **Panel directory**: `/opt/remnawave`
 - **Caddy directory**: `/opt/remnawave/caddy`
 - **remnawave-subscription-page directory**: `/opt/remnawave/remnawave-subscription-page`
 
@@ -139,7 +139,7 @@ After installation, you can manage services using the `make` command in the corr
 
 ### For the "All-in-one" option:
 
-- **Panel directory**: `/opt/remnawave/panel`
+- **Panel directory**: `/opt/remnawave`
 - **Caddy directory**: `/opt/remnawave/caddy`
 - **Node directory**: `/opt/remnawave/node`
 

@@ -16,7 +16,7 @@ install_panel() {
     mkdir -p $REMNAWAVE_DIR/{panel,caddy}
 
     # Go to the panel directory
-    cd $REMNAWAVE_DIR/panel
+    cd $REMNAWAVE_DIR
 
     # Generate JWT secrets using openssl
     JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
@@ -98,7 +98,7 @@ install_panel() {
     sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
     # Create Makefile
-    create_makefile "$REMNAWAVE_DIR/panel"
+    create_makefile "$REMNAWAVE_DIR"
 
     # ===================================================================================
     # Install remnawave-subscription-page
@@ -119,7 +119,7 @@ install_panel() {
     show_info "Starting containers..." "$BOLD_GREEN"
 
     # Start RemnaWave panel
-    start_container "$REMNAWAVE_DIR/panel" "remnawave/backend" "Remnawave"
+    start_container "$REMNAWAVE_DIR" "remnawave/backend" "Remnawave"
 
     # Start Caddy
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
@@ -140,7 +140,7 @@ install_panel() {
     fi
 
     # Save credentials to file
-    CREDENTIALS_FILE="$REMNAWAVE_DIR/panel/credentials.txt"
+    CREDENTIALS_FILE="$REMNAWAVE_DIR/credentials.txt"
     echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
     echo "PANEL URL: https://$SCRIPT_PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
     echo "" >>"$CREDENTIALS_FILE"
