@@ -156,7 +156,7 @@ wait_for_panel() {
         local end_time=$((start_time + max_wait))
 
         while [ $(date +%s) -lt $end_time ]; do
-            if curl -s --connect-timeout 1 "http://$panel_url/api/auth/register" >/dev/null; then
+            if curl -s --connect-timeout 1 "http://$panel_url/api/auth/status" >/dev/null; then
                 echo "success" >"$temp_file"
                 exit 0
             fi
