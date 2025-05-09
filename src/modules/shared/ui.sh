@@ -173,14 +173,6 @@ show_warning() {
 
 show_info() {
     local message="$1"
-    local blue_text="$2"
-    local output_fd="${3:-1}" # Default to stdout (1)
-    echo -e "${BOLD_WHITE}${message} ${CYAN}${blue_text}${NC}" >&$output_fd
-    echo "" >&$output_fd
-}
-
-show_info_e() {
-    local message="$1"
     local color="${2:-$ORANGE}"
     local output_fd="${3:-2}" # Default to stderr (2)
     echo -e "${color}${message}${NC}" >&$output_fd

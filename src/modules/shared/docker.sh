@@ -121,17 +121,14 @@ restart_panel() {
     fi
 }
 
-# Start container with proper status checking
 start_container() {
     local directory="$1"      # Directory with docker-compose.yml
     local container_name="$2" # Container name to check in docker ps
     local service_name="$3"   # Service name for messages
     local wait_time=${4:-1}   # Wait time in seconds
 
-    # Change to the required directory
     cd "$directory"
 
-    # Run the whole process in the background using a subshell
     (
         docker compose up -d >/dev/null 2>&1
         sleep $wait_time
@@ -139,22 +136,19 @@ start_container() {
 
     local bg_pid=$!
 
-    # Show spinner for the entire startup and wait process
     spinner $bg_pid "Starting container ${service_name}..."
 
-    # Check container status
     if ! docker ps | grep -q "$container_name"; then
         echo -e "${BOLD_RED}Container $service_name did not start. Check the configuration.${NC}"
         echo -e "${ORANGE}You can check logs later using 'make logs' in directory $directory.${NC}"
         return 1
     else
-        # echo -e "${BOLD_GREEN}$service_name started successfully.${NC}"
-        # echo ""
+        echo -e "${BOLD_GREEN}$service_name started successfully.${NC}"
+        echo ""
         return 0
     fi
 }
 
-# Create a common Makefile for managing services
 create_makefile() {
     local directory="$1"
     cat >"$directory/Makefile" <<'EOF'

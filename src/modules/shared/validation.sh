@@ -148,14 +148,14 @@ find_available_port() {
     # Try sequentially until we find an available one
     while true; do
         if is_port_available "$port"; then
-            show_info_e "Port $port is available."
+            show_info "Port $port is available."
             echo "$port"
             return 0
         fi
         ((port++))
         # Limit to 65535 just in case
         if [ "$port" -gt 65535 ]; then
-            show_info_e "Failed to find an available port!"
+            show_info "Failed to find an available port!"
             return 1
         fi
     done
