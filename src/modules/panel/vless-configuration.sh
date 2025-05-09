@@ -5,11 +5,6 @@ vless_configuration() {
   local panel_domain="$2"
   local token="$3"
 
-  SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain, e.g. domain.example.com" "$ORANGE" true false)
-  SELF_STEAL_PORT=$(read_port "Enter Selfsteal port (default can be used)" "9443" true)
-  NODE_HOST=$(simple_read_domain_or_ip "Enter the IP address or domain of the node server (if different from Selfsteal domain)" "$SELF_STEAL_DOMAIN")
-  NODE_PORT=$(read_port "Enter node API port (default can be used)" "2222" true)
-
   local config_file="$REMNAWAVE_DIR/config.json"
 
   local keys_result=$(generate_vless_keys)
