@@ -180,14 +180,6 @@ show_warning() {
 
 show_info() {
     local message="$1"
-    local blue_text="$2"
-    local output_fd="${3:-1}" # Default to stdout (1)
-    echo -e "${BOLD_WHITE}${message} ${CYAN}${blue_text}${NC}" >&$output_fd
-    echo "" >&$output_fd
-}
-
-show_info_e() {
-    local message="$1"
     local color="${2:-$ORANGE}"
     local output_fd="${3:-2}" # Default to stderr (2)
     echo -e "${color}${message}${NC}" >&$output_fd
@@ -605,13 +597,13 @@ find_available_port() {
 
     while true; do
         if is_port_available "$port"; then
-            show_info_e "Port $port is available."
+            show_info "Port $port is available."
             echo "$port"
             return 0
         fi
         ((port++))
         if [ "$port" -gt 65535 ]; then
-            show_info_e "Failed to find an available port!"
+            show_info "Failed to find an available port!"
             return 1
         fi
     done
@@ -955,6 +947,8 @@ start_container() {
         echo -e "${ORANGE}You can check logs later using 'make logs' in directory $directory.${NC}"
         return 1
     else
+        echo -e "${BOLD_GREEN}$service_name started successfully.${NC}"
+        echo ""
         return 0
     fi
 }
@@ -1376,13 +1370,14 @@ check_and_install_dependency() {
 
 install_dependencies() {
     show_info "Checking dependencies..."
+
+    (sudo apt-get update >/dev/null 2>&1) &
+    spinner $! "Updating package lists"
+
     if ! command -v lsb_release &>/dev/null; then
-        sudo apt-get update >/dev/null 2>&1
-        sudo apt-get install -y lsb-release >/dev/null 2>&1
+        (sudo apt-get install -y lsb-release >/dev/null 2>&1) &
+        spinner $! "Installing lsb-release"
     fi
-
-
-    sudo apt-get update >/dev/null 2>&1
 
     check_and_install_dependency "curl" "jq" "make" "dnsutils" || {
         show_error "Error: Not all required dependencies were installed."
@@ -1392,18 +1387,23 @@ install_dependencies() {
     if command -v docker &>/dev/null && docker --version &>/dev/null; then
         return 0
     else
-        sudo apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc >/dev/null 2>&1
+        (sudo apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc >/dev/null 2>&1) &
+        spinner $! "Removing old Docker versions"
+
         show_info "Installing Docker and other required packages..."
 
-        sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common >/dev/null 2>&1
+        (sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common >/dev/null 2>&1) &
+        spinner $! "Installing Docker prerequisites"
 
         sudo mkdir -p /etc/apt/keyrings
 
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg 2>/dev/null ||
+        (curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg 2>/dev/null) &
+        spinner $! "Adding Docker GPG key" ||
             {
                 sudo rm -f /etc/apt/keyrings/docker.gpg
-                curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
-                    sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null
+                (curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
+                    sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null) &
+                spinner $! "Retrying Docker GPG key installation"
             }
 
         sudo chmod a+r /etc/apt/keyrings/docker.gpg
@@ -1423,9 +1423,11 @@ install_dependencies() {
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] $REPO_URL $CODENAME stable" |
             sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 
-        sudo apt-get update >/dev/null 2>&1
+        (sudo apt-get update >/dev/null 2>&1) &
+        spinner $! "Updating package index"
 
-        sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1
+        (sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1) &
+        spinner $! "Installing Docker packages"
 
         if ! getent group docker >/dev/null; then
             show_info "Creating docker group..."
