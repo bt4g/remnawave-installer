@@ -1198,34 +1198,33 @@ EOF
 
 
 generate_vless_keys() {
-    local temp_file=$(mktemp)
+  local temp_file=$(mktemp)
 
-    docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
-    spinner $! "Generating x25519 keys..."
-    keys=$(cat "$temp_file")
+  docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
+  spinner $! "Generating x25519 keys..."
+  keys=$(cat "$temp_file")
 
-    local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
-    local public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
-    rm -f "$temp_file"
+  local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
+  local public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
+  rm -f "$temp_file"
 
-    if [ -z "$private_key" ] || [ -z "$public_key" ]; then
-        echo -e "${BOLD_RED}Error: Failed to generate keys.${NC}"
-        return 1
-    fi
+  if [ -z "$private_key" ] || [ -z "$public_key" ]; then
+    echo -e "${BOLD_RED}Error: Failed to generate keys.${NC}"
+    return 1
+  fi
 
-    echo "$private_key:$public_key"
+  echo "$private_key:$public_key"
 }
 
 generate_vless_config() {
-    local config_file="$1"
-    local self_steal_domain="$2"
-    local self_steal_port="$3"
-    local private_key="$4"
-    local public_key="$5"
+  local config_file="$1"
+  local self_steal_domain="$2"
+  local self_steal_port="$3"
+  local private_key="$4"
 
-    local short_id=$(openssl rand -hex 8)
+  local short_id=$(openssl rand -hex 8)
 
-    cat >"$config_file" <<EOL
+  cat >"$config_file" <<EOL
 {
   "log": {
     "loglevel": "debug"
@@ -1258,7 +1257,6 @@ generate_vless_config() {
           "shortIds": [
             "$short_id"
           ],
-          "publicKey": "$public_key",
           "privateKey": "$private_key",
           "serverNames": [
               "$self_steal_domain"
@@ -1307,30 +1305,30 @@ EOL
 }
 
 update_xray_config() {
-    local panel_url="$1"
-    local token="$2"
-    local panel_domain="$3"
-    local config_file="$4"
+  local panel_url="$1"
+  local token="$2"
+  local panel_domain="$3"
+  local config_file="$4"
 
-    local temp_file=$(mktemp)
-    local new_config=$(cat "$config_file")
+  local temp_file=$(mktemp)
+  local new_config=$(cat "$config_file")
 
-    make_api_request "PUT" "http://$panel_url/api/xray" "$token" "$panel_domain" "$new_config" >"$temp_file" 2>&1 &
-    spinner $! "Updating Xray configuration..."
-    local update_response=$(cat "$temp_file")
-    rm -f "$temp_file"
+  make_api_request "PUT" "http://$panel_url/api/xray" "$token" "$panel_domain" "$new_config" >"$temp_file" 2>&1 &
+  spinner $! "Updating Xray configuration..."
+  local update_response=$(cat "$temp_file")
+  rm -f "$temp_file"
 
-    if [ -z "$update_response" ]; then
-        echo -e "${BOLD_RED}Error: Empty response from server when updating Xray config.${NC}"
-        return 1
-    fi
+  if [ -z "$update_response" ]; then
+    echo -e "${BOLD_RED}Error: Empty response from server when updating Xray config.${NC}"
+    return 1
+  fi
 
-    if echo "$update_response" | jq -e '.response.config' >/dev/null; then
-        return 0
-    else
-        echo -e "${BOLD_RED}Error: Failed to update Xray configuration.${NC}"
-        return 1
-    fi
+  if echo "$update_response" | jq -e '.response.config' >/dev/null; then
+    return 0
+  else
+    echo -e "${BOLD_RED}Error: Failed to update Xray configuration.${NC}"
+    return 1
+  fi
 }
 
 # Including module: tools.sh
@@ -1650,9 +1648,8 @@ vless_configuration() {
   fi
 
   local private_key=$(echo "$keys_result" | cut -d':' -f1)
-  local public_key=$(echo "$keys_result" | cut -d':' -f2)
 
-  generate_vless_config "$config_file" "$SELF_STEAL_DOMAIN" "$SELF_STEAL_PORT" "$private_key" "$public_key"
+  generate_vless_config "$config_file" "$SELF_STEAL_DOMAIN" "$SELF_STEAL_PORT" "$private_key"
 
   if ! update_xray_config "$panel_url" "$token" "$panel_domain" "$config_file"; then
     return 1
@@ -2199,9 +2196,8 @@ vless_configuration_all_in_one() {
   fi
 
   local private_key=$(echo "$keys_result" | cut -d':' -f1)
-  local public_key=$(echo "$keys_result" | cut -d':' -f2)
 
-  generate_vless_config "$config_file" "$panel_domain" "$SELF_STEAL_PORT" "$private_key" "$public_key"
+  generate_vless_config "$config_file" "$panel_domain" "$SELF_STEAL_PORT" "$private_key"
 
   if ! update_xray_config "$panel_url" "$token" "$panel_domain" "$config_file"; then
     return 1

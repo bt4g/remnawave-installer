@@ -18,9 +18,8 @@ vless_configuration() {
   fi
 
   local private_key=$(echo "$keys_result" | cut -d':' -f1)
-  local public_key=$(echo "$keys_result" | cut -d':' -f2)
 
-  generate_vless_config "$config_file" "$SELF_STEAL_DOMAIN" "$SELF_STEAL_PORT" "$private_key" "$public_key"
+  generate_vless_config "$config_file" "$SELF_STEAL_DOMAIN" "$SELF_STEAL_PORT" "$private_key"
 
   if ! update_xray_config "$panel_url" "$token" "$panel_domain" "$config_file"; then
     return 1
