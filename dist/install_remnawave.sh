@@ -1438,8 +1438,10 @@ install_dependencies() {
 
         if command -v docker &>/dev/null; then
             echo -e "${GREEN}Docker installed successfully: $(docker --version)${NC}"
+            echo ""
         else
             echo -e "${RED}Docker installation failed${NC}"
+            echo ""
             exit 1
         fi
     fi
@@ -1669,9 +1671,9 @@ vless_configuration() {
 install_panel() {
     clear_screen
 
-    remove_previous_installation
-
     install_dependencies
+
+    remove_previous_installation
 
     mkdir -p $REMNAWAVE_DIR/{panel,caddy}
 
@@ -1887,6 +1889,8 @@ EOF
 setup_node() {
     clear
 
+    install_dependencies
+
     if [ -d "$REMNANODE_ROOT_DIR" ]; then
         show_warning "Previous Remnawave Node installation detected."
         if prompt_yes_no "To continue, the previous installation must be removed. Do you confirm removal?" "$ORANGE"; then
@@ -1908,8 +1912,6 @@ setup_node() {
             return 0
         fi
     fi
-
-    install_dependencies
 
     mkdir -p $REMNANODE_DIR && cd $REMNANODE_DIR
     cat >docker-compose.yml <<EOL
@@ -2207,9 +2209,9 @@ vless_configuration_all_in_one() {
 install_panel_all_in_one() {
     clear_screen
 
-    remove_previous_installation
-
     install_dependencies
+
+    remove_previous_installation
 
     mkdir -p $REMNAWAVE_DIR/caddy
 

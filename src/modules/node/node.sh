@@ -5,6 +5,9 @@
 setup_node() {
     clear
 
+    # Install common dependencies
+    install_dependencies
+
     # Check for previous installation
     if [ -d "$REMNANODE_ROOT_DIR" ]; then
         show_warning "Previous Remnawave Node installation detected."
@@ -30,9 +33,6 @@ setup_node() {
             return 0
         fi
     fi
-
-    # Install common dependencies
-    install_dependencies
 
     mkdir -p $REMNANODE_DIR && cd $REMNANODE_DIR
     # Create docker-compose.yml

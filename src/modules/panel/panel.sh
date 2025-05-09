@@ -7,10 +7,10 @@
 install_panel() {
     clear_screen
 
-    remove_previous_installation
-
     # Install common dependencies
     install_dependencies
+
+    remove_previous_installation
 
     # Create base directory for the whole project
     mkdir -p $REMNAWAVE_DIR/{panel,caddy}
