@@ -10,6 +10,12 @@ TARGET = install_remnawave.sh
 # List of all modules in the order of inclusion
 MODULES = $(MODULES_DIR)/shared/common.sh \
           $(MODULES_DIR)/shared/ui.sh \
+          $(MODULES_DIR)/shared/utils.sh \
+          $(MODULES_DIR)/shared/security.sh \
+          $(MODULES_DIR)/shared/validation.sh \
+          $(MODULES_DIR)/shared/docker.sh \
+          $(MODULES_DIR)/shared/api.sh \
+          $(MODULES_DIR)/shared/vless.sh \
 		  $(MODULES_DIR)/tools/tools.sh \
           $(MODULES_DIR)/dependencies/dependencies.sh \
           $(MODULES_DIR)/remnawave-subscription-page/remnawave-subscription-page.sh \
