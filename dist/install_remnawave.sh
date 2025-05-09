@@ -478,48 +478,69 @@ generate_readable_login() {
 # Including module: validation.sh
 
 
-validate_domain() {
+validate_ip() {
+    local input="$1"
+
+    input=$(echo "$input" | tr -d ' ')
+
+    if [ -z "$input" ]; then
+        return 1
+    fi
+
+    if [[ $input =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+        IFS='.' read -r -a octets <<<"$input"
+        for octet in "${octets[@]}"; do
+            if [ "$octet" -gt 255 ]; then
+                return 1
+            fi
+        done
+        echo "$input"
+        return 0
+    fi
+
+    return 1
+}
+
+validate_domain_name() {
     local input="$1"
     local max_length="${2:-253}" # Maximum domain length by standard
 
-    if [[ "$input" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        local valid_ip=true
-        IFS='.' read -r -a octets <<<"$input"
-        for octet in "${octets[@]}"; do
-            if [[ ! "$octet" =~ ^[0-9]+$ ]] || [ "$octet" -gt 255 ]; then
-                valid_ip=false
-                break
-            fi
-        done
+    input=$(echo "$input" | tr -d ' ')
 
-        if [ "$valid_ip" = true ]; then
-            echo "$input"
-            return 0
-        fi
-    fi
-
-    local cleaned_domain=$(echo "$input" | tr -cd 'a-zA-Z0-9.-')
-
-    if [ -z "$cleaned_domain" ]; then
-        echo ""
+    if [ -z "$input" ]; then
         return 1
     fi
 
-    if [ ${#cleaned_domain} -gt $max_length ]; then
-        cleaned_domain=${cleaned_domain:0:$max_length}
-    fi
-
-    if
-        [[ ! "$cleaned_domain" =~ \. ]] ||
-            [[ "$cleaned_domain" =~ ^[\.-] ]] ||
-            [[ "$cleaned_domain" =~ [\.-]$ ]]
-    then
-        echo "$cleaned_domain"
+    if [ ${#input} -gt $max_length ]; then
         return 1
     fi
 
-    echo "$cleaned_domain"
-    return 0
+    if [[ $input =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)+$ ]] &&
+        [[ ! $input =~ \.\. ]]; then
+        echo "$input"
+        return 0
+    fi
+
+    return 1
+}
+
+validate_domain() {
+    local input="$1"
+    local max_length="${2:-253}"
+
+    local result=$(validate_ip "$input")
+    if [ $? -eq 0 ]; then
+        echo "$result"
+        return 0
+    fi
+
+    result=$(validate_domain_name "$input" "$max_length")
+    if [ $? -eq 0 ]; then
+        echo "$result"
+        return 0
+    fi
+
+    return 1
 }
 
 prompt_number() {
@@ -615,7 +636,7 @@ read_port() {
     local skip_availability_check="${3:-false}"
     local result=""
     local attempts=0
-    local max_attempts=3
+    local max_attempts=10
 
     while [ $attempts -lt $max_attempts ]; do
         if [ -n "$default_value" ]; then
@@ -672,9 +693,10 @@ read_port() {
 simple_read_domain_or_ip() {
     local prompt="$1"
     local default_value="$2"
-    local max_attempts="${3:-3}"
+    local validation_type="${3:-both}" # Can be 'domain_only', 'ip_only', or 'both'
     local result=""
     local attempts=0
+    local max_attempts=10
 
     while [ $attempts -lt $max_attempts ]; do
         local prompt_formatted_text=""
@@ -691,17 +713,39 @@ simple_read_domain_or_ip() {
             break
         fi
 
-        result=$(validate_domain "$input")
-        local status=$?
+        if [ "$validation_type" = "ip_only" ]; then
+            result=$(validate_ip "$input")
+            local status=$?
 
-        if [ $status -eq 0 ]; then
-            break
+            if [ $status -eq 0 ]; then
+                break
+            else
+                echo -e "${BOLD_RED}Invalid IP address format. IP must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+            fi
+        elif [ "$validation_type" = "domain_only" ]; then
+            result=$(validate_domain_name "$input")
+            local status=$?
+
+            if [ $status -eq 0 ]; then
+                break
+            else
+                echo -e "${BOLD_RED}Invalid domain name format. Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
+                echo -e "${BOLD_RED}Use only letters, digits, dots, and dashes.${NC}" >&2
+            fi
         else
-            echo -e "${BOLD_RED}Invalid domain or IP address format. Please use only letters, digits, dots, and dashes.${NC}" >&2
-            echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
-            echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
-            ((attempts++))
+            result=$(validate_domain "$input")
+            local status=$?
+
+            if [ $status -eq 0 ]; then
+                break
+            else
+                echo -e "${BOLD_RED}Invalid domain or IP address format.${NC}" >&2
+                echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
+                echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+            fi
         fi
+
+        ((attempts++))
     done
 
     if [ $attempts -eq $max_attempts ]; then
@@ -1714,7 +1758,7 @@ install_panel() {
 
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel (for example, panel.example.com)")
     SCRIPT_SUB_DOMAIN=$(prompt_domain "Enter the domain for subscriptions (for example, subs.example.com)")
-    SELF_STEAL_DOMAIN=$(read_domain "Enter Selfsteal domain, e.g. domain.example.com" "$ORANGE" true false)
+    SELF_STEAL_DOMAIN=$(simple_read_domain_or_ip "Enter Selfsteal domain, e.g. domain.example.com" "" "domain_only")
     SELF_STEAL_PORT=$(read_port "Enter Selfsteal port (default can be used)" "9443" true)
     NODE_HOST=$(simple_read_domain_or_ip "Enter the IP address or domain of the node server (if different from Selfsteal domain)" "$SELF_STEAL_DOMAIN")
     NODE_PORT=$(read_port "Enter node API port (default can be used)" "2222" true)
