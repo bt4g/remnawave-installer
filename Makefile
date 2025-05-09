@@ -10,7 +10,7 @@ TARGET = install_remnawave.sh
 # List of all modules in the order of inclusion
 MODULES = $(MODULES_DIR)/shared/common.sh \
           $(MODULES_DIR)/shared/ui.sh \
-					$(MODULES_DIR)/tools/tools.sh \
+		  $(MODULES_DIR)/tools/tools.sh \
           $(MODULES_DIR)/dependencies/dependencies.sh \
           $(MODULES_DIR)/remnawave-subscription-page/remnawave-subscription-page.sh \
           $(MODULES_DIR)/caddy/caddy.sh \
@@ -18,10 +18,10 @@ MODULES = $(MODULES_DIR)/shared/common.sh \
           $(MODULES_DIR)/panel/panel.sh \
           $(MODULES_DIR)/selfsteal/selfsteal.sh \
           $(MODULES_DIR)/node/node.sh \
-          $(MODULES_DIR)/all-in-one/setup-node-all-in-one.sh \
-          $(MODULES_DIR)/all-in-one/setup-caddy-all-in-one.sh \
-          $(MODULES_DIR)/all-in-one/vless-configuration-all-in-one.sh \
-					$(MODULES_DIR)/all-in-one/all-in-one.sh
+          $(MODULES_DIR)/all-in-one/setup-node.sh \
+          $(MODULES_DIR)/all-in-one/setup-caddy.sh \
+          $(MODULES_DIR)/all-in-one/vless-configuration.sh \
+		  $(MODULES_DIR)/all-in-one/setup.sh
 
 .PHONY: all
 all: clean build
