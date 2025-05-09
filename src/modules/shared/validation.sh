@@ -1,0 +1,362 @@
+#!/bin/bash
+
+# ===================================================================================
+#                                VALIDATION FUNCTIONS
+# ===================================================================================
+
+# Function to validate and clean domain name or IP address
+# Leaves only valid characters: letters, digits, dots, and dashes
+# Usage:
+#   validate_domain "example.com"
+validate_domain() {
+    local input="$1"
+    local max_length="${2:-253}" # Maximum domain length by standard
+
+    # Check for IP address
+    if [[ "$input" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        # Check each octet of IP address
+        local valid_ip=true
+        IFS='.' read -r -a octets <<<"$input"
+        for octet in "${octets[@]}"; do
+            if [[ ! "$octet" =~ ^[0-9]+$ ]] || [ "$octet" -gt 255 ]; then
+                valid_ip=false
+                break
+            fi
+        done
+
+        if [ "$valid_ip" = true ]; then
+            echo "$input"
+            return 0
+        fi
+    fi
+
+    # Remove all characters except letters, digits, dots, and dashes
+    local cleaned_domain=$(echo "$input" | tr -cd 'a-zA-Z0-9.-')
+
+    # Проверка на пустую строку после очистки
+    if [ -z "$cleaned_domain" ]; then
+        echo ""
+        return 1
+    fi
+
+    # Check for maximum length
+    if [ ${#cleaned_domain} -gt $max_length ]; then
+        cleaned_domain=${cleaned_domain:0:$max_length}
+    fi
+
+    # Check domain format (basic check)
+    # Domain must contain at least one dot and not start/end with dot or dash
+    if
+        [[ ! "$cleaned_domain" =~ \. ]] ||
+            [[ "$cleaned_domain" =~ ^[\.-] ]] ||
+            [[ "$cleaned_domain" =~ [\.-]$ ]]
+    then
+        echo "$cleaned_domain"
+        return 1
+    fi
+
+    echo "$cleaned_domain"
+    return 0
+}
+
+# Safe reading of user input with validation
+# Usage:
+#   read_domain "Enter domain:" "example.com"
+read_domain() {
+    local prompt="$1"
+    local default_value="$2"
+    local max_attempts="${3:-3}"
+    local result=""
+    local attempts=0
+
+    while [ $attempts -lt $max_attempts ]; do
+        # Show prompt with default value if present
+        local prompt_formatted_text=""
+        if [ -n "$default_value" ]; then
+            prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
+        else
+            prompt_formatted_text="${ORANGE}${prompt}:${NC}"
+        fi
+
+        read -p "$prompt_formatted_text" input
+
+        # Если ввод пустой и есть дефолтное значение, используем его
+        if [ -z "$input" ] && [ -n "$default_value" ]; then
+            result="$default_value"
+            break
+        fi
+
+        # Validate input
+        result=$(validate_domain "$input")
+        local status=$?
+
+        if [ $status -eq 0 ]; then
+            break
+        else
+            echo -e "${BOLD_RED}Invalid domain or IP address format. Please use only letters, digits, dots, and dashes.${NC}" >&2
+            echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
+            echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+            ((attempts++))
+        fi
+    done
+
+    if [ $attempts -eq $max_attempts ]; then
+        echo -e "${BOLD_RED}Maximum number of attempts exceeded. Using default value: $default_value${NC}" >&2
+        result="$default_value"
+    fi
+
+    echo "$result"
+}
+
+# Function for validating and cleaning the port
+# Leaves only numeric characters and checks that the value is in the range 1-65535
+# Usage:
+#   validate_port "8080"
+validate_port() {
+    local input="$1"
+    local default_port="$2"
+
+    # Remove all characters except digits
+    local cleaned_port=$(echo "$input" | tr -cd '0-9')
+
+    # Check for empty string after cleaning
+    if [ -z "$cleaned_port" ] && [ -n "$default_port" ]; then
+        echo "$default_port"
+        return 0
+    elif [ -z "$cleaned_port" ]; then
+        echo ""
+        return 1
+    fi
+
+    # Check port range
+    if [ "$cleaned_port" -lt 1 ] || [ "$cleaned_port" -gt 65535 ]; then
+        if [ -n "$default_port" ]; then
+            echo "$default_port"
+            return 0
+        else
+            echo ""
+            return 1
+        fi
+    fi
+
+    echo "$cleaned_port"
+    return 0
+}
+
+# Check if the port is available
+is_port_available() {
+    local port=$1
+    # Try to open a temporary server on the port
+    # If returns 0, port is available; if 1 - occupied
+    (echo >/dev/tcp/localhost/$port) >/dev/null 2>&1
+    if [ $? -eq 1 ]; then
+        return 0 # Port is available
+    else
+        return 1 # Port is occupied
+    fi
+}
+
+# Find available port, starting from the specified one
+find_available_port() {
+    local port="$1"
+
+    # Try sequentially until we find an available one
+    while true; do
+        if is_port_available "$port"; then
+            show_info_e "Port $port is available."
+            echo "$port"
+            return 0
+        fi
+        ((port++))
+        # Limit to 65535 just in case
+        if [ "$port" -gt 65535 ]; then
+            show_info_e "Failed to find an available port!"
+            return 1
+        fi
+    done
+}
+
+# Function for safe port reading with validation
+# Usage:
+#   read_port "Enter port:" "8080"
+#   read_port "Enter port:" "8080" true    # Skip port availability check
+read_port() {
+    local prompt="$1"
+    local default_value="${2:-}"
+    local skip_availability_check="${3:-false}"
+    local result=""
+    local attempts=0
+    local max_attempts=3
+
+    while [ $attempts -lt $max_attempts ]; do
+        # Display prompt with default value
+        if [ -n "$default_value" ]; then
+            prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
+            read -p "$prompt_formatted_text" result
+        else
+            prompt_formatted_text="${ORANGE}${prompt}:${NC}"
+            read -p "$prompt_formatted_text" result
+        fi
+
+        # If input is empty and default value exists, use it
+        if [ -z "$result" ] && [ -n "$default_value" ]; then
+            result="$default_value"
+        fi
+
+        # Port validation - store result in variable
+        result=$(validate_port "$result" "$default_value")
+        local status=$?
+
+        if [ $status -ne 0 ]; then
+            echo -e "${BOLD_RED}Invalid port number. Please use a number between 1 and 65535.${NC}" >&2
+            ((attempts++))
+            continue
+        fi
+
+        # Check port availability if needed
+        if [ "$skip_availability_check" != "true" ]; then
+            if ! is_port_available "$result"; then
+                echo -e "${BOLD_RED}Port $result is already in use.${NC}" >&2
+                # Try to find an available port
+                local next_port=$((result + 1))
+                local available_port=$(find_available_port "$next_port")
+                if [ $? -eq 0 ]; then
+                    echo -e "${ORANGE}Would you like to use port $available_port instead?${NC}" >&2
+                    if prompt_yes_no "Use port $available_port instead?" "$ORANGE"; then
+                        result="$available_port"
+                        break
+                    fi
+                else
+                    echo -e "${BOLD_RED}Failed to find an available port.${NC}" >&2
+                fi
+                ((attempts++))
+                continue
+            fi
+        fi
+
+        # If we made it here, all checks passed
+        break
+    done
+
+    if [ $attempts -eq $max_attempts ]; then
+        echo -e "${BOLD_RED}Maximum number of attempts exceeded. Using default value: $default_value${NC}" >&2
+        result="$default_value"
+    fi
+
+    echo "$result"
+}
+
+# Function to check if IP is in any of the CIDR ranges (Cloudflare or any other passed as array)
+is_ip_in_cidrs() {
+    local ip="$1"
+    shift
+    local cidrs=("$@")
+
+    # Helper function to convert IP (format x.x.x.x) to 32-bit number
+    function ip2dec() {
+        local a b c d
+        IFS=. read -r a b c d <<<"$1"
+        echo $(((a << 24) + (b << 16) + (c << 8) + d))
+    }
+
+    # Function to check if IP is in CIDR
+    function in_cidr() {
+        local ip_dec mask base_ip cidr_ip cidr_mask
+        ip_dec=$(ip2dec "$1")
+        base_ip="${2%/*}"
+        mask="${2#*/}"
+
+        cidr_ip=$(ip2dec "$base_ip")
+        cidr_mask=$((0xFFFFFFFF << (32 - mask) & 0xFFFFFFFF))
+
+        # Если (ip_dec & cidr_mask) == (cidr_ip & cidr_mask), IP попадает в диапазон
+        if (((ip_dec & cidr_mask) == (cidr_ip & cidr_mask))); then
+            return 0
+        else
+            return 1
+        fi
+    }
+
+    # Check IP against all ranges; if it matches at least one, return 0
+    for range in "${cidrs[@]}"; do
+        if in_cidr "$ip" "$range"; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# Function to check if the domain points to the current server
+check_domain_points_to_server() {
+    local domain="$1"
+    local show_warning="${2:-true}"   # Show warning by default
+    local allow_cf_proxy="${3:-true}" # Allow Cloudflare proxying by default
+
+    # Get domain's IP
+    local domain_ip=""
+    domain_ip=$(dig +short A "$domain" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+
+    # Get public IP of the current server
+    local server_ip=""
+    server_ip=$(curl -s -4 ifconfig.me || curl -s -4 api.ipify.org || curl -s -4 ipinfo.io/ip)
+
+    # If unable to get IPs, exit
+    if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
+        if [ "$show_warning" = true ]; then
+            show_warning "Failed to determine domain or server IP address."
+            show_warning "Make sure that the domain $domain is properly configured and points to the server ($server_ip)."
+        fi
+        return 1
+    fi
+
+    # Load current Cloudflare ranges
+    local cf_ranges
+    cf_ranges=$(curl -s https://www.cloudflare.com/ips-v4) || true # если curl не сработал, переменная останется пустой
+
+    # If loaded successfully, convert to array
+    local cf_array=()
+    if [ -n "$cf_ranges" ]; then
+        # Convert received lines to array
+        IFS=$'\n' read -r -d '' -a cf_array <<<"$cf_ranges"
+    fi
+
+    # Check if domain_ip is in Cloudflare ranges
+    if [ ${#cf_array[@]} -gt 0 ] && is_ip_in_cidrs "$domain_ip" "${cf_array[@]}"; then
+        # IP is Cloudflare
+        if [ "$allow_cf_proxy" = true ]; then
+            # Proxying allowed — all good
+            return 0
+        else
+            # Proxying not allowed — warn
+            if [ "$show_warning" = true ]; then
+                echo ""
+                show_warning "Domain $domain points to Cloudflare IP ($domain_ip)."
+                show_warning "Disable Cloudflare proxying - selfsteal domain proxying is not allowed."
+                if prompt_yes_no "Continue installation despite incorrect domain configuration?" "$ORANGE"; then
+                    return 1
+                else
+                    return 2
+                fi
+            fi
+            return 1
+        fi
+    else
+        # If not Cloudflare, check if domain IP matches server IP
+        if [ "$domain_ip" != "$server_ip" ]; then
+            if [ "$show_warning" = true ]; then
+                echo ""
+                show_warning "Domain $domain points to IP address $domain_ip, which differs from the server IP ($server_ip)."
+                show_warning "For proper operation, the domain must point to the current server."
+                if prompt_yes_no "Continue installation despite incorrect domain configuration?" "$ORANGE"; then
+                    return 1
+                else
+                    return 2
+                fi
+            fi
+            return 1
+        fi
+    fi
+
+    return 0 # All correct
+}
