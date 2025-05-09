@@ -152,34 +152,39 @@ prompt_menu_option() {
 
 show_success() {
     local message="$1"
-    echo -e "${BOLD_GREEN}✓ ${message}${NC}"
-    echo ""
+    local output_fd="${2:-1}" # Default to stdout (1)
+    echo -e "${BOLD_GREEN}✓ ${message}${NC}" >&$output_fd
+    echo "" >&$output_fd
 }
 
 show_error() {
     local message="$1"
-    echo -e "${BOLD_RED}✗ ${message}${NC}"
-    echo ""
+    local output_fd="${2:-2}" # Default to stderr (2)
+    echo -e "${BOLD_RED}✗ ${message}${NC}" >&$output_fd
+    echo "" >&$output_fd
 }
 
 show_warning() {
     local message="$1"
-    echo -e "${BOLD_YELLOW}⚠  ${message}${NC}"
-    echo ""
+    local output_fd="${2:-2}" # Default to stderr (2)
+    echo -e "${BOLD_YELLOW}⚠  ${message}${NC}" >&$output_fd
+    echo "" >&$output_fd
 }
 
 show_info() {
     local message="$1"
-    local color="${2:-$ORANGE}"
-    echo -e "${color}${message}${NC}"
-    echo ""
+    local blue_text="$2"
+    local output_fd="${3:-1}" # Default to stdout (1)
+    echo -e "${BOLD_WHITE}${message} ${CYAN}${blue_text}${NC}" >&$output_fd
+    echo "" >&$output_fd
 }
 
 show_info_e() {
     local message="$1"
     local color="${2:-$ORANGE}"
-    echo -e "${color}${message}${NC}" >&2
-    echo "" >&2
+    local output_fd="${3:-2}" # Default to stderr (2)
+    echo -e "${color}${message}${NC}" >&$output_fd
+    echo "" >&$output_fd
 }
 
 # Draw separator
@@ -197,68 +202,11 @@ show_progress() {
     local count=${3:-3}
     
     echo -ne "${message}"
-    for ((i=0; i<count; i++)); do
+    for ((i = 0; i < count; i++)); do
         echo -ne "${progress_char}"
         sleep 0.5
     done
     echo ""
-}
-
-# Request domain with validation
-prompt_domain() {
-    local prompt_text="$1"
-    local prompt_color="${2:-$ORANGE}"
-    
-    local domain
-    while true; do
-        echo -ne "${prompt_color}${prompt_text}: ${NC}" >&2
-        read domain
-        echo >&2
-        
-        # Base domain validation (can be expanded)
-        if [[ "$domain" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
-            break
-        else
-            echo -e "${BOLD_RED}Invalid domain format. Please try again.${NC}" >&2
-        fi
-    done
-    
-    echo "$domain"
-    echo ""
-}
-
-# Request numeric value with validation
-prompt_number() {
-    local prompt_text="$1"
-    local prompt_color="${2:-$ORANGE}"
-    local min="${3:-1}"
-    local max="${4:-}"
-    
-    local number
-    while true; do
-        echo -ne "${prompt_color}${prompt_text}: ${NC}" >&2
-        read number
-        echo >&2
-        
-        # Number validation
-        if [[ "$number" =~ ^[0-9]+$ ]]; then
-            if [ -n "$min" ] && [ "$number" -lt "$min" ]; then
-                echo -e "${BOLD_RED}Value must be at least ${min}.${NC}" >&2
-                continue
-            fi
-            
-            if [ -n "$max" ] && [ "$number" -gt "$max" ]; then
-                echo -e "${BOLD_RED}Value must be at most ${max}.${NC}" >&2
-                continue
-            fi
-            
-            break
-        else
-            echo -e "${BOLD_RED}Please enter a valid numeric value.${NC}" >&2
-        fi
-    done
-    
-    echo "$number"
 }
 
 # Display row with label and value
