@@ -48,7 +48,7 @@ install_panel() {
 
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel (for example, panel.example.com)")
     SCRIPT_SUB_DOMAIN=$(prompt_domain "Enter the domain for subscriptions (for example, subs.example.com)")
-    SELF_STEAL_DOMAIN=$(read_domain "Enter Selfsteal domain, e.g. domain.example.com" "$ORANGE" true false)
+    SELF_STEAL_DOMAIN=$(simple_read_domain_or_ip "Enter Selfsteal domain, e.g. domain.example.com" "" "domain_only")
     SELF_STEAL_PORT=$(read_port "Enter Selfsteal port (default can be used)" "9443" true)
     NODE_HOST=$(simple_read_domain_or_ip "Enter the IP address or domain of the node server (if different from Selfsteal domain)" "$SELF_STEAL_DOMAIN")
     NODE_PORT=$(read_port "Enter node API port (default can be used)" "2222" true)

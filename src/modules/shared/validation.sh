@@ -4,59 +4,82 @@
 #                                VALIDATION FUNCTIONS
 # ===================================================================================
 
-# Function to validate and clean domain name or IP address
-# Leaves only valid characters: letters, digits, dots, and dashes
-# Usage:
-#   validate_domain "example.com"
-validate_domain() {
+# Validate an IP address
+validate_ip() {
+    local input="$1"
+
+    # Trim spaces
+    input=$(echo "$input" | tr -d ' ')
+
+    # If empty, fail
+    if [ -z "$input" ]; then
+        return 1
+    fi
+
+    # Check for IP pattern
+    if [[ $input =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+        # Validate each octet is <= 255
+        IFS='.' read -r -a octets <<<"$input"
+        for octet in "${octets[@]}"; do
+            if [ "$octet" -gt 255 ]; then
+                return 1
+            fi
+        done
+        echo "$input"
+        return 0
+    fi
+
+    return 1
+}
+
+# Validate a domain name
+validate_domain_name() {
     local input="$1"
     local max_length="${2:-253}" # Maximum domain length by standard
 
-    # Check for IP address
-    if [[ "$input" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        # Check each octet of IP address
-        local valid_ip=true
-        IFS='.' read -r -a octets <<<"$input"
-        for octet in "${octets[@]}"; do
-            if [[ ! "$octet" =~ ^[0-9]+$ ]] || [ "$octet" -gt 255 ]; then
-                valid_ip=false
-                break
-            fi
-        done
+    # Trim spaces
+    input=$(echo "$input" | tr -d ' ')
 
-        if [ "$valid_ip" = true ]; then
-            echo "$input"
-            return 0
-        fi
-    fi
-
-    # Remove all characters except letters, digits, dots, and dashes
-    local cleaned_domain=$(echo "$input" | tr -cd 'a-zA-Z0-9.-')
-
-    # Проверка на пустую строку после очистки
-    if [ -z "$cleaned_domain" ]; then
-        echo ""
+    # If empty, fail
+    if [ -z "$input" ]; then
         return 1
     fi
 
-    # Check for maximum length
-    if [ ${#cleaned_domain} -gt $max_length ]; then
-        cleaned_domain=${cleaned_domain:0:$max_length}
-    fi
-
-    # Check domain format (basic check)
-    # Domain must contain at least one dot and not start/end with dot or dash
-    if
-        [[ ! "$cleaned_domain" =~ \. ]] ||
-            [[ "$cleaned_domain" =~ ^[\.-] ]] ||
-            [[ "$cleaned_domain" =~ [\.-]$ ]]
-    then
-        echo "$cleaned_domain"
+    # Check length
+    if [ ${#input} -gt $max_length ]; then
         return 1
     fi
 
-    echo "$cleaned_domain"
-    return 0
+    # Domain pattern validation - must contain at least one dot and not start/end with dot or dash
+    if [[ $input =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)+$ ]] &&
+        [[ ! $input =~ \.\. ]]; then
+        echo "$input"
+        return 0
+    fi
+
+    return 1
+}
+
+# Validate either an IP address or domain name
+validate_domain() {
+    local input="$1"
+    local max_length="${2:-253}"
+
+    # Try as IP first
+    local result=$(validate_ip "$input")
+    if [ $? -eq 0 ]; then
+        echo "$result"
+        return 0
+    fi
+
+    # Try as domain name
+    result=$(validate_domain_name "$input" "$max_length")
+    if [ $? -eq 0 ]; then
+        echo "$result"
+        return 0
+    fi
+
+    return 1
 }
 
 # Request numeric value with validation
@@ -94,9 +117,6 @@ prompt_number() {
 }
 
 # Function for validating and cleaning the port
-# Leaves only numeric characters and checks that the value is in the range 1-65535
-# Usage:
-#   validate_port "8080"
 validate_port() {
     local input="$1"
     local default_port="$2"
@@ -162,16 +182,13 @@ find_available_port() {
 }
 
 # Function for safe port reading with validation
-# Usage:
-#   read_port "Enter port:" "8080"
-#   read_port "Enter port:" "8080" true    # Skip port availability check
 read_port() {
     local prompt="$1"
     local default_value="${2:-}"
     local skip_availability_check="${3:-false}"
     local result=""
     local attempts=0
-    local max_attempts=3
+    local max_attempts=10
 
     while [ $attempts -lt $max_attempts ]; do
         # Display prompt with default value
@@ -231,15 +248,13 @@ read_port() {
     echo "$result"
 }
 
-# Safe reading of user input with validation
-# Usage:
-#   read_domain "Enter domain:" "example.com"
 simple_read_domain_or_ip() {
     local prompt="$1"
     local default_value="$2"
-    local max_attempts="${3:-3}"
+    local validation_type="${3:-both}" # Can be 'domain_only', 'ip_only', or 'both'
     local result=""
     local attempts=0
+    local max_attempts=10
 
     while [ $attempts -lt $max_attempts ]; do
         # Show prompt with default value if present
@@ -252,24 +267,49 @@ simple_read_domain_or_ip() {
 
         read -p "$prompt_formatted_text" input
 
-        # Если ввод пустой и есть дефолтное значение, используем его
+        # If input is empty and we have a default value, use it
         if [ -z "$input" ] && [ -n "$default_value" ]; then
             result="$default_value"
             break
         fi
 
-        # Validate input
-        result=$(validate_domain "$input")
-        local status=$?
+        # Perform validation based on validation_type
+        if [ "$validation_type" = "ip_only" ]; then
+            # Only validate as IP address
+            result=$(validate_ip "$input")
+            local status=$?
 
-        if [ $status -eq 0 ]; then
-            break
+            if [ $status -eq 0 ]; then
+                break
+            else
+                echo -e "${BOLD_RED}Invalid IP address format. IP must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+            fi
+        elif [ "$validation_type" = "domain_only" ]; then
+            # Only validate as domain name
+            result=$(validate_domain_name "$input")
+            local status=$?
+
+            if [ $status -eq 0 ]; then
+                break
+            else
+                echo -e "${BOLD_RED}Invalid domain name format. Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
+                echo -e "${BOLD_RED}Use only letters, digits, dots, and dashes.${NC}" >&2
+            fi
         else
-            echo -e "${BOLD_RED}Invalid domain or IP address format. Please use only letters, digits, dots, and dashes.${NC}" >&2
-            echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
-            echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
-            ((attempts++))
+            # Default: validate as either domain or IP
+            result=$(validate_domain "$input")
+            local status=$?
+
+            if [ $status -eq 0 ]; then
+                break
+            else
+                echo -e "${BOLD_RED}Invalid domain or IP address format.${NC}" >&2
+                echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
+                echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+            fi
         fi
+
+        ((attempts++))
     done
 
     if [ $attempts -eq $max_attempts ]; then
