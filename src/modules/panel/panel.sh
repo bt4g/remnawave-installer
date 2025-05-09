@@ -46,25 +46,10 @@ install_panel() {
         NODES_NOTIFY_CHAT_ID="change-me"
     fi
 
-    # Ask for the main panel domain with validation
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel (for example, panel.example.com)")
-    check_domain_points_to_server "$SCRIPT_PANEL_DOMAIN"
-    domain_check_result=$?
-    if [ $domain_check_result -eq 2 ]; then
-        # User chose to abort installation
-        return 1
-    fi
 
-    # Ask for the subscription domain with validation
     SCRIPT_SUB_DOMAIN=$(prompt_domain "Enter the domain for subscriptions (for example, subs.example.com)")
-    check_domain_points_to_server "$SCRIPT_SUB_DOMAIN"
-    domain_check_result=$?
-    if [ $domain_check_result -eq 2 ]; then
-        # User chose to abort installation
-        return 1
-    fi
 
-    # Ask about installing remnawave-subscription-page
     if prompt_yes_no "Install remnawave-subscription-page (https://remna.st/subscription-templating/installation)?"; then
         INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE="y"
     else
@@ -75,18 +60,18 @@ install_panel() {
     SUPERADMIN_PASSWORD=$(generate_secure_password 25)
 
     update_file ".env" \
-    "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
-    "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
-    "IS_TELEGRAM_ENABLED" "$IS_TELEGRAM_ENV_VALUE" \
-    "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
-    "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
-    "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
-    "SUB_PUBLIC_DOMAIN" "$SCRIPT_SUB_DOMAIN" \
-    "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
-    "POSTGRES_USER" "$DB_USER" \
-    "POSTGRES_PASSWORD" "$DB_PASSWORD" \
-    "POSTGRES_DB" "$DB_NAME" \
-    "METRICS_PASS" "$METRICS_PASS"
+        "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
+        "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
+        "IS_TELEGRAM_ENABLED" "$IS_TELEGRAM_ENV_VALUE" \
+        "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
+        "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
+        "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
+        "SUB_PUBLIC_DOMAIN" "$SCRIPT_SUB_DOMAIN" \
+        "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
+        "POSTGRES_USER" "$DB_USER" \
+        "POSTGRES_PASSWORD" "$DB_PASSWORD" \
+        "POSTGRES_DB" "$DB_NAME" \
+        "METRICS_PASS" "$METRICS_PASS"
 
     # Generate a secret key to protect the admin panel
     PANEL_SECRET_KEY=$(openssl rand -hex 16)
@@ -104,7 +89,6 @@ install_panel() {
     # Install remnawave-subscription-page
     # ===================================================================================
 
-    # Install remnawave-subscription-page if the user agreed
     if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
         setup_remnawave-subscription-page
     fi
@@ -115,16 +99,12 @@ install_panel() {
 
     setup_caddy_for_panel "$PANEL_SECRET_KEY"
 
-    # Start all containers
     show_info "Starting containers..." "$BOLD_GREEN"
 
-    # Start RemnaWave panel
     start_container "$REMNAWAVE_DIR" "remnawave/backend" "Remnawave"
 
-    # Start Caddy
     start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
 
-    # Start remnawave-subscription-page (if selected)
     if [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "y" ] || [ "$INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE" = "yes" ]; then
         start_container "$REMNAWAVE_DIR/subscription-page" "remnawave/subscription-page" "Subscription page"
     fi

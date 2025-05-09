@@ -52,17 +52,7 @@ EOL
     create_makefile "$REMNANODE_DIR"
 
     # Request Selfsteal domain with validation
-    SELF_STEAL_DOMAIN=$(read_domain "Enter Selfsteal domain, e.g. domain.example.com")
-    if [ -z "$SELF_STEAL_DOMAIN" ]; then
-        return 1
-    fi
-
-    check_domain_points_to_server "$SELF_STEAL_DOMAIN" true false
-    domain_check_result=$?
-    if [ $domain_check_result -eq 2 ]; then
-        # User chose to abort installation
-        return 1
-    fi
+    SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain, e.g. domain.example.com" "$ORANGE" true false)
 
     # Request Selfsteal port with validation and default value
     SELF_STEAL_PORT=$(read_port "Enter Selfsteal port (default can be used)" "9443")

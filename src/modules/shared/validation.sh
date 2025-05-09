@@ -59,53 +59,38 @@ validate_domain() {
     return 0
 }
 
-# Safe reading of user input with validation
-# Usage:
-#   read_domain "Enter domain:" "example.com"
-read_domain() {
-    local prompt="$1"
-    local default_value="$2"
-    local max_attempts="${3:-3}"
-    local result=""
-    local attempts=0
+# Request numeric value with validation
+prompt_number() {
+    local prompt_text="$1"
+    local prompt_color="${2:-$ORANGE}"
+    local min="${3:-1}"
+    local max="${4:-}"
 
-    while [ $attempts -lt $max_attempts ]; do
-        # Show prompt with default value if present
-        local prompt_formatted_text=""
-        if [ -n "$default_value" ]; then
-            prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
-        else
-            prompt_formatted_text="${ORANGE}${prompt}:${NC}"
-        fi
+    local number
+    while true; do
+        echo -ne "${prompt_color}${prompt_text}: ${NC}" >&2
+        read number
+        echo >&2
 
-        read -p "$prompt_formatted_text" input
+        # Number validation
+        if [[ "$number" =~ ^[0-9]+$ ]]; then
+            if [ -n "$min" ] && [ "$number" -lt "$min" ]; then
+                echo -e "${BOLD_RED}Value must be at least ${min}.${NC}" >&2
+                continue
+            fi
 
-        # Если ввод пустой и есть дефолтное значение, используем его
-        if [ -z "$input" ] && [ -n "$default_value" ]; then
-            result="$default_value"
-            break
-        fi
+            if [ -n "$max" ] && [ "$number" -gt "$max" ]; then
+                echo -e "${BOLD_RED}Value must be at most ${max}.${NC}" >&2
+                continue
+            fi
 
-        # Validate input
-        result=$(validate_domain "$input")
-        local status=$?
-
-        if [ $status -eq 0 ]; then
             break
         else
-            echo -e "${BOLD_RED}Invalid domain or IP address format. Please use only letters, digits, dots, and dashes.${NC}" >&2
-            echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
-            echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
-            ((attempts++))
+            echo -e "${BOLD_RED}Please enter a valid numeric value.${NC}" >&2
         fi
     done
 
-    if [ $attempts -eq $max_attempts ]; then
-        echo -e "${BOLD_RED}Maximum number of attempts exceeded. Using default value: $default_value${NC}" >&2
-        result="$default_value"
-    fi
-
-    echo "$result"
+    echo "$number"
 }
 
 # Function for validating and cleaning the port
@@ -246,6 +231,55 @@ read_port() {
     echo "$result"
 }
 
+# Safe reading of user input with validation
+# Usage:
+#   read_domain "Enter domain:" "example.com"
+simple_read_domain_or_ip() {
+    local prompt="$1"
+    local default_value="$2"
+    local max_attempts="${3:-3}"
+    local result=""
+    local attempts=0
+
+    while [ $attempts -lt $max_attempts ]; do
+        # Show prompt with default value if present
+        local prompt_formatted_text=""
+        if [ -n "$default_value" ]; then
+            prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
+        else
+            prompt_formatted_text="${ORANGE}${prompt}:${NC}"
+        fi
+
+        read -p "$prompt_formatted_text" input
+
+        # Если ввод пустой и есть дефолтное значение, используем его
+        if [ -z "$input" ] && [ -n "$default_value" ]; then
+            result="$default_value"
+            break
+        fi
+
+        # Validate input
+        result=$(validate_domain "$input")
+        local status=$?
+
+        if [ $status -eq 0 ]; then
+            break
+        else
+            echo -e "${BOLD_RED}Invalid domain or IP address format. Please use only letters, digits, dots, and dashes.${NC}" >&2
+            echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
+            echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+            ((attempts++))
+        fi
+    done
+
+    if [ $attempts -eq $max_attempts ]; then
+        echo -e "${BOLD_RED}Maximum number of attempts exceeded. Using default value: $default_value${NC}" >&2
+        result="$default_value"
+    fi
+
+    echo "$result"
+}
+
 # Function to check if IP is in any of the CIDR ranges (Cloudflare or any other passed as array)
 is_ip_in_cidrs() {
     local ip="$1"
@@ -287,76 +321,94 @@ is_ip_in_cidrs() {
     return 1
 }
 
-# Function to check if the domain points to the current server
-check_domain_points_to_server() {
-    local domain="$1"
-    local show_warning="${2:-true}"   # Show warning by default
-    local allow_cf_proxy="${3:-true}" # Allow Cloudflare proxying by default
+# Request domain with validation and IP verification
+prompt_domain() {
+    local prompt_text="$1"
+    local prompt_color="${2:-$ORANGE}"
+    local show_warning="${3:-true}"
+    local allow_cf_proxy="${4:-true}"
 
-    # Get domain's IP
-    local domain_ip=""
-    domain_ip=$(dig +short A "$domain" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+    local domain
+    while true; do
+        echo -ne "${prompt_color}${prompt_text}: ${NC}" >&2
+        read domain
+        echo >&2
 
-    # Get public IP of the current server
-    local server_ip=""
-    server_ip=$(curl -s -4 ifconfig.me || curl -s -4 api.ipify.org || curl -s -4 ipinfo.io/ip)
-
-    # If unable to get IPs, exit
-    if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
-        if [ "$show_warning" = true ]; then
-            show_warning "Failed to determine domain or server IP address."
-            show_warning "Make sure that the domain $domain is properly configured and points to the server ($server_ip)."
+        # Base domain validation
+        if ! [[ "$domain" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
+            echo -e "${BOLD_RED}Invalid domain format. Please try again.${NC}" >&2
+            continue
         fi
-        return 1
-    fi
 
-    # Load current Cloudflare ranges
-    local cf_ranges
-    cf_ranges=$(curl -s https://www.cloudflare.com/ips-v4) || true # если curl не сработал, переменная останется пустой
+        # Get domain's IP
+        local domain_ip=""
+        domain_ip=$(dig +short A "$domain" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
 
-    # If loaded successfully, convert to array
-    local cf_array=()
-    if [ -n "$cf_ranges" ]; then
-        # Convert received lines to array
-        IFS=$'\n' read -r -d '' -a cf_array <<<"$cf_ranges"
-    fi
+        # Get public IP of the current server
+        local server_ip=""
+        server_ip=$(curl -s -4 ifconfig.me || curl -s -4 api.ipify.org || curl -s -4 ipinfo.io/ip)
 
-    # Check if domain_ip is in Cloudflare ranges
-    if [ ${#cf_array[@]} -gt 0 ] && is_ip_in_cidrs "$domain_ip" "${cf_array[@]}"; then
-        # IP is Cloudflare
-        if [ "$allow_cf_proxy" = true ]; then
-            # Proxying allowed — all good
-            return 0
+        # If unable to get IPs, warn and ask if user wants to continue
+        if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
+            if [ "$show_warning" = true ]; then
+                show_warning "Failed to determine domain or server IP address." 2
+                show_warning "Make sure that the domain $domain is properly configured and points to the server ($server_ip)." 2
+                if prompt_yes_no "Continue with this domain despite being unable to verify its IP address?" "$ORANGE"; then
+                    break
+                else
+                    continue
+                fi
+            fi
+        fi
+
+        # Load current Cloudflare ranges
+        local cf_ranges
+        cf_ranges=$(curl -s https://www.cloudflare.com/ips-v4) || true # if curl fails, variable remains empty
+
+        # If loaded successfully, convert to array
+        local cf_array=()
+        if [ -n "$cf_ranges" ]; then
+            # Convert received lines to array
+            IFS=$'\n' read -r -d '' -a cf_array <<<"$cf_ranges"
+        fi
+
+        # Check if domain_ip is in Cloudflare ranges
+        if [ ${#cf_array[@]} -gt 0 ] && is_ip_in_cidrs "$domain_ip" "${cf_array[@]}"; then
+            # IP is Cloudflare
+            if [ "$allow_cf_proxy" = true ]; then
+                # Proxying allowed — all good
+                break
+            else
+                # Proxying not allowed — warn
+                if [ "$show_warning" = true ]; then
+                    echo ""
+                    show_warning "Domain $domain points to Cloudflare IP ($domain_ip)." 2
+                    show_warning "Disable Cloudflare proxying - selfsteal domain proxying is not allowed." 2
+                    if prompt_yes_no "Continue with this domain despite Cloudflare proxy configuration issue?" "$ORANGE"; then
+                        break
+                    else
+                        continue
+                    fi
+                fi
+            fi
         else
-            # Proxying not allowed — warn
-            if [ "$show_warning" = true ]; then
-                echo ""
-                show_warning "Domain $domain points to Cloudflare IP ($domain_ip)."
-                show_warning "Disable Cloudflare proxying - selfsteal domain proxying is not allowed."
-                if prompt_yes_no "Continue installation despite incorrect domain configuration?" "$ORANGE"; then
-                    return 1
-                else
-                    return 2
+            # If not Cloudflare, check if domain IP matches server IP
+            if [ "$domain_ip" != "$server_ip" ]; then
+                if [ "$show_warning" = true ]; then
+                    show_warning "Domain $domain points to IP address $domain_ip, which differs from the server IP ($server_ip)." 2
+                    if prompt_yes_no "Continue with this domain despite the IP address mismatch?" "$ORANGE"; then
+                        break
+                    else
+                        continue
+                    fi
                 fi
+            else
+                # Domain points to server IP - all good
+                break
             fi
-            return 1
         fi
-    else
-        # If not Cloudflare, check if domain IP matches server IP
-        if [ "$domain_ip" != "$server_ip" ]; then
-            if [ "$show_warning" = true ]; then
-                echo ""
-                show_warning "Domain $domain points to IP address $domain_ip, which differs from the server IP ($server_ip)."
-                show_warning "For proper operation, the domain must point to the current server."
-                if prompt_yes_no "Continue installation despite incorrect domain configuration?" "$ORANGE"; then
-                    return 1
-                else
-                    return 2
-                fi
-            fi
-            return 1
-        fi
-    fi
+    done
 
-    return 0 # All correct
+    echo "$domain"
+    echo ""
 }

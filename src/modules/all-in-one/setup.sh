@@ -44,14 +44,8 @@ install_panel_all_in_one() {
         NODES_NOTIFY_CHAT_ID="change-me"
     fi
 
-    # Ask for the main domain for the panel with validation
+    # Ask for the main domain for the panel with integrated validation
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel, subscriptions, and selfsteal (e.g., panel.example.com)")
-    check_domain_points_to_server "$SCRIPT_PANEL_DOMAIN"
-    domain_check_result=$?
-    if [ $domain_check_result -eq 2 ]; then
-        # User decided to abort the installation
-        return 1
-    fi
     SCRIPT_SUB_DOMAIN="$SCRIPT_PANEL_DOMAIN"
     # Ask for Selfsteal port with validation and default value 9443
     SELF_STEAL_PORT=$(read_port "Enter the port for Caddy - should not be 443 (you can leave the default)" "9443")

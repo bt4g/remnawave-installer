@@ -159,34 +159,39 @@ prompt_menu_option() {
 
 show_success() {
     local message="$1"
-    echo -e "${BOLD_GREEN}✓ ${message}${NC}"
-    echo ""
+    local output_fd="${2:-1}" # Default to stdout (1)
+    echo -e "${BOLD_GREEN}✓ ${message}${NC}" >&$output_fd
+    echo "" >&$output_fd
 }
 
 show_error() {
     local message="$1"
-    echo -e "${BOLD_RED}✗ ${message}${NC}"
-    echo ""
+    local output_fd="${2:-2}" # Default to stderr (2)
+    echo -e "${BOLD_RED}✗ ${message}${NC}" >&$output_fd
+    echo "" >&$output_fd
 }
 
 show_warning() {
     local message="$1"
-    echo -e "${BOLD_YELLOW}⚠  ${message}${NC}"
-    echo ""
+    local output_fd="${2:-2}" # Default to stderr (2)
+    echo -e "${BOLD_YELLOW}⚠  ${message}${NC}" >&$output_fd
+    echo "" >&$output_fd
 }
 
 show_info() {
     local message="$1"
-    local color="${2:-$ORANGE}"
-    echo -e "${color}${message}${NC}"
-    echo ""
+    local blue_text="$2"
+    local output_fd="${3:-1}" # Default to stdout (1)
+    echo -e "${BOLD_WHITE}${message} ${CYAN}${blue_text}${NC}" >&$output_fd
+    echo "" >&$output_fd
 }
 
 show_info_e() {
     local message="$1"
     local color="${2:-$ORANGE}"
-    echo -e "${color}${message}${NC}" >&2
-    echo "" >&2
+    local output_fd="${3:-2}" # Default to stderr (2)
+    echo -e "${color}${message}${NC}" >&$output_fd
+    echo "" >&$output_fd
 }
 
 draw_separator() {
@@ -202,64 +207,11 @@ show_progress() {
     local count=${3:-3}
     
     echo -ne "${message}"
-    for ((i=0; i<count; i++)); do
+    for ((i = 0; i < count; i++)); do
         echo -ne "${progress_char}"
         sleep 0.5
     done
     echo ""
-}
-
-prompt_domain() {
-    local prompt_text="$1"
-    local prompt_color="${2:-$ORANGE}"
-    
-    local domain
-    while true; do
-        echo -ne "${prompt_color}${prompt_text}: ${NC}" >&2
-        read domain
-        echo >&2
-        
-        if [[ "$domain" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
-            break
-        else
-            echo -e "${BOLD_RED}Invalid domain format. Please try again.${NC}" >&2
-        fi
-    done
-    
-    echo "$domain"
-    echo ""
-}
-
-prompt_number() {
-    local prompt_text="$1"
-    local prompt_color="${2:-$ORANGE}"
-    local min="${3:-1}"
-    local max="${4:-}"
-    
-    local number
-    while true; do
-        echo -ne "${prompt_color}${prompt_text}: ${NC}" >&2
-        read number
-        echo >&2
-        
-        if [[ "$number" =~ ^[0-9]+$ ]]; then
-            if [ -n "$min" ] && [ "$number" -lt "$min" ]; then
-                echo -e "${BOLD_RED}Value must be at least ${min}.${NC}" >&2
-                continue
-            fi
-            
-            if [ -n "$max" ] && [ "$number" -gt "$max" ]; then
-                echo -e "${BOLD_RED}Value must be at most ${max}.${NC}" >&2
-                continue
-            fi
-            
-            break
-        else
-            echo -e "${BOLD_RED}Please enter a valid numeric value.${NC}" >&2
-        fi
-    done
-    
-    echo "$number"
 }
 
 draw_info_row() {
@@ -578,47 +530,36 @@ validate_domain() {
     return 0
 }
 
-read_domain() {
-    local prompt="$1"
-    local default_value="$2"
-    local max_attempts="${3:-3}"
-    local result=""
-    local attempts=0
+prompt_number() {
+    local prompt_text="$1"
+    local prompt_color="${2:-$ORANGE}"
+    local min="${3:-1}"
+    local max="${4:-}"
 
-    while [ $attempts -lt $max_attempts ]; do
-        local prompt_formatted_text=""
-        if [ -n "$default_value" ]; then
-            prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
-        else
-            prompt_formatted_text="${ORANGE}${prompt}:${NC}"
-        fi
+    local number
+    while true; do
+        echo -ne "${prompt_color}${prompt_text}: ${NC}" >&2
+        read number
+        echo >&2
 
-        read -p "$prompt_formatted_text" input
+        if [[ "$number" =~ ^[0-9]+$ ]]; then
+            if [ -n "$min" ] && [ "$number" -lt "$min" ]; then
+                echo -e "${BOLD_RED}Value must be at least ${min}.${NC}" >&2
+                continue
+            fi
 
-        if [ -z "$input" ] && [ -n "$default_value" ]; then
-            result="$default_value"
-            break
-        fi
+            if [ -n "$max" ] && [ "$number" -gt "$max" ]; then
+                echo -e "${BOLD_RED}Value must be at most ${max}.${NC}" >&2
+                continue
+            fi
 
-        result=$(validate_domain "$input")
-        local status=$?
-
-        if [ $status -eq 0 ]; then
             break
         else
-            echo -e "${BOLD_RED}Invalid domain or IP address format. Please use only letters, digits, dots, and dashes.${NC}" >&2
-            echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
-            echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
-            ((attempts++))
+            echo -e "${BOLD_RED}Please enter a valid numeric value.${NC}" >&2
         fi
     done
 
-    if [ $attempts -eq $max_attempts ]; then
-        echo -e "${BOLD_RED}Maximum number of attempts exceeded. Using default value: $default_value${NC}" >&2
-        result="$default_value"
-    fi
-
-    echo "$result"
+    echo "$number"
 }
 
 validate_port() {
@@ -736,6 +677,49 @@ read_port() {
     echo "$result"
 }
 
+simple_read_domain_or_ip() {
+    local prompt="$1"
+    local default_value="$2"
+    local max_attempts="${3:-3}"
+    local result=""
+    local attempts=0
+
+    while [ $attempts -lt $max_attempts ]; do
+        local prompt_formatted_text=""
+        if [ -n "$default_value" ]; then
+            prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
+        else
+            prompt_formatted_text="${ORANGE}${prompt}:${NC}"
+        fi
+
+        read -p "$prompt_formatted_text" input
+
+        if [ -z "$input" ] && [ -n "$default_value" ]; then
+            result="$default_value"
+            break
+        fi
+
+        result=$(validate_domain "$input")
+        local status=$?
+
+        if [ $status -eq 0 ]; then
+            break
+        else
+            echo -e "${BOLD_RED}Invalid domain or IP address format. Please use only letters, digits, dots, and dashes.${NC}" >&2
+            echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
+            echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+            ((attempts++))
+        fi
+    done
+
+    if [ $attempts -eq $max_attempts ]; then
+        echo -e "${BOLD_RED}Maximum number of attempts exceeded. Using default value: $default_value${NC}" >&2
+        result="$default_value"
+    fi
+
+    echo "$result"
+}
+
 is_ip_in_cidrs() {
     local ip="$1"
     shift
@@ -772,66 +756,82 @@ is_ip_in_cidrs() {
     return 1
 }
 
-check_domain_points_to_server() {
-    local domain="$1"
-    local show_warning="${2:-true}"   # Show warning by default
-    local allow_cf_proxy="${3:-true}" # Allow Cloudflare proxying by default
+prompt_domain() {
+    local prompt_text="$1"
+    local prompt_color="${2:-$ORANGE}"
+    local show_warning="${3:-true}"
+    local allow_cf_proxy="${4:-true}"
 
-    local domain_ip=""
-    domain_ip=$(dig +short A "$domain" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+    local domain
+    while true; do
+        echo -ne "${prompt_color}${prompt_text}: ${NC}" >&2
+        read domain
+        echo >&2
 
-    local server_ip=""
-    server_ip=$(curl -s -4 ifconfig.me || curl -s -4 api.ipify.org || curl -s -4 ipinfo.io/ip)
-
-    if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
-        if [ "$show_warning" = true ]; then
-            show_warning "Failed to determine domain or server IP address."
-            show_warning "Make sure that the domain $domain is properly configured and points to the server ($server_ip)."
+        if ! [[ "$domain" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
+            echo -e "${BOLD_RED}Invalid domain format. Please try again.${NC}" >&2
+            continue
         fi
-        return 1
-    fi
 
-    local cf_ranges
-    cf_ranges=$(curl -s https://www.cloudflare.com/ips-v4) || true # если curl не сработал, переменная останется пустой
+        local domain_ip=""
+        domain_ip=$(dig +short A "$domain" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
 
-    local cf_array=()
-    if [ -n "$cf_ranges" ]; then
-        IFS=$'\n' read -r -d '' -a cf_array <<<"$cf_ranges"
-    fi
+        local server_ip=""
+        server_ip=$(curl -s -4 ifconfig.me || curl -s -4 api.ipify.org || curl -s -4 ipinfo.io/ip)
 
-    if [ ${#cf_array[@]} -gt 0 ] && is_ip_in_cidrs "$domain_ip" "${cf_array[@]}"; then
-        if [ "$allow_cf_proxy" = true ]; then
-            return 0
+        if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
+            if [ "$show_warning" = true ]; then
+                show_warning "Failed to determine domain or server IP address." 2
+                show_warning "Make sure that the domain $domain is properly configured and points to the server ($server_ip)." 2
+                if prompt_yes_no "Continue with this domain despite being unable to verify its IP address?" "$ORANGE"; then
+                    break
+                else
+                    continue
+                fi
+            fi
+        fi
+
+        local cf_ranges
+        cf_ranges=$(curl -s https://www.cloudflare.com/ips-v4) || true # if curl fails, variable remains empty
+
+        local cf_array=()
+        if [ -n "$cf_ranges" ]; then
+            IFS=$'\n' read -r -d '' -a cf_array <<<"$cf_ranges"
+        fi
+
+        if [ ${#cf_array[@]} -gt 0 ] && is_ip_in_cidrs "$domain_ip" "${cf_array[@]}"; then
+            if [ "$allow_cf_proxy" = true ]; then
+                break
+            else
+                if [ "$show_warning" = true ]; then
+                    echo ""
+                    show_warning "Domain $domain points to Cloudflare IP ($domain_ip)." 2
+                    show_warning "Disable Cloudflare proxying - selfsteal domain proxying is not allowed." 2
+                    if prompt_yes_no "Continue with this domain despite Cloudflare proxy configuration issue?" "$ORANGE"; then
+                        break
+                    else
+                        continue
+                    fi
+                fi
+            fi
         else
-            if [ "$show_warning" = true ]; then
-                echo ""
-                show_warning "Domain $domain points to Cloudflare IP ($domain_ip)."
-                show_warning "Disable Cloudflare proxying - selfsteal domain proxying is not allowed."
-                if prompt_yes_no "Continue installation despite incorrect domain configuration?" "$ORANGE"; then
-                    return 1
-                else
-                    return 2
+            if [ "$domain_ip" != "$server_ip" ]; then
+                if [ "$show_warning" = true ]; then
+                    show_warning "Domain $domain points to IP address $domain_ip, which differs from the server IP ($server_ip)." 2
+                    if prompt_yes_no "Continue with this domain despite the IP address mismatch?" "$ORANGE"; then
+                        break
+                    else
+                        continue
+                    fi
                 fi
+            else
+                break
             fi
-            return 1
         fi
-    else
-        if [ "$domain_ip" != "$server_ip" ]; then
-            if [ "$show_warning" = true ]; then
-                echo ""
-                show_warning "Domain $domain points to IP address $domain_ip, which differs from the server IP ($server_ip)."
-                show_warning "For proper operation, the domain must point to the current server."
-                if prompt_yes_no "Continue installation despite incorrect domain configuration?" "$ORANGE"; then
-                    return 1
-                else
-                    return 2
-                fi
-            fi
-            return 1
-        fi
-    fi
+    done
 
-    return 0 # All correct
+    echo "$domain"
+    echo ""
 }
 
 # Including module: docker.sh
@@ -1615,46 +1615,40 @@ vless_configuration() {
   local panel_domain="$2"
   local token="$3"
 
-  SELF_STEAL_DOMAIN=$(read_domain "Enter Selfsteal domain, e.g. domain.example.com")
-  if [ -z "$SELF_STEAL_DOMAIN" ]; then
-    return 1
-  fi
-
+  SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain, e.g. domain.example.com" "$ORANGE" true false)
   SELF_STEAL_PORT=$(read_port "Enter Selfsteal port (default can be used)" "9443" true)
-
-  NODE_HOST=$(read_domain "Enter the IP address or domain of the node server (if different from Selfsteal domain)" "$SELF_STEAL_DOMAIN")
-
+  NODE_HOST=$(simple_read_domain_or_ip "Enter the IP address or domain of the node server (if different from Selfsteal domain)" "$SELF_STEAL_DOMAIN")
   NODE_PORT=$(read_port "Enter node API port (default can be used)" "2222" true)
-  
+
   local config_file="$REMNAWAVE_DIR/config.json"
-  
+
   local keys_result=$(generate_vless_keys)
   if [ $? -ne 0 ]; then
     return 1
   fi
-  
+
   local private_key=$(echo "$keys_result" | cut -d':' -f1)
   local public_key=$(echo "$keys_result" | cut -d':' -f2)
-  
+
   generate_vless_config "$config_file" "$SELF_STEAL_DOMAIN" "$SELF_STEAL_PORT" "$private_key" "$public_key"
-  
+
   if ! update_xray_config "$panel_url" "$token" "$panel_domain" "$config_file"; then
     return 1
   fi
-  
+
   if ! create_vless_node "$panel_url" "$token" "$panel_domain" "$NODE_HOST" "$NODE_PORT"; then
     return 1
   fi
-  
+
   local inbound_uuid=$(get_inbounds "$panel_url" "$token" "$panel_domain")
   if [ -z "$inbound_uuid" ]; then
     return 1
   fi
-  
+
   if ! create_vless_host "$panel_url" "$token" "$panel_domain" "$inbound_uuid" "$SELF_STEAL_DOMAIN"; then
     return 1
   fi
-  
+
   local pubkey=$(get_public_key "$panel_url" "$token" "$panel_domain")
   if [ -z "$pubkey" ]; then
     return 1
@@ -1705,18 +1699,8 @@ install_panel() {
     fi
 
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel (for example, panel.example.com)")
-    check_domain_points_to_server "$SCRIPT_PANEL_DOMAIN"
-    domain_check_result=$?
-    if [ $domain_check_result -eq 2 ]; then
-        return 1
-    fi
 
     SCRIPT_SUB_DOMAIN=$(prompt_domain "Enter the domain for subscriptions (for example, subs.example.com)")
-    check_domain_points_to_server "$SCRIPT_SUB_DOMAIN"
-    domain_check_result=$?
-    if [ $domain_check_result -eq 2 ]; then
-        return 1
-    fi
 
     if prompt_yes_no "Install remnawave-subscription-page (https://remna.st/subscription-templating/installation)?"; then
         INSTALL_REMNAWAVE_SUBSCRIPTION_PAGE="y"
@@ -1728,18 +1712,18 @@ install_panel() {
     SUPERADMIN_PASSWORD=$(generate_secure_password 25)
 
     update_file ".env" \
-    "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
-    "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
-    "IS_TELEGRAM_ENABLED" "$IS_TELEGRAM_ENV_VALUE" \
-    "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
-    "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
-    "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
-    "SUB_PUBLIC_DOMAIN" "$SCRIPT_SUB_DOMAIN" \
-    "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
-    "POSTGRES_USER" "$DB_USER" \
-    "POSTGRES_PASSWORD" "$DB_PASSWORD" \
-    "POSTGRES_DB" "$DB_NAME" \
-    "METRICS_PASS" "$METRICS_PASS"
+        "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
+        "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
+        "IS_TELEGRAM_ENABLED" "$IS_TELEGRAM_ENV_VALUE" \
+        "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
+        "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
+        "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
+        "SUB_PUBLIC_DOMAIN" "$SCRIPT_SUB_DOMAIN" \
+        "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
+        "POSTGRES_USER" "$DB_USER" \
+        "POSTGRES_PASSWORD" "$DB_PASSWORD" \
+        "POSTGRES_DB" "$DB_NAME" \
+        "METRICS_PASS" "$METRICS_PASS"
 
     PANEL_SECRET_KEY=$(openssl rand -hex 16)
 
@@ -1940,16 +1924,7 @@ EOL
 
     create_makefile "$REMNANODE_DIR"
 
-    SELF_STEAL_DOMAIN=$(read_domain "Enter Selfsteal domain, e.g. domain.example.com")
-    if [ -z "$SELF_STEAL_DOMAIN" ]; then
-        return 1
-    fi
-
-    check_domain_points_to_server "$SELF_STEAL_DOMAIN" true false
-    domain_check_result=$?
-    if [ $domain_check_result -eq 2 ]; then
-        return 1
-    fi
+    SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain, e.g. domain.example.com" "$ORANGE" true false)
 
     SELF_STEAL_PORT=$(read_port "Enter Selfsteal port (default can be used)" "9443")
 
@@ -2262,11 +2237,6 @@ install_panel_all_in_one() {
     fi
 
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel, subscriptions, and selfsteal (e.g., panel.example.com)")
-    check_domain_points_to_server "$SCRIPT_PANEL_DOMAIN"
-    domain_check_result=$?
-    if [ $domain_check_result -eq 2 ]; then
-        return 1
-    fi
     SCRIPT_SUB_DOMAIN="$SCRIPT_PANEL_DOMAIN"
     SELF_STEAL_PORT=$(read_port "Enter the port for Caddy - should not be 443 (you can leave the default)" "9443")
     echo ""
