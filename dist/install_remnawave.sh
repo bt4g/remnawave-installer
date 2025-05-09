@@ -1007,24 +1007,42 @@ register_user() {
     local reg_error=""
     local response=""
     local max_wait=180
-    local start_time=$(date +%s)
-    local end_time=$((start_time + max_wait))
 
-    while [ $(date +%s) -lt $end_time ]; do
-        response=$(make_api_request "POST" "$api_url" "" "$panel_domain" "{\"username\":\"$username\",\"password\":\"$password\"}")
-        if [ -z "$response" ]; then
-            reg_error="Empty server response"
-        elif [[ "$response" == *"accessToken"* ]]; then
-            reg_token=$(echo "$response" | jq -r '.response.accessToken')
-            echo "$reg_token"
-            return 0
-        else
-            reg_error="$response"
-        fi
-        sleep 1
-    done
-    echo "${reg_error:-Registration failed: unknown error}"
-    return 1
+    local temp_result=$(mktemp)
+
+    {
+        local start_time=$(date +%s)
+        local end_time=$((start_time + max_wait))
+
+        while [ $(date +%s) -lt $end_time ]; do
+            response=$(make_api_request "POST" "$api_url" "" "$panel_domain" "{\"username\":\"$username\",\"password\":\"$password\"}")
+            if [ -z "$response" ]; then
+                reg_error="Empty server response"
+            elif [[ "$response" == *"accessToken"* ]]; then
+                reg_token=$(echo "$response" | jq -r '.response.accessToken')
+                echo "$reg_token" >"$temp_result"
+                exit 0
+            else
+                reg_error="$response"
+            fi
+            sleep 1
+        done
+        echo "${reg_error:-Registration failed: unknown error}" >"$temp_result"
+        exit 1
+    } &
+
+    local pid=$!
+
+    spinner "$pid" "Registering user $username..."
+
+    wait $pid
+    local status=$?
+
+    local result=$(cat "$temp_result")
+    rm -f "$temp_result"
+
+    echo "$result"
+    return $status
 }
 
 get_public_key() {
