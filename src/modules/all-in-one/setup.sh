@@ -7,10 +7,10 @@
 install_panel_all_in_one() {
     clear_screen
 
-    remove_previous_installation
-
     # Install general dependencies
     install_dependencies
+
+    remove_previous_installation
 
     mkdir -p $REMNAWAVE_DIR/caddy
 
