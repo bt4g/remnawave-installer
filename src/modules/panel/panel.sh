@@ -31,19 +31,25 @@ install_panel() {
     curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
 
     # Ask if Telegram integration is needed
-    if prompt_yes_no "Do you want to enable Telegram integration?"; then
-        IS_TELEGRAM_ENV_VALUE="true"
-        # If Telegram integration is enabled, ask for parameters
+    if prompt_yes_no "Do you want to enable Telegram notifications?"; then
+        ### TELEGRAM NOTIFICATIONS ###
+        IS_TELEGRAM_NOTIFICATIONS_ENABLED=true
         TELEGRAM_BOT_TOKEN=$(prompt_input "Enter your Telegram bot token: " "$ORANGE")
-        TELEGRAM_ADMIN_ID=$(prompt_input "Enter the Telegram admin ID: " "$ORANGE")
-        NODES_NOTIFY_CHAT_ID=$(prompt_input "Enter the chat ID for notifications: " "$ORANGE")
+        TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "Enter the users chat ID: " "$ORANGE")
+        TELEGRAM_NOTIFY_NODES_CHAT_ID=$(prompt_input "Enter the nodes chat ID: " "$ORANGE")
+
+        if prompt_yes_no "Do you want to use Telegram topics?"; then
+            TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "Enter the users thread ID: " "$ORANGE")
+            TELEGRAM_NOTIFY_NODES_THREAD_ID=$(prompt_input "Enter the nodes thread ID: " "$ORANGE")
+        fi
     else
-        # If Telegram integration is not enabled, set parameters to 'change-me'
-        IS_TELEGRAM_ENV_VALUE="false"
         show_warning "Skipping Telegram integration."
+        IS_TELEGRAM_NOTIFICATIONS_ENABLED=false
         TELEGRAM_BOT_TOKEN="change-me"
-        TELEGRAM_ADMIN_ID="change-me"
-        NODES_NOTIFY_CHAT_ID="change-me"
+        TELEGRAM_NOTIFY_USERS_CHAT_ID="change-me"
+        TELEGRAM_NOTIFY_NODES_CHAT_ID="change-me"
+        TELEGRAM_NOTIFY_USERS_THREAD_ID=""
+        TELEGRAM_NOTIFY_NODES_THREAD_ID=""
     fi
 
     SCRIPT_PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel (for example, panel.example.com)")
@@ -65,10 +71,12 @@ install_panel() {
     update_file ".env" \
         "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
         "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
-        "IS_TELEGRAM_ENABLED" "$IS_TELEGRAM_ENV_VALUE" \
+        "IS_TELEGRAM_NOTIFICATIONS_ENABLED" "$IS_TELEGRAM_NOTIFICATIONS_ENABLED" \
         "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
-        "TELEGRAM_ADMIN_ID" "$TELEGRAM_ADMIN_ID" \
-        "NODES_NOTIFY_CHAT_ID" "$NODES_NOTIFY_CHAT_ID" \
+        "TELEGRAM_NOTIFY_USERS_CHAT_ID" "$TELEGRAM_NOTIFY_USERS_CHAT_ID" \
+        "TELEGRAM_NOTIFY_NODES_CHAT_ID" "$TELEGRAM_NOTIFY_NODES_CHAT_ID" \
+        "TELEGRAM_NOTIFY_USERS_THREAD_ID" "$TELEGRAM_NOTIFY_USERS_THREAD_ID" \
+        "TELEGRAM_NOTIFY_NODES_THREAD_ID" "$TELEGRAM_NOTIFY_NODES_THREAD_ID" \
         "SUB_PUBLIC_DOMAIN" "$SCRIPT_SUB_DOMAIN" \
         "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
         "POSTGRES_USER" "$DB_USER" \

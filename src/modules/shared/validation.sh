@@ -244,6 +244,8 @@ read_port() {
         echo -e "${BOLD_RED}Maximum number of attempts exceeded. Using default value: $default_value${NC}" >&2
         result="$default_value"
     fi
+    # Add a newline for better formatting between prompts
+    echo "" >&2
 
     echo "$result"
 }
