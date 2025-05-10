@@ -319,6 +319,7 @@ simple_read_domain_or_ip() {
         result="$default_value"
     fi
 
+    echo "" >&2
     echo "$result"
 }
 
