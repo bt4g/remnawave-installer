@@ -15,14 +15,14 @@ GREEN=$(tput setaf 2)
 YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
-VERSION="1.0"
+VERSION="1.2.0"
 
 REMNAWAVE_DIR="/opt/remnawave"
 REMNANODE_ROOT_DIR="/opt/remnanode"
 REMNANODE_DIR="/opt/remnanode/node"
 SELFSTEAL_DIR="/opt/remnanode/selfsteal"
 
-LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node" 
+LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node"
 
 # Including module: ui.sh
 draw_info_box() {
@@ -754,6 +754,7 @@ simple_read_domain_or_ip() {
         result="$default_value"
     fi
 
+    echo "" >&2
     echo "$result"
 }
 
