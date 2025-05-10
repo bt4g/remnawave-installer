@@ -15,14 +15,14 @@ GREEN=$(tput setaf 2)
 YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
-VERSION="1.0"
+VERSION="1.2.0"
 
 REMNAWAVE_DIR="/opt/remnawave"
 REMNANODE_ROOT_DIR="/opt/remnanode"
 REMNANODE_DIR="/opt/remnanode/node"
 SELFSTEAL_DIR="/opt/remnanode/selfsteal"
 
-LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node" 
+LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node"
 
 # Including module: ui.sh
 draw_info_box() {
@@ -1800,7 +1800,6 @@ install_panel() {
 
     curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
 
-    sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
     create_makefile "$REMNAWAVE_DIR"
 
@@ -2339,7 +2338,6 @@ install_panel_all_in_one() {
 
     curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
 
-    sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
 
     create_makefile "$REMNAWAVE_DIR"
 
