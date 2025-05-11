@@ -30,8 +30,6 @@ Recommended installation order:
 1. First, install the panel and obtain the public key for your node.
 2. Then install the node, specifying the previously obtained key.
 
-**Important!** After completing the **node** installation, to make the panel recognize it, you will need to restart the **panel** from the installer script menu.
-
 ### Option 2: All-in-one (simplified installation)
 
 For a simplified installation, you can deploy both the panel and node on a single server.
