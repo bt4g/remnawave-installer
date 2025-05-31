@@ -16,43 +16,89 @@ clear
 main() {
 
     while true; do
-    draw_info_box "Remnawave Panel" "Automatic installation by uphantom"
+        draw_info_box "Remnawave Panel" "Automatic installation by uphantom"
 
-        echo -e "${BOLD_BLUE_MENU}Please select a component to install:${NC}"
+        # Installation section
+        echo -e "  ${BOLD_BLUE_MENU}═══ COMPONENT INSTALLATION ═══${NC}"
         echo
-        echo -e "  ${GREEN}1. ${NC}Install panel"
-        echo -e "  ${GREEN}2. ${NC}Install node"
-        echo -e "  ${GREEN}3. ${NC}Simple installation (panel + node)"
-        echo -e "  ${GREEN}4. ${NC}Restart panel"
-        echo -e "  ${GREEN}5. ${NC}Enable BBR"
-        echo -e "  ${GREEN}6. ${NC}Exit"
         echo
-        echo -ne "${BOLD_BLUE_MENU}Select an option (1-6): ${NC}"
+        echo -e "  ${YELLOW}[PANEL ONLY]:${NC}"
+        echo
+        echo -e "  ${GREEN}1. ${NC}Panel with FULL Caddy security (recommended)"
+        echo -e "  ${GREEN}2. ${NC}Panel with SIMPLE cookie security"
+        echo
+        echo
+        echo -e "  ${YELLOW}[NODE ONLY]:${NC}"
+        echo
+        echo -e "  ${GREEN}3. ${NC}Node only (for separate server)"
+        echo
+        echo
+        echo -e "  ${YELLOW}[ALL-IN-ONE]:${NC}"
+        echo
+        echo -e "  ${GREEN}4. ${NC}Panel + Node with FULL Caddy security"
+        echo -e "  ${GREEN}5. ${NC}Panel + Node with SIMPLE cookie security"
+        echo
+
+        # System management section
+        echo -e "  ${BOLD_BLUE_MENU}═══ SYSTEM MANAGEMENT ═══${NC}"
+        echo
+        echo -e "  ${GREEN}6. ${NC}Restart panel"
+        echo -e "  ${GREEN}7. ${NC}Enable BBR"
+        echo -e "  ${GREEN}8. ${NC}Remove panel"
+        echo
+
+        # Administration tools section
+        echo -e "  ${BOLD_BLUE_MENU}═══ ADMINISTRATION TOOLS ═══${NC}"
+        echo
+        echo -e "  ${GREEN}9. ${NC} Reset admin login and password (delete admin from DB)"
+        echo -e "  ${GREEN}10.${NC} Show panel access credentials"
+        echo
+
+        echo -e "  ${BOLD_BLUE_MENU}═══ EXIT ═══${NC}"
+        echo
+        echo -e "  ${GREEN}0. ${NC}Exit from script"
+        echo
+        echo -ne "${BOLD_BLUE_MENU}Select option (0-10): ${NC}"
         read choice
 
         case $choice in
         1)
-            install_panel
+            install_panel_only "full"
             ;;
         2)
-            setup_node
+            install_panel_only "cookie"
             ;;
         3)
-            install_panel_all_in_one
+            setup_node
             ;;
         4)
-            restart_panel
+            install_remnawave_all_in_one "full"
             ;;
         5)
-            enable_bbr
+            install_remnawave_all_in_one "cookie"
             ;;
         6)
-            echo "Done."
+            restart_panel
+            ;;
+        7)
+            enable_bbr
+            ;;
+        8)
+            remove_previous_installation true
+            ;;
+        9)
+            delete_admin
+            ;;
+        10)
+            show_panel_credentials
+            ;;
+        0)
+            echo "Exiting."
             break
             ;;
         *)
             clear
-            draw_info_box "Remnawave Panel" "Advanced configuration $VERSION"
+            draw_info_box "Remnawave Panel" "Automatic installation by uphantom"
             echo -e "${BOLD_RED}Invalid choice, please try again.${NC}"
             sleep 1
             ;;

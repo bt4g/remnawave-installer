@@ -3,6 +3,7 @@
 # Color definitions for output
 BOLD_BLUE=$(tput setaf 4)
 BOLD_GREEN=$(tput setaf 2)
+BOLD_YELLOW=$(tput setaf 11)
 LIGHT_GREEN=$(tput setaf 10)
 BOLD_BLUE_MENU=$(tput setaf 6)
 ORANGE=$(tput setaf 3)
@@ -13,7 +14,7 @@ YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
 # Script version
-VERSION="1.2.0"
+VERSION="1.5.0b"
 
 # Main directories
 REMNAWAVE_DIR="/opt/remnawave"

@@ -1,39 +1,8 @@
 #!/bin/bash
 
 # ===================================================================================
-#                                API REQUEST FUNCTIONS
+#                                REMNAWAVE API FUNCTIONS
 # ===================================================================================
-
-# Function to perform API request with Bearer token
-# Parameters:
-#   $1 - method (GET, POST, PUT, DELETE)
-#   $2 - full URL
-#   $3 - Bearer token for authorization
-#   $4 - host domain (for Host header)
-#   $5 - request data in JSON format (optional, only for POST/PUT)
-make_api_request() {
-    local method=$1
-    local url=$2
-    local token=$3
-    local panel_domain=$4
-    local data=$5
-
-    local headers=(
-        -H "Content-Type: application/json"
-        -H "Host: $panel_domain"
-        -H "X-Forwarded-For: ${url#http://}"
-        -H "X-Forwarded-Proto: https"
-    )
-    if [ -n "$token" ]; then
-        headers+=(-H "Authorization: Bearer $token")
-    fi
-
-    if [ -n "$data" ]; then
-        curl -s -X "$method" "$url" "${headers[@]}" -d "$data"
-    else
-        curl -s -X "$method" "$url" "${headers[@]}"
-    fi
-}
 
 register_user() {
     local panel_url="$1"
@@ -91,7 +60,7 @@ get_public_key() {
 
     local temp_file=$(mktemp)
 
-    make_api_request "GET" "http://$panel_url/api/keygen" "$token" "$panel_domain" >"$temp_file" 2>&1 &
+    make_api_request "GET" "http://$panel_url/api/keygen" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
     spinner $! "Getting public key..."
     api_response=$(cat "$temp_file")
     rm -f "$temp_file"
@@ -112,7 +81,7 @@ get_public_key() {
 }
 
 # Create node
-create_vless_node() {
+create_node() {
     local panel_url="$1"
     local token="$2"
     local panel_domain="$3"
@@ -172,7 +141,7 @@ get_inbounds() {
 
     local temp_file=$(mktemp)
 
-    make_api_request "GET" "http://$panel_url/api/inbounds" "$token" "$panel_domain" >"$temp_file" 2>&1 &
+    make_api_request "GET" "http://$panel_url/api/inbounds" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
     spinner $! "Getting list of inbounds..."
     inbounds_response=$(cat "$temp_file")
     rm -f "$temp_file"
@@ -193,7 +162,7 @@ get_inbounds() {
 }
 
 # Create host
-create_vless_host() {
+create_host() {
     local panel_url="$1"
     local token="$2"
     local panel_domain="$3"
@@ -212,7 +181,7 @@ create_vless_host() {
     "path": "",
     "sni": "$self_steal_domain",
     "host": "$self_steal_domain",
-    "alpn": "h2",
+    "alpn": "h2,http/1.1",
     "fingerprint": "chrome",
     "allowInsecure": false,
     "isDisabled": false
@@ -235,5 +204,107 @@ EOF
     else
         echo -e "${BOLD_RED}Error: Failed to create host.${NC}"
         return 1
+    fi
+}
+
+# Create user
+create_user() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    local username="$4"
+    local inbound_uuid="$5"
+
+    local temp_file=$(mktemp)
+    local temp_headers=$(mktemp)
+
+    local user_data=$(
+        cat <<EOF
+{
+    "username": "$username",
+    "status": "ACTIVE",
+    "trafficLimitBytes": 0,
+    "trafficLimitStrategy": "NO_RESET",
+    "activeUserInbounds": [
+        "$inbound_uuid"
+    ],
+    "expireAt": "2099-12-31T23:59:59.000Z",
+    "description": "Default user created during installation",
+    "hwidDeviceLimit": 0
+}
+EOF
+    )
+
+    # Make request with status code check
+    {
+        local host_only=$(echo "http://$panel_url/api/users" | sed 's|http://||' | cut -d'/' -f1)
+
+        local headers=(
+            -H "Content-Type: application/json"
+            -H "Host: $panel_domain"
+            -H "X-Forwarded-For: $host_only"
+            -H "X-Forwarded-Proto: https"
+            -H "Authorization: Bearer $token"
+        )
+
+        curl -s -w "%{http_code}" -X "POST" "http://$panel_url/api/users" "${headers[@]}" -d "$user_data" -D "$temp_headers" >"$temp_file"
+    } &
+
+    spinner $! "Creating user: $username..."
+
+    # Read response and status code
+    local full_response=$(cat "$temp_file")
+    local status_code="${full_response: -3}"   # Last 3 characters
+    local user_response="${full_response%???}" # Everything except last 3 characters
+
+    rm -f "$temp_file" "$temp_headers"
+
+    if [ -z "$user_response" ]; then
+        echo -e "${BOLD_RED}Error: Empty response from server when creating user.${NC}"
+        return 1
+    fi
+
+    # Check for 201 status code
+    if [ "$status_code" != "201" ]; then
+        echo -e "${BOLD_RED}Error: Failed to create user. HTTP status: $status_code${NC}"
+        echo
+        echo "Request body was:"
+        echo "$user_data"
+        echo
+        echo "Response:"
+        echo "$user_response"
+        return 1
+    fi
+
+    if echo "$user_response" | jq -e '.response.uuid' >/dev/null; then
+        # Extract user data and save to global variables
+        USER_UUID=$(echo "$user_response" | jq -r '.response.uuid')
+        USER_SHORT_UUID=$(echo "$user_response" | jq -r '.response.shortUuid')
+        USER_SUBSCRIPTION_UUID=$(echo "$user_response" | jq -r '.response.subscriptionUuid')
+        USER_VLESS_UUID=$(echo "$user_response" | jq -r '.response.vlessUuid')
+        USER_TROJAN_PASSWORD=$(echo "$user_response" | jq -r '.response.trojanPassword')
+        USER_SS_PASSWORD=$(echo "$user_response" | jq -r '.response.ssPassword')
+        USER_SUBSCRIPTION_URL=$(echo "$user_response" | jq -r '.response.subscriptionUrl')
+
+        return 0
+    else
+        echo -e "${BOLD_RED}Error: Failed to create user, invalid response format:${NC}"
+        echo
+        echo "Request body was:"
+        echo "$user_data"
+        echo
+        echo "Response:"
+        echo "$user_response"
+        return 1
+    fi
+}
+
+# Common user registration
+register_panel_user() {
+    REG_TOKEN=$(register_user "127.0.0.1:3000" "$PANEL_DOMAIN" "$SUPERADMIN_USERNAME" "$SUPERADMIN_PASSWORD")
+
+    if [ -z "$REG_TOKEN" ]; then
+        show_error "Failed to register user."
+        exit 1
     fi
 }

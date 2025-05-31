@@ -3,7 +3,7 @@
 enable_bbr() {
   # Check if BBR settings exist in sysctl.conf
   if grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf && grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf; then
-    echo ""
+    echo
     show_warning "BBR already added to /etc/sysctl.conf"
     # Check if BBR is currently active
     local current_cc=$(sysctl -n net.ipv4.tcp_congestion_control)

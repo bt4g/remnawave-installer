@@ -5,16 +5,15 @@
 # ===================================================================================
 
 setup_node_all_in_one() {
-    local SCRIPT_SUB_DOMAIN=$1
-    local SELF_STEAL_PORT=$2
-    local panel_url=$3
-    local token=$4
-    local NODE_PORT=$5
+  local panel_url=$1
+  local token=$2
+  local NODE_PORT=$3
 
-    mkdir -p "$LOCAL_REMNANODE_DIR" && cd "$LOCAL_REMNANODE_DIR"
-    
-    # Create docker-compose.yml
-    cat > docker-compose.yml << EOL
+  create_dir "$LOCAL_REMNANODE_DIR"
+
+  cd "$LOCAL_REMNANODE_DIR"
+
+  cat >docker-compose.yml <<EOL
 services:
   remnanode:
     container_name: remnanode
@@ -26,28 +25,24 @@ services:
     restart: always
 EOL
 
-    # Create Makefile for the node
-    create_makefile "$LOCAL_REMNANODE_DIR"
+  create_makefile "$LOCAL_REMNANODE_DIR"
 
-    # Get public key
-    local temp_file=$(mktemp)
-    make_api_request "GET" "http://$panel_url/api/keygen" "$token" "$SCRIPT_SUB_DOMAIN" > "$temp_file" 2>&1 &
-    spinner $! "Getting public key..."
-    api_response=$(cat "$temp_file")
-    rm -f "$temp_file"
+  local pubkey=$(get_public_key "$panel_url" "$token" "$PANEL_DOMAIN")
 
-    if [ -z "$api_response" ]; then
-        echo -e "${BOLD_RED}Error: Failed to get public key.${NC}"
-        return 1
-    fi
+  if [ -z "$pubkey" ]; then
+    return 1
+  fi
 
-    pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
-    if [ -z "$pubkey" ]; then
-        echo -e "${BOLD_RED}Error: Failed to extract public key from response.${NC}"
-        return 1
-    fi
+  local CERTIFICATE="SSL_CERT=\"$pubkey\""
 
-    local CERTIFICATE="SSL_CERT=\"$pubkey\""
+  echo -e "### APP ###\nAPP_PORT=$NODE_PORT\n$CERTIFICATE" >.env
+}
 
-    echo -e "### APP ###\nAPP_PORT=$NODE_PORT\n$CERTIFICATE" >.env
+setup_and_start_all_in_one_node() {
+  setup_node_all_in_one "127.0.0.1:3000" "$REG_TOKEN" "$NODE_PORT"
+
+  if ! start_container "$LOCAL_REMNANODE_DIR" "remnanode" "Remnawave Node"; then
+    show_info "Installation stopped" "$BOLD_RED"
+    exit 1
+  fi
 }

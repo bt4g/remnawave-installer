@@ -88,3 +88,43 @@ generate_readable_login() {
 
     echo "$login"
 }
+
+# Generate nonce
+# Nonce – aAzZ0-9, min 6, max 64
+generate_nonce() {
+    local length="${1:-64}"
+    local nonce=""
+    local chars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+    while [ ${#nonce} -lt $length ]; do
+        nonce+="${chars:$((RANDOM % ${#chars})):1}"
+    done
+
+    echo "$nonce"
+}
+
+# Generate custom path
+# Path – a-zA-Z0-9-
+generate_custom_path() {
+    local length="${1:-36}"
+    local path=""
+    local chars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
+
+    while [ ${#path} -lt $length ]; do
+        path+="${chars:$((RANDOM % ${#chars})):1}"
+    done
+
+    echo "$path"
+}
+
+# Generate common secrets
+generate_secrets() {
+    JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
+    JWT_API_TOKENS_SECRET=$(openssl rand -hex 32 | tr -d '\n')
+    DB_USER="remnawave_$(openssl rand -hex 4 | tr -d '\n')"
+    DB_PASSWORD=$(generate_secure_password 16)
+    DB_NAME="remnawave_db"
+    METRICS_PASS=$(generate_secure_password 16)
+    SUPERADMIN_USERNAME=$(generate_readable_login)
+    SUPERADMIN_PASSWORD=$(generate_secure_password 28)
+}

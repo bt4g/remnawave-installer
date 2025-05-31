@@ -1,3 +1,9 @@
+#!/bin/bash
+
+# ===================================================================================
+#                                DISPLAY FUNCTIONS
+# ===================================================================================
+
 # Draw information box
 draw_info_box() {
     local title="$1"
@@ -48,14 +54,14 @@ clear_screen() {
 draw_section_header() {
     local title="$1"
     local width=${2:-50}
-    
+
     echo -e "${BOLD_RED}\033[1m┌$(printf '─%.0s' $(seq 1 $width))┐\033[0m${NC}"
-    
+
     # Centring title
     local padding_left=$(((width - ${#title}) / 2))
     local padding_right=$((width - padding_left - ${#title}))
     echo -e "${BOLD_RED}\033[1m│$(printf ' %.0s' $(seq 1 $padding_left))$title$(printf ' %.0s' $(seq 1 $padding_right))│\033[0m${NC}"
-    
+
     echo -e "${BOLD_RED}\033[1m└$(printf '─%.0s' $(seq 1 $width))┘\033[0m${NC}"
     echo
 }
@@ -64,7 +70,7 @@ draw_section_header() {
 draw_menu_options() {
     local options=("$@")
     local idx=1
-    
+
     for option in "${options[@]}"; do
         echo -e "${ORANGE}$idx. $option${NC}"
         ((idx++))
@@ -72,103 +78,25 @@ draw_menu_options() {
     echo
 }
 
-# Request input with preset text and color
-prompt_input() {
-    local prompt_text="$1"
-    local prompt_color="${2:-$GREEN}"
-    
-    echo -ne "${prompt_color}${prompt_text}${NC}" >&2
-    read input_value
-    echo >&2
-    
-    echo "$input_value"
-}
-
-# Request password input (with echo disabled)
-prompt_password() {
-    local prompt_text="$1"
-    local prompt_color="${2:-$ORANGE}"
-    
-    echo -ne "${prompt_color}${prompt_text}${NC}" >&2
-    stty -echo
-    read password_value
-    stty echo
-    echo >&2
-    
-    echo "$password_value"
-}
-
-# Request yes/no option selection
-prompt_yes_no() {
-    local prompt_text="$1"
-    local prompt_color="${2:-$GREEN}"
-    local default="${3:-}"
-    
-    local prompt_suffix=" (y/n): "
-    [ -n "$default" ] && prompt_suffix=" (y/n) [$default]: "
-    
-    echo -ne "${prompt_color}${prompt_text}${prompt_suffix}${NC}" >&2
-    read answer
-    echo >&2
-    
-    # Convert to lowercase
-    answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
-    
-    # If empty, use default value
-    [ -z "$answer" ] && answer="$default"
-    
-    if [ "$answer" = "y" ] || [ "$answer" = "yes" ]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-# Request selection from numbered menu
-prompt_menu_option() {
-    local prompt_text="$1"
-    local prompt_color="${2:-$GREEN}"
-    local min="${3:-1}"
-    local max="$4"
-    
-    local selected_option
-    while true; do
-        echo -ne "${prompt_color}${prompt_text} (${min}-${max}): ${NC}" >&2
-        read selected_option
-        echo >&2
-        
-        # Validation of selection
-        if [[ "$selected_option" =~ ^[0-9]+$ ]] && \
-           [ "$selected_option" -ge "$min" ] && \
-           [ "$selected_option" -le "$max" ]; then
-            break
-        else
-            echo -e "${BOLD_RED}Plfease enter a number between ${min} and ${max}.${NC}" >&2
-        fi
-    done
-    
-    echo "$selected_option"
-}
-
 show_success() {
     local message="$1"
     local output_fd="${2:-1}" # Default to stdout (1)
     echo -e "${BOLD_GREEN}✓ ${message}${NC}" >&$output_fd
-    echo "" >&$output_fd
+    echo >&$output_fd
 }
 
 show_error() {
     local message="$1"
     local output_fd="${2:-2}" # Default to stderr (2)
     echo -e "${BOLD_RED}✗ ${message}${NC}" >&$output_fd
-    echo "" >&$output_fd
+    echo >&$output_fd
 }
 
 show_warning() {
     local message="$1"
     local output_fd="${2:-2}" # Default to stderr (2)
     echo -e "${BOLD_YELLOW}⚠  ${message}${NC}" >&$output_fd
-    echo "" >&$output_fd
+    echo >&$output_fd
 }
 
 show_info() {
@@ -176,14 +104,14 @@ show_info() {
     local color="${2:-$ORANGE}"
     local output_fd="${3:-2}" # Default to stderr (2)
     echo -e "${color}${message}${NC}" >&$output_fd
-    echo "" >&$output_fd
+    echo >&$output_fd
 }
 
 # Draw separator
 draw_separator() {
     local width=${1:-50}
     local char=${2:-"-"}
-    
+
     printf "%s\n" "$(printf "$char%.0s" $(seq 1 $width))"
 }
 
@@ -192,13 +120,13 @@ show_progress() {
     local message="$1"
     local progress_char=${2:-"."}
     local count=${3:-3}
-    
+
     echo -ne "${message}"
     for ((i = 0; i < count; i++)); do
         echo -ne "${progress_char}"
         sleep 0.5
     done
-    echo ""
+    echo
 }
 
 # Display row with label and value
@@ -208,10 +136,10 @@ draw_info_row() {
     local label_color="${3:-$ORANGE}"
     local value_color="${4:-$GREEN}"
     local width=${5:-50}
-    
+
     local label_display="${label_color}${label}:${NC}"
     local value_display="${value_color}${value}${NC}"
-    
+
     echo -e "${label_display} ${value_display}"
 }
 
@@ -220,7 +148,7 @@ center_text() {
     local text="$1"
     local width=${2:-$(tput cols)}
     local padding_left=$(((width - ${#text}) / 2))
-    
+
     printf "%${padding_left}s%s\n" "" "$text"
 }
 
@@ -229,80 +157,12 @@ draw_completion_message() {
     local title="$1"
     local message="$2"
     local width=${3:-70}
-    
+
     draw_separator "$width" "="
     center_text "$title" "$width"
     echo
     echo -e "$message"
     draw_separator "$width" "="
-}
-
-# Validate password strength
-validate_password_strength() {
-    local password="$1"
-    local min_length=${2:-8}
-    
-    local length=${#password}
-    
-    # Check length
-    if [ "$length" -lt "$min_length" ]; then
-        echo "Password must contain at least $min_length characters."
-        return 1
-    fi
-    
-    # Check for digits
-    if ! [[ "$password" =~ [0-9] ]]; then
-        echo "Password must contain at least one digit."
-        return 1
-    fi
-    
-    # Check for lowercase letters
-    if ! [[ "$password" =~ [a-z] ]]; then
-        echo "Password must contain at least one lowercase letter."
-        return 1
-    fi
-    
-    # Check for uppercase letters
-    if ! [[ "$password" =~ [A-Z] ]]; then
-        echo "Password must contain at least one uppercase letter."
-        return 1
-    fi
-    
-    # Password passed all checks
-    return 0
-}
-
-# Request password with confirmation and strength validation
-prompt_secure_password() {
-    local prompt_text="$1"
-    local confirm_text="${2:-Please confirm your password}"
-    local min_length=${3:-8}
-    
-    local password1 password2 error_message
-    
-    while true; do
-        # Request password
-        password1=$(prompt_password "$prompt_text")
-        
-        # Check password strength
-        error_message=$(validate_password_strength "$password1" "$min_length")
-        if [ $? -ne 0 ]; then
-            echo -e "${BOLD_RED}${error_message} Please try again.${NC}" >&2
-            continue
-        fi
-        
-        # Request password confirmation
-        password2=$(prompt_password "$confirm_text")
-        
-        # Check password match
-        if [ "$password1" = "$password2" ]; then
-            break
-        else
-            echo -e "${BOLD_RED}Passwords do not match. Please try again.${NC}" >&2
-        fi
-    done
-    
-    echo "$password1"
 }
 
 # Display spinner while command is running

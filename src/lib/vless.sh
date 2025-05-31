@@ -27,10 +27,10 @@ generate_vless_keys() {
 }
 
 # Create VLESS Xray configuration
-generate_vless_config() {
+generate_xray_config() {
   local config_file="$1"
   local self_steal_domain="$2"
-  local self_steal_port="$3"
+  local CADDY_LOCAL_PORT="$3"
   local private_key="$4"
 
   local short_id=$(openssl rand -hex 8)
@@ -62,7 +62,7 @@ generate_vless_config() {
         "network": "tcp",
         "security": "reality",
         "realitySettings": {
-          "dest": "127.0.0.1:$self_steal_port",
+          "dest": "127.0.0.1:$CADDY_LOCAL_PORT",
           "show": false,
           "xver": 1,
           "shortIds": [

@@ -1,6 +1,7 @@
 # Main variables
 BUILD_DIR = dist
 SRC_DIR = src
+LIB_DIR = $(SRC_DIR)/lib
 MODULES_DIR = $(SRC_DIR)/modules
 SHELL = /bin/bash
 
@@ -8,26 +9,37 @@ SHELL = /bin/bash
 TARGET = install_remnawave.sh
 
 # List of all modules in the order of inclusion
-MODULES = $(MODULES_DIR)/shared/common.sh \
-          $(MODULES_DIR)/shared/ui.sh \
-          $(MODULES_DIR)/shared/utils.sh \
-          $(MODULES_DIR)/shared/security.sh \
-          $(MODULES_DIR)/shared/validation.sh \
-          $(MODULES_DIR)/shared/docker.sh \
-          $(MODULES_DIR)/shared/api.sh \
-          $(MODULES_DIR)/shared/vless.sh \
-		  $(MODULES_DIR)/tools/tools.sh \
-          $(MODULES_DIR)/dependencies/dependencies.sh \
-          $(MODULES_DIR)/remnawave-subscription-page/remnawave-subscription-page.sh \
-          $(MODULES_DIR)/caddy/caddy.sh \
-          $(MODULES_DIR)/panel/vless-configuration.sh \
-          $(MODULES_DIR)/panel/panel.sh \
-          $(MODULES_DIR)/selfsteal/selfsteal.sh \
+MODULES = $(LIB_DIR)/constants.sh \
+          $(LIB_DIR)/system.sh \
+          $(LIB_DIR)/containers.sh \
+          $(LIB_DIR)/display.sh \
+          $(LIB_DIR)/input.sh \
+          $(LIB_DIR)/network.sh \
+          $(LIB_DIR)/crypto.sh \
+          $(LIB_DIR)/http.sh \
+          $(LIB_DIR)/remnawave-api.sh \
+          $(LIB_DIR)/config.sh \
+          $(LIB_DIR)/validation.sh \
+          $(LIB_DIR)/misc.sh \
+          $(LIB_DIR)/vless.sh \
+					$(MODULES_DIR)/tools/delete-admin.sh \
+					$(MODULES_DIR)/tools/enable-bbr.sh \
+					$(MODULES_DIR)/tools/show-credentials.sh \
+          $(MODULES_DIR)/auth/full-auth.sh \
+					$(MODULES_DIR)/auth/cookie-auth.sh \
+          $(MODULES_DIR)/auth/static-site.sh \
+          $(MODULES_DIR)/subscription-page.sh \
+          $(MODULES_DIR)/panel/vless-config.sh \
+          $(MODULES_DIR)/panel/caddy-cookie-auth.sh \
+          $(MODULES_DIR)/panel/caddy-full-auth.sh \
+          $(MODULES_DIR)/panel/setup.sh \
+          $(MODULES_DIR)/node/selfsteal.sh \
           $(MODULES_DIR)/node/node.sh \
+          $(MODULES_DIR)/all-in-one/vless-config.sh \
           $(MODULES_DIR)/all-in-one/setup-node.sh \
-          $(MODULES_DIR)/all-in-one/setup-caddy.sh \
-          $(MODULES_DIR)/all-in-one/vless-configuration.sh \
-		  $(MODULES_DIR)/all-in-one/setup.sh
+          $(MODULES_DIR)/all-in-one/caddy-cookie-auth.sh \
+          $(MODULES_DIR)/all-in-one/caddy-full-auth.sh \
+					$(MODULES_DIR)/all-in-one/setup.sh
 
 .PHONY: all
 all: clean build
@@ -46,17 +58,17 @@ build: $(BUILD_DIR)
 	@echo '' >> $(BUILD_DIR)/$(TARGET)
 	@echo '# Remnawave Installer ' >> $(BUILD_DIR)/$(TARGET)
 	@echo '' >> $(BUILD_DIR)/$(TARGET)
-	
+
 	@# Add module contents, removing shebang from each file
 	@for module in $(MODULES); do \
 		echo "# Including module: $$(basename $$module)" >> $(BUILD_DIR)/$(TARGET); \
 		tail -n +2 $$module | grep -v '^[[:space:]]*#' >> $(BUILD_DIR)/$(TARGET); \
 		echo '' >> $(BUILD_DIR)/$(TARGET); \
 	done
-	
+
 	@# Add main.sh
 	@tail -n +2 $(SRC_DIR)/main.sh | grep -v '^[[:space:]]*#' >> $(BUILD_DIR)/$(TARGET)
-	
+
 	@# Make script executable
 	@chmod +x $(BUILD_DIR)/$(TARGET)
 	@echo "Installer successfully built: $(BUILD_DIR)/$(TARGET)"

@@ -2,31 +2,22 @@
 
 # Installation and setup of remnawave-subscription-page
 setup_remnawave-subscription-page() {
-    # echo -e "${BOLD_GREEN}Installing remnawave-subscription-page...${NC}"
-
-    # Create directory for remnawave-subscription-page
     mkdir -p $REMNAWAVE_DIR/subscription-page
 
     cd $REMNAWAVE_DIR/subscription-page
 
-    # Create .env file
-    cat >.env <<EOF
-PANEL_DOMAIN=$SCRIPT_PANEL_DOMAIN
-EOF
-
-    # Create docker-compose.yml for remnawave-subscription-page
-    cat >docker-compose.yml <<"EOF"
+    cat >docker-compose.yml <<EOF
 services:
     remnawave-subscription-page:
         image: remnawave/subscription-page:latest
         container_name: remnawave-subscription-page
         hostname: remnawave-subscription-page
         restart: always
-        env_file:
-            - .env
         environment:
-            - REMNAWAVE_PLAIN_DOMAIN=${PANEL_DOMAIN}
+            - REMNAWAVE_PANEL_URL=http://remnawave:3000
             - SUBSCRIPTION_PAGE_PORT=3010
+            - META_TITLE="Subscription Page Title"
+            - META_DESCRIPTION="Subscription Page Description"
         ports:
             - '127.0.0.1:3010:3010'
         networks:
@@ -38,8 +29,5 @@ networks:
         external: true
 EOF
 
-    # Create Makefile for remnawave-subscription-page
     create_makefile "$REMNAWAVE_DIR/subscription-page"
-
-    # echo -e "${BOLD_GREEN}remnawave-subscription-page configuration completed.${NC}"
 }

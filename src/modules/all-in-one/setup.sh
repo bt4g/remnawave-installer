@@ -4,139 +4,126 @@
 #                              REMNAWAVE PANEL INSTALLATION
 # ===================================================================================
 
-install_panel_all_in_one() {
-    clear_screen
+generate_secrets_all_in_one() {
+    local auth_type=$1
 
-    # Install general dependencies
-    install_dependencies
-
-    remove_previous_installation
-
-    mkdir -p $REMNAWAVE_DIR/caddy
-
-    cd $REMNAWAVE_DIR
-
-    # Generate JWT secrets using openssl
-    JWT_AUTH_SECRET=$(openssl rand -hex 32 | tr -d '\n')
-    JWT_API_TOKENS_SECRET=$(openssl rand -hex 32 | tr -d '\n')
-
-    # Generate secure credentials
-    DB_USER="remnawave_$(openssl rand -hex 4 | tr -d '\n')"
-    DB_PASSWORD=$(generate_secure_password 16)
-    DB_NAME="remnawave_db"
-    METRICS_PASS=$(generate_secure_password 16)
-
-    curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
-
-    # Ask if Telegram integration is needed
-    if prompt_yes_no "Do you want to enable Telegram notifications?"; then
-        ### TELEGRAM NOTIFICATIONS ###
-        IS_TELEGRAM_NOTIFICATIONS_ENABLED=true
-        TELEGRAM_BOT_TOKEN=$(prompt_input "Enter your Telegram bot token: " "$ORANGE")
-        TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "Enter the users chat ID: " "$ORANGE")
-        TELEGRAM_NOTIFY_NODES_CHAT_ID=$(prompt_input "Enter the nodes chat ID: " "$ORANGE")
-
-        if prompt_yes_no "Do you want to use Telegram topics?"; then
-            TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "Enter the users thread ID: " "$ORANGE")
-            TELEGRAM_NOTIFY_NODES_THREAD_ID=$(prompt_input "Enter the nodes thread ID: " "$ORANGE")
-        fi
+    generate_secrets
+    if [ "$auth_type" = "full" ]; then
+        generate_full_auth_secrets
     else
-        show_warning "Skipping Telegram integration."
-        IS_TELEGRAM_NOTIFICATIONS_ENABLED=false
-        TELEGRAM_BOT_TOKEN="change-me"
-        TELEGRAM_NOTIFY_USERS_CHAT_ID="change-me"
-        TELEGRAM_NOTIFY_NODES_CHAT_ID="change-me"
-        TELEGRAM_NOTIFY_USERS_THREAD_ID=""
-        TELEGRAM_NOTIFY_NODES_THREAD_ID=""
+        if [ "$auth_type" = "cookie" ]; then
+            generate_cookie_auth_secrets
+        fi
+    fi
+}
+
+setup_caddy_all_in_one() {
+    local auth_type=$1
+
+    # Setup components
+    if [ "$auth_type" = "full" ]; then
+        setup_caddy_all_in_one_full_auth
+    else
+        if [ "$auth_type" = "cookie" ]; then
+            setup_caddy_all_in_one_cookie_auth
+        fi
+    fi
+}
+
+start_caddy_all_in_one() {
+    local auth_type=$1
+
+    if [ "$auth_type" = "full" ]; then
+        start_caddy_full_auth
+    else
+        if [ "$auth_type" = "cookie" ]; then
+            start_caddy_cookie_auth
+        fi
     fi
 
-    # Ask for the main domain for the panel with integrated validation
-    SCRIPT_PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel, subscriptions, and selfsteal (e.g., panel.example.com)")
-    SCRIPT_SUB_DOMAIN="$SCRIPT_PANEL_DOMAIN"
-    # Ask for Selfsteal port with validation and default value 9443
-    SELF_STEAL_PORT=$(read_port "Enter the port for Caddy - should not be 443 (you can leave the default)" "9443")
-    # Ask for API node port with validation and default value 2222
-    NODE_PORT=$(read_port "Enter the API node port (you can leave the default)" "2222")
+}
 
-    SUPERADMIN_USERNAME=$(generate_readable_login)
-    SUPERADMIN_PASSWORD=$(generate_secure_password 25)
+save_credentials_all_in_one() {
+    local auth_type=$1
 
-    update_file ".env" \
-        "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
-        "JWT_API_TOKENS_SECRET" "$JWT_API_TOKENS_SECRET" \
-        "IS_TELEGRAM_NOTIFICATIONS_ENABLED" "$IS_TELEGRAM_NOTIFICATIONS_ENABLED" \
-        "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN" \
-        "TELEGRAM_NOTIFY_USERS_CHAT_ID" "$TELEGRAM_NOTIFY_USERS_CHAT_ID" \
-        "TELEGRAM_NOTIFY_NODES_CHAT_ID" "$TELEGRAM_NOTIFY_NODES_CHAT_ID" \
-        "TELEGRAM_NOTIFY_USERS_THREAD_ID" "$TELEGRAM_NOTIFY_USERS_THREAD_ID" \
-        "TELEGRAM_NOTIFY_NODES_THREAD_ID" "$TELEGRAM_NOTIFY_NODES_THREAD_ID" \
-        "SUB_PUBLIC_DOMAIN" "$SCRIPT_PANEL_DOMAIN/sub" \
-        "DATABASE_URL" "postgresql://$DB_USER:$DB_PASSWORD@remnawave-db:5432/$DB_NAME" \
-        "POSTGRES_USER" "$DB_USER" \
-        "POSTGRES_PASSWORD" "$DB_PASSWORD" \
-        "POSTGRES_DB" "$DB_NAME" \
-        "METRICS_PASS" "$METRICS_PASS"
+    if [ "$auth_type" = "full" ]; then
+        save_credentials_full_auth
+    else
+        if [ "$auth_type" = "cookie" ]; then
+            save_credentials_cookie_auth
+        fi
+    fi
+}
 
-    # Generate a secret key to protect the admin panel
-    PANEL_SECRET_KEY=$(openssl rand -hex 16)
+display_results_all_in_one() {
+    local auth_type=$1
 
-    # Create docker-compose.yml for the panel
-    curl -s -o docker-compose.yml https://raw.githubusercontent.com/remnawave/backend/refs/heads/main/docker-compose-prod.yml
+    if [ "$auth_type" = "full" ]; then
+        display_full_auth_results "all-in-one"
+    else
+        if [ "$auth_type" = "cookie" ]; then
+            display_cookie_auth_results "all-in-one"
+        fi
+    fi
+}
 
-    # Change the image to dev
-    sed -i "s|image: remnawave/backend:latest|image: remnawave/backend:dev|" docker-compose.yml
+collect_selfsteal_domain_for_all_in_one() {
+    while true; do
+        # 3 - true show_warning
+        # 4 - false allow_cf_proxy
+        # 5 - false expect_different_ip
+        SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain (will be used on node server), e.g. domain.example.com" "$ORANGE" true false false)
 
-    # Create Makefile
+        # Check that selfsteal domain is different from panel and subscription domains
+        if check_domain_uniqueness "$SELF_STEAL_DOMAIN" "selfsteal" "$PANEL_DOMAIN" "$SUB_DOMAIN"; then
+            break
+        fi
+        show_warning "Please enter a different domain for selfsteal service."
+        echo
+    done
+}
+
+install_remnawave_all_in_one() {
+    local auth_type=$1
+
+    if ! prepare_installation "qrencode"; then
+        return 1
+    fi
+
+    generate_secrets_all_in_one $auth_type
+
+    collect_telegram_config
+    collect_domain_config
+    collect_selfsteal_domain_for_all_in_one
+
+    if [ "$auth_type" = "full" ]; then
+        collect_full_auth_config
+    fi
+
+    collect_ports_all_in_one
+
+    allow_ufw_node_port_from_panel
+
+    setup_panel_docker_compose
+
+    setup_panel_environment
+
     create_makefile "$REMNAWAVE_DIR"
 
-    # ===================================================================================
-    # Install Caddy for the panel and subscriptions
-    # ===================================================================================
+    setup_caddy_all_in_one $auth_type
 
-    setup_caddy_all_in_one "$PANEL_SECRET_KEY" "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT"
+    setup_remnawave-subscription-page
 
-    # Start all containers
-    show_info "Starting containers..." "$BOLD_GREEN"
+    start_services
 
-    # Start RemnaWave panel
-    start_container "$REMNAWAVE_DIR" "remnawave/backend" "Remnawave"
+    start_caddy_all_in_one $auth_type
 
-    # Start Caddy
-    start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"
+    register_panel_user
+    configure_vless_all_in_one
 
-    REG_TOKEN=$(register_user "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$SUPERADMIN_USERNAME" "$SUPERADMIN_PASSWORD")
+    setup_and_start_all_in_one_node
 
-    if [ -n "$REG_TOKEN" ]; then
-        vless_configuration_all_in_one "127.0.0.1:3000" "$SCRIPT_PANEL_DOMAIN" "$REG_TOKEN" "$SELF_STEAL_PORT" "$NODE_PORT"
-    else
-        show_error "Failed to register user."
-        exit 1
-    fi
+    save_credentials_all_in_one $auth_type
 
-    setup_node_all_in_one "$SCRIPT_PANEL_DOMAIN" "$SELF_STEAL_PORT" "127.0.0.1:3000" "$REG_TOKEN" "$NODE_PORT"
-    # Start the node
-    start_container "$LOCAL_REMNANODE_DIR" "remnawave/node" "Remnawave Node"
-
-    # Check if the node is running
-    NODE_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "node" && echo "running" || echo "stopped")
-
-    if [ "$NODE_STATUS" = "running" ]; then
-        echo -e "${BOLD_GREEN}✓ Remnawave node successfully installed and running!${NC}"
-        echo ""
-    fi
-
-    # Save credentials to a file
-    CREDENTIALS_FILE="$REMNAWAVE_DIR/credentials.txt"
-    echo "PANEL DOMAIN: $SCRIPT_PANEL_DOMAIN" >>"$CREDENTIALS_FILE"
-    echo "PANEL URL: https://$SCRIPT_PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
-    echo "" >>"$CREDENTIALS_FILE"
-    echo "SUPERADMIN USERNAME: $SUPERADMIN_USERNAME" >>"$CREDENTIALS_FILE"
-    echo "SUPERADMIN PASSWORD: $SUPERADMIN_PASSWORD" >>"$CREDENTIALS_FILE"
-    echo "" >>"$CREDENTIALS_FILE"
-    echo "SECRET KEY: $PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
-
-    # Set secure permissions on the credentials file
-    chmod 600 "$CREDENTIALS_FILE"
-
-    display_panel_installation_complete_message
+    display_results_all_in_one $auth_type
 }
