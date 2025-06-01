@@ -3578,17 +3578,17 @@ main() {
         echo -e "  ${GREEN}5. ${NC}Panel + Node with SIMPLE cookie security"
         echo
 
-        echo -e "  ${BOLD_BLUE_MENU}═══ SYSTEM MANAGEMENT ═══${NC}"
+        echo -e "  ${BOLD_BLUE_MENU}═══ PANEL MANAGEMENT ═══${NC}"
         echo
         echo -e "  ${GREEN}6. ${NC}Restart panel"
-        echo -e "  ${GREEN}7. ${NC}Enable BBR"
-        echo -e "  ${GREEN}8. ${NC}Remove panel"
+        echo -e "  ${GREEN}7. ${NC}Remove panel"
+        echo -e "  ${GREEN}8. ${NC}Reset admin login and password"
+        echo -e "  ${GREEN}9. ${NC}Show panel access credentials"
         echo
 
-        echo -e "  ${BOLD_BLUE_MENU}═══ ADMINISTRATION TOOLS ═══${NC}"
+        echo -e "  ${BOLD_BLUE_MENU}═══ SYSTEM MANAGEMENT ═══${NC}"
         echo
-        echo -e "  ${GREEN}9. ${NC} Reset admin login and password (delete admin from DB)"
-        echo -e "  ${GREEN}10.${NC} Show panel access credentials"
+        echo -e "  ${GREEN}10. ${NC}Enable BBR"
         echo
 
         echo -e "  ${BOLD_BLUE_MENU}═══ EXIT ═══${NC}"
@@ -3618,16 +3618,16 @@ main() {
             restart_panel
             ;;
         7)
-            enable_bbr
-            ;;
-        8)
             remove_previous_installation true
             ;;
-        9)
+        8)
             delete_admin
             ;;
-        10)
+        9)
             show_panel_credentials
+            ;;
+        10)
+            enable_bbr
             ;;
         0)
             echo "Exiting."
