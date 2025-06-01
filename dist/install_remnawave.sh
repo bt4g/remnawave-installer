@@ -214,11 +214,10 @@ remove_previous_installation() {
             show_success "Remnawave has been completely removed from your system. Press any key to continue..."
             read
         else
-            echo
             show_success "Previous installation removed."
         fi
     elif [ "$from_menu" = true ]; then
-        echo ''
+        echo
         show_info "No Remnawave installation detected on this system."
         echo -e "${BOLD_GREEN}Press any key to continue...${NC}"
         read
@@ -251,13 +250,13 @@ restart_panel() {
             spinner $! "Restarting panel..."
 
             show_info "Starting main panel..." "$ORANGE"
-            if ! start_container "/opt/remnawave" "remnawave/backend" "Remnawave Panel"; then
+            if ! start_container "/opt/remnawave" "Remnawave Panel"; then
                 return 1
             fi
 
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
                 show_info "Starting subscription page..." "$ORANGE"
-                if ! start_container "/opt/remnawave/subscription-page" "remnawave/subscription-page" "Subscription Page"; then
+                if ! start_container "/opt/remnawave/subscription-page" "Subscription Page"; then
                     return 1
                 fi
             fi
@@ -271,92 +270,92 @@ restart_panel() {
     fi
 }
 
-check_docker_rate_limit() {
-    local error_output="$1"
-    local service_name="$2"
+start_container() {
+    local compose_dir="$1" display_name="$2"
+    local max_wait=20 poll=1 tmp_log compose_file
+    tmp_log=$(mktemp /tmp/docker-stack-XXXX.log)
 
-    if echo "$error_output" | grep -q "toomanyrequests.*pull rate limit"; then
-        show_error "Docker Hub rate limit exceeded for $service_name"
-        show_info "Cause: Docker Hub pull rate limit exceeded" "$BOLD_YELLOW"
-        echo -e "${ORANGE}Possible solutions:${NC}"
-        echo -e "${GREEN}1. Wait 6 hours and retry installation${NC}"
-        echo -e "${GREEN}2. Login to Docker Hub: docker login${NC}"
-        echo -e "${GREEN}3. Use VPN or different IP address${NC}"
-        echo -e "${GREEN}4. Configure Docker Hub mirror${NC}"
-        echo
-        return 0 # Rate limit detected
+    if [[ -z "$compose_dir" || -z "$display_name" ]]; then
+        printf "${BOLD_RED}Error:${NC} provide directory and display name\n" >&2
+        return 2
+    fi
+    if [[ ! -d "$compose_dir" ]]; then
+        printf "${BOLD_RED}Error:${NC} directory “%s” not found\n" "$compose_dir" >&2
+        return 2
+    fi
+    if [[ -f "$compose_dir/docker-compose.yml" ]]; then
+        compose_file="$compose_dir/docker-compose.yml"
+    elif [[ -f "$compose_dir/docker-compose.yaml" ]]; then
+        compose_file="$compose_dir/docker-compose.yaml"
+    else
+        printf "${BOLD_RED}Error:${NC} docker-compose.yml not found in “%s”\n" "$compose_dir" >&2
+        return 2
+    fi
+    if ! command -v docker >/dev/null 2>&1; then
+        printf "${BOLD_RED}Error:${NC} Docker is not installed or not in PATH\n" >&2
+        return 2
+    fi
+    if ! docker info >/dev/null 2>&1; then
+        printf "${BOLD_RED}Error:${NC} Docker daemon is not running\n" >&2
+        return 2
     fi
 
-    return 1 # No rate limit detected
-}
+    (docker compose -f "$compose_file" up -d --force-recreate) \
+        >"$tmp_log" 2>&1 &
+    spinner $! "Launching “$display_name”"
+    wait $!
 
-check_containers_health() {
-    local directory="$1"
-    local expected_containers=("$@")
-    shift # Remove directory from arguments
+    local output
+    output=$(<"$tmp_log")
 
-    cd "$directory"
+    if echo "$output" | grep -qiE 'toomanyrequests.*rate limit'; then
+        printf "${BOLD_RED}✖ Docker Hub rate limit while pulling images for “%s”.${NC}\n" "$display_name" >&2
+        printf "${BOLD_YELLOW}Cause:${NC} pull rate limit exceeded.\n" >&2
+        echo -e "${ORANGE}Possible solutions:${NC}" >&2
+        echo -e "${GREEN}1. Wait ~6 h and retry${NC}" >&2
+        echo -e "${GREEN}2. docker login${NC}" >&2
+        echo -e "${GREEN}3. Use VPN / other IP${NC}" >&2
+        echo -e "${GREEN}4. Set up a mirror${NC}\n" >&2
+        rm -f "$tmp_log"
+        return 1
+    fi
 
-    local failed_containers=()
-    local running_containers=$(docker compose ps --services --filter "status=running" 2>/dev/null)
+    mapfile -t services < <(docker compose -f "$compose_file" config --services)
 
-    for container in "${expected_containers[@]}"; do
-        if ! echo "$running_containers" | grep -q "^$container$"; then
-            failed_containers+=("$container")
-        fi
+    local all_ok=true elapsed=0
+    while [[ $elapsed -lt $max_wait ]]; do
+        all_ok=true
+        for svc in "${services[@]}"; do
+            cid=$(docker compose -f "$compose_file" ps -q "$svc")
+            state=$(docker inspect -f '{{.State.Status}}' "$cid" 2>/dev/null)
+            if [[ "$state" != "running" ]]; then
+                all_ok=false
+                break
+            fi
+        done
+        $all_ok && break
+        sleep $poll
+        ((elapsed += poll))
     done
 
-    if [ ${#failed_containers[@]} -gt 0 ]; then
-        show_error "The following containers failed to start: ${failed_containers[*]}"
-        return 1
-    fi
-
-    return 0
-}
-
-start_container() {
-    local directory="$1"      # Directory with docker-compose.yml
-    local container_name="$2" # Container name to check in docker ps
-    local service_name="$3"   # Service name for messages
-    local wait_time=${4:-3}   # Wait time in seconds (increased default)
-
-    cd "$directory"
-
-    local temp_output=$(mktemp)
-    local temp_error=$(mktemp)
-
-    (
-        docker compose up -d >"$temp_output" 2>"$temp_error"
-        sleep $wait_time
-    ) &
-
-    local bg_pid=$!
-
-    spinner $bg_pid "Starting container ${service_name}..."
-
-    wait $bg_pid
-    local docker_exit_code=$?
-
-    local error_output=$(cat "$temp_error")
-    local stdout_output=$(cat "$temp_output")
-
-    rm -f "$temp_output" "$temp_error"
-
-    if [ $docker_exit_code -ne 0 ]; then
-        show_error "Failed to start $service_name"
-
-        local combined_output="$error_output$stdout_output"
-        if ! check_docker_rate_limit "$combined_output" "$service_name"; then
-            local container_logs=$(docker compose logs --tail=100 2>/dev/null || echo "Unable to get logs")
-        fi
-
-        echo -e "${ORANGE}Diagnostic commands:${NC}"
-        echo -e "${GREEN}cd $directory && docker compose logs${NC}"
-        echo -e "${GREEN}cd $directory && docker compose ps${NC}"
-        echo -e "${ORANGE}You can check logs later using 'make logs' in directory $directory${NC}"
+    if $all_ok; then
+        printf "${BOLD_GREEN}✔ “%s” is up (services: %s).${NC}\n" \
+            "$display_name" "$(
+                IFS=,
+                echo "${services[*]}"
+            )"
         echo
-        return 1
+        rm -f "$tmp_log"
+        return 0
     fi
+
+    printf "${BOLD_RED}✖ “%s” failed to start entirely.${NC}\n" "$display_name" >&2
+    printf "${BOLD_RED}→ docker compose output:${NC}\n" >&2
+    cat "$tmp_log" >&2
+    printf "\n${BOLD_RED}→ Problematic services status:${NC}\n" >&2
+    docker compose -f "$compose_file" ps >&2
+    rm -f "$tmp_log"
+    return 1
 }
 
 create_makefile() {
@@ -379,12 +378,12 @@ start_services() {
     echo
     show_info "Starting containers..." "$BOLD_GREEN"
 
-    if ! start_container "$REMNAWAVE_DIR" "remnawave/backend" "Remnawave/backend"; then
+    if ! start_container "$REMNAWAVE_DIR" "Remnawave/backend"; then
         show_info "Installation stopped" "$BOLD_RED"
         exit 1
     fi
 
-    if ! start_container "$REMNAWAVE_DIR/subscription-page" "remnawave/subscription-page" "Subscription page"; then
+    if ! start_container "$REMNAWAVE_DIR/subscription-page" "Subscription page"; then
         show_info "Installation stopped" "$BOLD_RED"
         exit 1
     fi
@@ -2139,7 +2138,7 @@ generate_full_auth_secrets() {
 }
 
 start_caddy_full_auth() {
-    if ! start_container "$REMNAWAVE_DIR/caddy" "remnawave/caddy-with-auth" "Caddy"; then
+    if ! start_container "$REMNAWAVE_DIR/caddy" "Caddy"; then
         show_info "Installation stopped" "$BOLD_RED"
         exit 1
     fi
@@ -2221,7 +2220,7 @@ display_full_auth_results() {
 
 # Including module: cookie-auth.sh
 start_caddy_cookie_auth() {
-  if ! start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"; then
+  if ! start_container "$REMNAWAVE_DIR/caddy" "Caddy"; then
     show_info "Installation stopped" "$BOLD_RED"
     exit 1
   fi
@@ -2846,7 +2845,7 @@ EOF
 
     mkdir -p logs
 
-    if ! start_container "$SELFSTEAL_DIR" "caddy-selfsteal" "Caddy"; then
+    if ! start_container "$SELFSTEAL_DIR" "Caddy"; then
         show_info "Installation stopped" "$BOLD_RED"
         exit 1
     fi
@@ -2940,7 +2939,7 @@ create_node_env_file() {
 }
 
 start_node_and_show_results() {
-    if ! start_container "$REMNANODE_DIR" "remnanode" "Remnawave Node"; then
+    if ! start_container "$REMNANODE_DIR" "Remnawave Node"; then
         show_info "Installation stopped" "$BOLD_RED"
         exit 1
     fi
@@ -3082,7 +3081,7 @@ EOL
 setup_and_start_all_in_one_node() {
   setup_node_all_in_one "127.0.0.1:3000" "$REG_TOKEN" "$NODE_PORT"
 
-  if ! start_container "$LOCAL_REMNANODE_DIR" "remnanode" "Remnawave Node"; then
+  if ! start_container "$LOCAL_REMNANODE_DIR" "Remnawave Node"; then
     show_info "Installation stopped" "$BOLD_RED"
     exit 1
   fi

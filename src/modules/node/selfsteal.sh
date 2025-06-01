@@ -83,7 +83,7 @@ EOF
     # Start the service
     mkdir -p logs
 
-    if ! start_container "$SELFSTEAL_DIR" "caddy-selfsteal" "Caddy"; then
+    if ! start_container "$SELFSTEAL_DIR" "Caddy"; then
         show_info "Installation stopped" "$BOLD_RED"
         exit 1
     fi

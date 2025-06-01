@@ -18,7 +18,7 @@ generate_full_auth_secrets() {
 
 # Start Caddy with full auth
 start_caddy_full_auth() {
-    if ! start_container "$REMNAWAVE_DIR/caddy" "remnawave/caddy-with-auth" "Caddy"; then
+    if ! start_container "$REMNAWAVE_DIR/caddy" "Caddy"; then
         show_info "Installation stopped" "$BOLD_RED"
         exit 1
     fi

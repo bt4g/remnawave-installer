@@ -82,7 +82,7 @@ create_node_env_file() {
 
 # Start node container and show results
 start_node_and_show_results() {
-    if ! start_container "$REMNANODE_DIR" "remnanode" "Remnawave Node"; then
+    if ! start_container "$REMNANODE_DIR" "Remnawave Node"; then
         show_info "Installation stopped" "$BOLD_RED"
         exit 1
     fi

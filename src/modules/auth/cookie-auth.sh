@@ -1,6 +1,6 @@
 # Start Caddy with cookie auth
 start_caddy_cookie_auth() {
-  if ! start_container "$REMNAWAVE_DIR/caddy" "caddy-remnawave" "Caddy"; then
+  if ! start_container "$REMNAWAVE_DIR/caddy" "Caddy"; then
     show_info "Installation stopped" "$BOLD_RED"
     exit 1
   fi
