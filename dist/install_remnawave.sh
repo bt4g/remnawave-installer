@@ -303,7 +303,7 @@ start_container() {
         return 2
     fi
 
-    (docker compose -f "$compose_file" up -d --force-recreate) \
+    (docker compose -f "$compose_file" up -d --force-recreate --remove-orphans) \
         >"$tmp_log" 2>&1 &
     spinner $! "Launching “$display_name”"
     wait $!
