@@ -58,7 +58,7 @@ Client → Port 443 → Xray → (Proxy connections)
 To run the installer, execute the following command in terminal:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/dist/install_remnawave.sh | bash -s -- --lang=en
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/dev/install.sh)" @ --lang=en
 ```
 
 <p align="center"><img src="./assets/menu.png" alt="Remnawave Installer Menu"></p>

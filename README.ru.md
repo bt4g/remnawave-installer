@@ -54,7 +54,7 @@
 Для запуска установщика выполните следующую команду в терминале:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/dist/install_remnawave.sh | bash -s -- --lang=ru
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/dev/install.sh)" @ --lang=ru
 ```
 
 <p align="center"><img src="./assets/menu.png" alt="Remnawave Installer Menu"></p>
