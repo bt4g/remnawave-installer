@@ -1,5 +1,23 @@
 #!/bin/bash
 
+# Parse command line arguments for language or use environment variable
+LANG_CODE="${LANG_CODE:-en}"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --lang=*)
+            LANG_CODE="${1#*=}"
+            shift
+            ;;
+        --lang)
+            LANG_CODE="$2"
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
 # Color definitions for output
 BOLD_BLUE=$(tput setaf 4)
 BOLD_GREEN=$(tput setaf 2)

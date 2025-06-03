@@ -1,23 +1,5 @@
 #!/bin/bash
 
-# Parse command line arguments for language
-LANG_CODE="en"
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --lang=*)
-            LANG_CODE="${1#*=}"
-            shift
-            ;;
-        --lang)
-            LANG_CODE="$2"
-            shift 2
-            ;;
-        *)
-            shift
-            ;;
-    esac
-done
-
 # Root privileges check
 if [ "$(id -u)" -ne 0 ]; then
     echo "$(t error_root_required)"

@@ -4,6 +4,23 @@
 
 # Including module: constants.sh
 
+LANG_CODE="${LANG_CODE:-en}"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --lang=*)
+            LANG_CODE="${1#*=}"
+            shift
+            ;;
+        --lang)
+            LANG_CODE="$2"
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
 BOLD_BLUE=$(tput setaf 4)
 BOLD_GREEN=$(tput setaf 2)
 BOLD_YELLOW=$(tput setaf 11)
@@ -4156,23 +4173,6 @@ install_remnawave_all_in_one() {
     display_results_all_in_one $auth_type
 }
 
-
-LANG_CODE="en"
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --lang=*)
-            LANG_CODE="${1#*=}"
-            shift
-            ;;
-        --lang)
-            LANG_CODE="$2"
-            shift 2
-            ;;
-        *)
-            shift
-            ;;
-    esac
-done
 
 if [ "$(id -u)" -ne 0 ]; then
     echo "$(t error_root_required)"
