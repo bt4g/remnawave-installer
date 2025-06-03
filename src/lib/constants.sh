@@ -18,8 +18,7 @@ VERSION="1.5.0b"
 
 # Main directories
 REMNAWAVE_DIR="/opt/remnawave"
-REMNANODE_ROOT_DIR="/opt/remnanode"
-REMNANODE_DIR="/opt/remnanode/node"
+REMNANODE_DIR="/opt/remnanode"
 SELFSTEAL_DIR="/opt/remnanode/selfsteal"
 
 # Local node directory (with panel)

@@ -134,7 +134,7 @@ After installation, you can manage services using the `make` command in correspo
 - **Caddy directory**: `/opt/remnawave/caddy`
 - **remnawave-subscription-page directory**: `/opt/remnawave/remnawave-subscription-page`
 
-- **Node directory**: `/opt/remnanode/node`
+- **Node directory**: `/opt/remnanode`
 - **Fallback site directory**: `/opt/remnanode/selfsteal`
 
 ### For "All-in-one" option:

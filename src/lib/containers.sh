@@ -4,102 +4,71 @@
 #                               DOCKER CONTAINER FUNCTIONS
 # ===================================================================================
 
-# Function to check and remove previous installation
 remove_previous_installation() {
-    local from_menu=${1:-false} # Optional parameter to indicate if called from menu
-    # Check for previous installation
-    local containers=("remnawave-subscription-page" "remnawave" "remnawave-db" "remnawave-redis" "remnanode" "caddy-remnawave" "caddy-selfsteal")
-    local container_exists=false
+    local from_menu=${1:-false}
 
-    # Check if any of the containers exist
-    for container in "${containers[@]}"; do
-        if docker ps -a --format "{{.Names}}" 2>/dev/null | grep -q "$container"; then
-            container_exists=true
-            break
-        fi
-    done
-
-    if [ -d "$REMNAWAVE_DIR" ] || [ "$container_exists" = true ]; then
+    # Check if installation directory exists
+    if [ -d "$REMNAWAVE_DIR" ]; then
+        # Show warning and request confirmation (keep as is)
         if [ "$from_menu" = true ]; then
             show_warning "RemnaWave installation detected."
-            if prompt_yes_no "Are you sure you want to completely DELETE Remnawave? IT WILL REMOVE ALL DATA!!! Continue?" "$ORANGE"; then
-                # Continue with removal
-                :
-            else
+            if ! prompt_yes_no "Are you sure you want to completely DELETE Remnawave? IT WILL REMOVE ALL DATA!!! Continue?" "$ORANGE"; then
                 return 1
             fi
         else
             show_warning "Previous RemnaWave installation detected."
-            if prompt_yes_no "To continue, you need to DELETE previous Remnawave installation. IT WILL REMOVE ALL DATA!!! Continue?" "$ORANGE"; then
-                # Continue with removal
-                :
-            else
+            if ! prompt_yes_no "To continue, you need to DELETE previous Remnawave installation. IT WILL REMOVE ALL DATA!!! Continue?" "$ORANGE"; then
                 return 1
             fi
         fi
 
-        # Check for Caddy and stop it
-        if [ -f "$REMNAWAVE_DIR/caddy/docker-compose.yml" ]; then
-            cd $REMNAWAVE_DIR && docker compose -f caddy/docker-compose.yml down >/dev/null 2>&1 &
-            spinner $! "Stopping Caddy container"
-        fi
-        # Check for subscription page and stop it
-        if [ -f "$REMNAWAVE_DIR/subscription-page/docker-compose.yml" ]; then
-            cd $REMNAWAVE_DIR && docker compose -f subscription-page/docker-compose.yml down >/dev/null 2>&1 &
-            spinner $! "Stopping remnawave-subscription-page container"
-        fi
+        # Array of compose files to process
+        local compose_configs=(
+            "$REMNAWAVE_DIR/caddy/docker-compose.yml"
+            "$REMNAWAVE_DIR/subscription-page/docker-compose.yml"
+            "$REMNAWAVE_DIR/docker-compose.yml"
+            "$REMNANODE_DIR/docker-compose.yml"
+            "$SELFSTEAL_DIR/docker-compose.yml"
+            "$REMNAWAVE_DIR/panel/docker-compose.yml" # Old path - for backward compatibility
+            "$REMNANODE_DIR/node/docker-compose.yml"  # Old path - for backward compatibility
+        )
 
-        # Check for panel and stop it
-        if [ -f "$REMNAWAVE_DIR/docker-compose.yml" ]; then
-            cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
-            spinner $! "Stopping Remnawave panel containers"
-        fi
-        # Check for panel and stop it
-        if [ -f "$REMNAWAVE_DIR/panel/docker-compose.yml" ]; then
-            cd $REMNAWAVE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
-            spinner $! "Stopping Remnawave panel containers"
-        fi
-        # Check for selfsteal and stop it
-        if [ -f "$SELFSTEAL_DIR/docker-compose.yml" ]; then
-            cd $SELFSTEAL_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
-            spinner $! "Stopping Caddy Selfsteal container"
-        fi
-        # Check for node and stop it
-        if [ -f "$REMNANODE_DIR/docker-compose.yml" ]; then
-            cd $REMNANODE_DIR && docker compose -f panel/docker-compose.yml down >/dev/null 2>&1 &
-            spinner $! "Stopping Remnawave node container"
-        fi
-
-        # Check for remaining containers and stop/remove them
-        for container in "${containers[@]}"; do
-            if docker ps -a --format '{{.Names}}' | grep -q "^$container$"; then
-                docker stop "$container" >/dev/null 2>&1 && docker rm "$container" >/dev/null 2>&1 &
-                spinner $! "Stopping and removing container $container"
+        # Process each compose file
+        for compose_file in "${compose_configs[@]}"; do
+            if [ -f "$compose_file" ]; then
+                local dir_path=$(dirname "$compose_file")
+                cd "$dir_path" && docker compose down -v --rmi local --remove-orphans >/dev/null 2>&1 &
+                spinner $! "Cleaning up $(basename "$dir_path") services"
             fi
         done
 
-        # Remove remaining Docker images
-        docker rmi $(docker images -q) -f >/dev/null 2>&1 &
-        spinner $! "Removing Docker images"
+        # Force cleanup of remaining containers (if any)
+        local containers=("remnawave-subscription-page" "remnawave" "remnawave-db" "remnawave-redis" "remnanode" "caddy-remnawave" "caddy-selfsteal")
+        for container in "${containers[@]}"; do
+            if docker ps -a --format '{{.Names}}' | grep -q "^$container$"; then
+                docker stop "$container" >/dev/null 2>&1 && docker rm "$container" >/dev/null 2>&1 &
+                spinner $! "Force removing container $container"
+            fi
+        done
 
         # Remove directory
-        rm -rf $REMNAWAVE_DIR >/dev/null 2>&1 &
+        rm -rf "$REMNAWAVE_DIR" >/dev/null 2>&1 &
         spinner $! "Removing directory $REMNAWAVE_DIR"
-        # Remove Docker volumes
-        docker volume rm remnawave-db-data remnawave-redis-data remnawave-caddy-ssl-data >/dev/null 2>&1 &
-        spinner $! "Removing Docker volumes: remnawave-db-data and remnawave-redis-data and remnawave-caddy-ssl-data"
 
+        # Show result
         if [ "$from_menu" = true ]; then
             show_success "Remnawave has been completely removed from your system. Press any key to continue..."
             read
         else
             show_success "Previous installation removed."
         fi
-    elif [ "$from_menu" = true ]; then
-        echo
-        show_info "No Remnawave installation detected on this system."
-        echo -e "${BOLD_GREEN}Press any key to continue...${NC}"
-        read
+    else
+        if [ "$from_menu" = true ]; then
+            echo
+            show_info "No Remnawave installation detected on this system."
+            echo -e "${BOLD_GREEN}Press any key to continue...${NC}"
+            read
+        fi
     fi
 }
 

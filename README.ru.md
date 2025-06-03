@@ -129,7 +129,7 @@ Caddy Auth представляет собой полноценную систе
 - **Директория Caddy**: `/opt/remnawave/caddy`
 - **Директория remnawave-subscription-page**: `/opt/remnawave/remnawave-subscription-page`
 
-- **Директория ноды**: `/opt/remnanode/node`
+- **Директория ноды**: `/opt/remnanode`
 - **Директория сайта-заглушки**: `/opt/remnanode/selfsteal`
 
 ### Для варианта "Всё в одном":
