@@ -15,9 +15,9 @@ is_bbr_enabled() {
 
 get_bbr_menu_text() {
   if is_bbr_enabled; then
-    echo "Disable BBR"
+    echo "$(t bbr_disable)"
   else
-    echo "Enable BBR"
+    echo "$(t bbr_enable)"
   fi
 }
 
@@ -32,7 +32,7 @@ load_bbr_module() {
 }
 
 enable_bbr() {
-  echo -e "\n${BOLD_GREEN}Enable BBR${NC}\n"
+  echo -e "\n${BOLD_GREEN}$(t bbr_enable)${NC}\n"
 
   load_bbr_module
 
@@ -50,17 +50,17 @@ enable_bbr() {
 
   apply_qdisc_now
 
-  show_success "BBR successfully enabled"
-  echo -e "\n${BOLD_YELLOW}Press Enter to return to menu...${NC}"
+  show_success "$(t success_bbr_enabled)"
+  echo -e "\n${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
   read -r
 }
 
 disable_bbr() {
-  echo -e "\n${BOLD_GREEN}Disable BBR${NC}\n"
+  echo -e "\n${BOLD_GREEN}$(t bbr_disable)${NC}\n"
 
   if grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf ||
     grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf; then
-    show_info "Removing BBR configuration from /etc/sysctl.conf…"
+    show_info "$(t info_removing_bbr_config)"
 
     sed -i '/net.core.default_qdisc=fq/d' /etc/sysctl.conf
     sed -i '/net.ipv4.tcp_congestion_control=bbr/d' /etc/sysctl.conf
@@ -68,12 +68,12 @@ disable_bbr() {
     sysctl -w net.ipv4.tcp_congestion_control=cubic >/dev/null
     sysctl -w net.core.default_qdisc=fq_codel >/dev/null
 
-    show_success "BBR disabled, active cubic + fq_codel"
+    show_success "$(t success_bbr_disabled)"
   else
-    show_warning "BBR не был настроен в /etc/sysctl.conf"
+    show_warning "$(t warning_bbr_not_configured)"
   fi
 
-  echo -e "\n${BOLD_YELLOW}Press Enter to return to menu...${NC}"
+  echo -e "\n${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
   read -r
 }
 

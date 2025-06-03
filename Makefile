@@ -8,8 +8,15 @@ SHELL = /bin/bash
 # Result file name
 TARGET = install_remnawave.sh
 
+# Language files
+LANG_DIR = $(SRC_DIR)/lang
+LANG_FILES = $(LANG_DIR)/en.sh $(LANG_DIR)/ru.sh
+
 # List of all modules in the order of inclusion
 MODULES = $(LIB_DIR)/constants.sh \
+          $(LIB_DIR)/i18n.sh \
+          $(LANG_DIR)/en.sh \
+          $(LANG_DIR)/ru.sh \
           $(LIB_DIR)/system.sh \
           $(LIB_DIR)/containers.sh \
           $(LIB_DIR)/display.sh \

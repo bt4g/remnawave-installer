@@ -10,7 +10,7 @@ generate_vless_keys() {
 
   # Generate x25519 keys using Docker
   docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
-  spinner $! "Generating x25519 keys..."
+  spinner $! "$(t spinner_generating_keys)"
   keys=$(cat "$temp_file")
 
   local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
@@ -18,7 +18,7 @@ generate_vless_keys() {
   rm -f "$temp_file"
 
   if [ -z "$private_key" ] || [ -z "$public_key" ]; then
-    echo -e "${BOLD_RED}Error: Failed to generate keys.${NC}"
+    echo -e "${BOLD_RED}$(t vless_failed_generate_keys)${NC}"
     return 1
   fi
 
@@ -126,19 +126,19 @@ update_xray_config() {
   local new_config=$(cat "$config_file")
 
   make_api_request "PUT" "http://$panel_url/api/xray" "$token" "$panel_domain" "$new_config" >"$temp_file" 2>&1 &
-  spinner $! "Updating Xray configuration..."
+  spinner $! "$(t spinner_updating_xray)"
   local update_response=$(cat "$temp_file")
   rm -f "$temp_file"
 
   if [ -z "$update_response" ]; then
-    echo -e "${BOLD_RED}Error: Empty response from server when updating Xray config.${NC}"
+    echo -e "${BOLD_RED}$(t vless_empty_response_xray)${NC}"
     return 1
   fi
 
   if echo "$update_response" | jq -e '.response.config' >/dev/null; then
     return 0
   else
-    echo -e "${BOLD_RED}Error: Failed to update Xray configuration.${NC}"
+    echo -e "${BOLD_RED}$(t vless_failed_update_xray)${NC}"
     return 1
   fi
 }

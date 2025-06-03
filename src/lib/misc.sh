@@ -24,7 +24,7 @@ generate_qr_code() {
                 printf "    %s\n" "$line"
             done
         else
-            echo "QR code generation failed"
+            echo "$(t misc_qr_generation_failed)"
         fi
         echo
     else

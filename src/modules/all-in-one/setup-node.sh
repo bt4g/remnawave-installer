@@ -42,7 +42,7 @@ setup_and_start_all_in_one_node() {
   setup_node_all_in_one "127.0.0.1:3000" "$REG_TOKEN" "$NODE_PORT"
 
   if ! start_container "$LOCAL_REMNANODE_DIR" "Remnawave Node"; then
-    show_info "Installation stopped" "$BOLD_RED"
+    show_info "$(t services_installation_stopped)" "$BOLD_RED"
     exit 1
   fi
 }

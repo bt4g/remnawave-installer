@@ -19,28 +19,28 @@ EOL
 }
 
 collect_node_selfsteal_domain() {
-    SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain, e.g. domain.example.com" "$ORANGE" true false false)
+    SELF_STEAL_DOMAIN=$(prompt_domain "$(t node_enter_selfsteal_domain)" "$ORANGE" true false false)
 }
 
 check_node_ports() {
     if CADDY_LOCAL_PORT=$(check_required_port "9443"); then
-        show_info "Required Caddy port 9443 is available"
+        show_info "$(t config_caddy_port_available)"
     else
-        show_error "Required Caddy port 9443 is already in use!"
-        show_error "For separate node installation, port 9443 must be available."
-        show_error "Please free up port 9443 and try again."
-        show_error "Installation cannot continue with occupied port 9443"
+        show_error "$(t node_port_9443_in_use)"
+        show_error "$(t node_separate_port_9443)"
+        show_error "$(t node_free_port_9443)"
+        show_error "$(t node_cannot_continue_9443)"
         exit 1
     fi
 
     # Check required Node API port 2222
     if NODE_PORT=$(check_required_port "2222"); then
-        show_info "Required Node API port 2222 is available"
+        show_info "$(t config_node_port_available)"
     else
-        show_error "Required Node API port 2222 is already in use!"
-        show_error "For separate node installation, port 2222 must be available."
-        show_error "Please free up port 2222 and try again."
-        show_error "Installation cannot continue with occupied port 2222"
+        show_error "$(t node_port_2222_in_use)"
+        show_error "$(t node_separate_port_2222)"
+        show_error "$(t node_free_port_2222)"
+        show_error "$(t node_cannot_continue_2222)"
         exit 1
     fi
 }
@@ -48,7 +48,7 @@ check_node_ports() {
 # Collect SSL certificate for node
 collect_node_ssl_certificate() {
     while true; do
-        echo -e "${ORANGE}Enter the server certificate in format SSL_CERT=\"...\" (paste the content and press Enter twice): ${NC}"
+        echo -e "${ORANGE}$(t node_enter_ssl_cert) ${NC}"
         CERTIFICATE=""
         while IFS= read -r line; do
             if [ -z "$line" ]; then
@@ -62,12 +62,12 @@ collect_node_ssl_certificate() {
 
         # Validate SSL certificate format
         if validate_ssl_certificate "$CERTIFICATE"; then
-            echo -e "${BOLD_GREEN}✓ SSL certificate format is valid${NC}"
+            echo -e "${BOLD_GREEN}$(t node_ssl_cert_valid)${NC}"
             echo
             break
         else
-            echo -e "${BOLD_RED}✗ Invalid SSL certificate format. Please try again.${NC}"
-            echo -e "${YELLOW}Expected format: SSL_CERT=\"...eyJub2RlQ2VydFBldW0iOiAi...\"${NC}"
+            echo -e "${BOLD_RED}$(t node_ssl_cert_invalid)${NC}"
+            echo -e "${YELLOW}$(t node_ssl_cert_expected)${NC}"
             echo
         fi
     done
@@ -83,18 +83,18 @@ create_node_env_file() {
 # Start node container and show results
 start_node_and_show_results() {
     if ! start_container "$REMNANODE_DIR" "Remnawave Node"; then
-        show_info "Installation stopped" "$BOLD_RED"
+        show_info "$(t services_installation_stopped)" "$BOLD_RED"
         exit 1
     fi
 
-    echo -e "${LIGHT_GREEN}• Node port: ${BOLD_GREEN}$NODE_PORT${NC}"
-    echo -e "${LIGHT_GREEN}• Node directory: ${BOLD_GREEN}$REMNANODE_DIR${NC}"
+    echo -e "${LIGHT_GREEN}$(t node_port_info) ${BOLD_GREEN}$NODE_PORT${NC}"
+    echo -e "${LIGHT_GREEN}$(t node_directory_info) ${BOLD_GREEN}$REMNANODE_DIR${NC}"
     echo
 }
 
 collect_panel_ip() {
     while true; do
-        PANEL_IP=$(simple_read_domain_or_ip "Enter the IP address of the panel server (for configuring firewall)" "" "ip_only")
+        PANEL_IP=$(simple_read_domain_or_ip "$(t node_enter_panel_ip)" "" "ip_only")
         if [ -n "$PANEL_IP" ]; then
             break
         fi
@@ -102,7 +102,7 @@ collect_panel_ip() {
 }
 
 allow_ufw_node_port_from_panel_ip() {
-    echo "Allow connections from panel server to node port 2222..."
+    echo "$(t node_allow_connections)"
     echo
     ufw allow from "$PANEL_IP" to any port 2222 proto tcp
     echo
@@ -140,6 +140,6 @@ setup_node() {
     unset CERTIFICATE
     unset NODE_PORT
 
-    echo -e "\n${BOLD_GREEN}Press Enter to return to the main menu...${NC}"
+    echo -e "\n${BOLD_GREEN}$(t node_press_enter_return)${NC}"
     read -r
 }

@@ -24,6 +24,618 @@ SELFSTEAL_DIR="/opt/remnanode/selfsteal"
 
 LOCAL_REMNANODE_DIR="$REMNAWAVE_DIR/node"
 
+# Including module: i18n.sh
+
+
+declare -A TRANSLATIONS_EN
+declare -A TRANSLATIONS_RU
+
+t() {
+    local key="$1"
+    local value=""
+
+    case "$LANG_CODE" in
+        "ru")
+            value="${TRANSLATIONS_RU[$key]:-}"
+            ;;
+        "en"|*)
+            value="${TRANSLATIONS_EN[$key]:-}"
+            ;;
+    esac
+
+    if [ -n "$value" ]; then
+        echo "$value"
+    else
+        echo "[$key]" # Show key if no translation found
+    fi
+}
+
+# Including module: en.sh
+
+
+
+TRANSLATIONS_EN[error_root_required]="Error: This script must be run as root (sudo)"
+TRANSLATIONS_EN[error_invalid_choice]="Invalid choice, please try again."
+TRANSLATIONS_EN[error_empty_response]="Error: Empty response from server when creating user."
+TRANSLATIONS_EN[error_failed_create_user]="Error: Failed to create user. HTTP status:"
+TRANSLATIONS_EN[error_passwords_no_match]="Passwords do not match. Please try again."
+TRANSLATIONS_EN[error_enter_yn]="Please enter 'y' or 'n'."
+TRANSLATIONS_EN[error_enter_number_between]="Please enter a number between"
+
+TRANSLATIONS_EN[main_menu_title]="Remnawave Panel Installer by uphantom v"
+TRANSLATIONS_EN[main_menu_install_components]="Install Panel/Node"
+TRANSLATIONS_EN[main_menu_restart_panel]="Restart panel"
+TRANSLATIONS_EN[main_menu_remove_panel]="Remove panel"
+TRANSLATIONS_EN[main_menu_rescue_cli]="Remnawave Rescue CLI [Reset admin]"
+TRANSLATIONS_EN[main_menu_show_credentials]="Show panel access credentials"
+TRANSLATIONS_EN[main_menu_exit]="Exit"
+TRANSLATIONS_EN[main_menu_select_option]="Select option:"
+
+TRANSLATIONS_EN[install_menu_title]="Install Panel/Node"
+TRANSLATIONS_EN[install_menu_panel_only]="Panel Only:"
+TRANSLATIONS_EN[install_menu_panel_full_security]="Panel with FULL Caddy security (recommended)"
+TRANSLATIONS_EN[install_menu_panel_simple_security]="Panel with SIMPLE cookie security"
+TRANSLATIONS_EN[install_menu_node_only]="Node Only:"
+TRANSLATIONS_EN[install_menu_node_separate]="Node only (for separate server)"
+TRANSLATIONS_EN[install_menu_all_in_one]="All-in-One:"
+TRANSLATIONS_EN[install_menu_panel_node_full]="Panel + Node with FULL Caddy security"
+TRANSLATIONS_EN[install_menu_panel_node_simple]="Panel + Node with SIMPLE cookie security"
+TRANSLATIONS_EN[install_menu_back]="Back to main menu"
+
+TRANSLATIONS_EN[prompt_yes_no_suffix]=" (y/n): "
+TRANSLATIONS_EN[prompt_yes_no_default_suffix]=" (y/n) ["
+TRANSLATIONS_EN[prompt_enter_to_continue]="Press Enter to continue..."
+TRANSLATIONS_EN[prompt_enter_to_return]="Press Enter to return to menu..."
+
+TRANSLATIONS_EN[success_bbr_enabled]="BBR successfully enabled"
+TRANSLATIONS_EN[success_bbr_disabled]="BBR disabled, active cubic + fq_codel"
+TRANSLATIONS_EN[success_credentials_saved]="Credentials saved in file:"
+TRANSLATIONS_EN[success_installation_complete]="Installation complete. Press Enter to continue..."
+
+TRANSLATIONS_EN[warning_skipping_telegram]="Skipping Telegram integration."
+TRANSLATIONS_EN[warning_bbr_not_configured]="BBR was not configured in /etc/sysctl.conf"
+TRANSLATIONS_EN[warning_enter_different_domain]="Please enter a different domain for"
+
+TRANSLATIONS_EN[info_removing_bbr_config]="Removing BBR configuration from /etc/sysctl.conf…"
+TRANSLATIONS_EN[info_installation_directory]="Installation directory:"
+
+TRANSLATIONS_EN[bbr_enable]="Enable BBR"
+TRANSLATIONS_EN[bbr_disable]="Disable BBR"
+
+TRANSLATIONS_EN[telegram_enable_notifications]="Do you want to enable Telegram notifications?"
+TRANSLATIONS_EN[telegram_bot_token]="Enter your Telegram bot token: "
+TRANSLATIONS_EN[telegram_users_chat_id]="Enter the users chat ID: "
+TRANSLATIONS_EN[telegram_nodes_chat_id]="Enter the nodes chat ID: "
+TRANSLATIONS_EN[telegram_use_topics]="Do you want to use Telegram topics?"
+TRANSLATIONS_EN[telegram_users_thread_id]="Enter the users thread ID: "
+TRANSLATIONS_EN[telegram_nodes_thread_id]="Enter the nodes thread ID: "
+
+TRANSLATIONS_EN[domain_panel_prompt]="Enter Panel domain (will be used on panel server), e.g. panel.example.com"
+TRANSLATIONS_EN[domain_subscription_prompt]="Enter Subscription domain (will be used on panel server), e.g. sub.example.com"
+TRANSLATIONS_EN[domain_selfsteal_prompt]="Enter Selfsteal domain (will be used on node server), e.g. domain.example.com"
+
+TRANSLATIONS_EN[auth_admin_username]="Enter admin username: "
+TRANSLATIONS_EN[auth_admin_password]="Enter admin password: "
+TRANSLATIONS_EN[auth_admin_email]="Enter the admin email for Caddy Auth"
+TRANSLATIONS_EN[auth_confirm_password]="Please confirm your password"
+
+TRANSLATIONS_EN[panel_invalid_auth_type]="Invalid authentication type"
+TRANSLATIONS_EN[panel_auth_type_options]="Valid options: 'cookie' or 'full'"
+
+TRANSLATIONS_EN[results_secure_login_link]="Secure login link (with secret key):"
+TRANSLATIONS_EN[results_user_subscription_url]="User subscription URL:"
+TRANSLATIONS_EN[results_admin_login]="Admin login:"
+TRANSLATIONS_EN[results_admin_password]="Admin password:"
+TRANSLATIONS_EN[results_caddy_auth_login]="Caddy auth login:"
+TRANSLATIONS_EN[results_caddy_auth_password]="Caddy auth password:"
+TRANSLATIONS_EN[results_remnawave_admin_login]="Remnawave admin login:"
+TRANSLATIONS_EN[results_remnawave_admin_password]="Remnawave admin password:"
+TRANSLATIONS_EN[results_auth_portal_page]="Auth Portal page:"
+
+TRANSLATIONS_EN[qr_subscription_url]="Subscription URL QR Code"
+
+TRANSLATIONS_EN[password_min_length]="Password must contain at least"
+TRANSLATIONS_EN[password_min_length_suffix]="characters."
+TRANSLATIONS_EN[password_need_digit]="Password must contain at least one digit."
+TRANSLATIONS_EN[password_need_lowercase]="Password must contain at least one lowercase letter."
+TRANSLATIONS_EN[password_need_uppercase]="Password must contain at least one uppercase letter."
+TRANSLATIONS_EN[password_try_again]="Please try again."
+
+TRANSLATIONS_EN[port_panel_prompt]="Enter Panel port (default: 443): "
+TRANSLATIONS_EN[port_node_prompt]="Enter Node port (default: 2222): "
+TRANSLATIONS_EN[port_caddy_local_prompt]="Enter Caddy local port (default: 9443): "
+
+TRANSLATIONS_EN[installation_preparing]="Preparing installation..."
+TRANSLATIONS_EN[installation_starting_services]="Starting services..."
+TRANSLATIONS_EN[installation_configuring]="Configuring..."
+
+TRANSLATIONS_EN[credentials_panel_title]="Panel Access Credentials"
+TRANSLATIONS_EN[credentials_found]="Panel access credentials found:"
+TRANSLATIONS_EN[credentials_not_found]="Credentials file not found!"
+TRANSLATIONS_EN[credentials_file_location]="The credentials file does not exist at:"
+TRANSLATIONS_EN[credentials_reasons]="This usually means:"
+TRANSLATIONS_EN[credentials_reason_not_installed]="Panel is not installed yet"
+TRANSLATIONS_EN[credentials_reason_incomplete]="Installation was not completed successfully"
+TRANSLATIONS_EN[credentials_reason_deleted]="Credentials file was manually deleted"
+TRANSLATIONS_EN[credentials_try_install]="Try installing the panel first using option 1 from the main menu."
+
+TRANSLATIONS_EN[cli_container_not_running]="Remnawave container is not running!"
+TRANSLATIONS_EN[cli_ensure_panel_running]="Please make sure the panel is installed and running."
+TRANSLATIONS_EN[cli_session_completed]="CLI session completed successfully"
+TRANSLATIONS_EN[cli_session_failed]="CLI session failed or was interrupted"
+
+TRANSLATIONS_EN[removal_installation_detected]="RemnaWave installation detected."
+TRANSLATIONS_EN[removal_confirm_delete]="Are you sure you want to completely DELETE Remnawave? IT WILL REMOVE ALL DATA!!! Continue?"
+TRANSLATIONS_EN[removal_previous_detected]="Previous RemnaWave installation detected."
+TRANSLATIONS_EN[removal_confirm_continue]="To continue, you need to DELETE previous Remnawave installation. IT WILL REMOVE ALL DATA!!! Continue?"
+TRANSLATIONS_EN[removal_complete_success]="Remnawave has been completely removed from your system. Press any key to continue..."
+TRANSLATIONS_EN[removal_previous_success]="Previous installation removed."
+TRANSLATIONS_EN[removal_no_installation]="No Remnawave installation detected on this system."
+
+TRANSLATIONS_EN[restart_panel_dir_not_found]="Error: panel directory not found at /opt/remnawave!"
+TRANSLATIONS_EN[restart_install_panel_first]="Please install Remnawave panel first."
+TRANSLATIONS_EN[restart_compose_not_found]="Error: docker-compose.yml not found in panel directory!"
+TRANSLATIONS_EN[restart_installation_corrupted]="Panel installation may be corrupted or incomplete."
+TRANSLATIONS_EN[restart_starting_panel]="Starting main panel..."
+TRANSLATIONS_EN[restart_starting_subscription]="Starting subscription page..."
+TRANSLATIONS_EN[restart_success]="Panel restarted successfully"
+
+TRANSLATIONS_EN[services_starting_containers]="Starting containers..."
+TRANSLATIONS_EN[services_installation_stopped]="Installation stopped"
+
+TRANSLATIONS_EN[system_distro_not_supported]="Distribution"
+TRANSLATIONS_EN[system_dependencies_success]="All dependencies installed and configured."
+TRANSLATIONS_EN[system_created_directory]="Created directory:"
+TRANSLATIONS_EN[system_installation_cancelled]="Installation cancelled. Returning to main menu."
+
+TRANSLATIONS_EN[prompt_press_any_key]="Press any key to continue..."
+
+TRANSLATIONS_EN[spinner_generating_keys]="Generating x25519 keys..."
+TRANSLATIONS_EN[spinner_updating_xray]="Updating Xray configuration..."
+TRANSLATIONS_EN[spinner_registering_user]="Registering user"
+TRANSLATIONS_EN[spinner_getting_public_key]="Getting public key..."
+TRANSLATIONS_EN[spinner_creating_node]="Creating node..."
+TRANSLATIONS_EN[spinner_getting_inbounds]="Getting list of inbounds..."
+TRANSLATIONS_EN[spinner_creating_host]="Creating host for"
+TRANSLATIONS_EN[spinner_cleaning_services]="Cleaning up"
+TRANSLATIONS_EN[spinner_force_removing]="Force removing container"
+TRANSLATIONS_EN[spinner_removing_directory]="Removing directory"
+TRANSLATIONS_EN[spinner_stopping_subscription]="Stopping remnawave-subscription-page container"
+TRANSLATIONS_EN[spinner_restarting_panel]="Restarting panel..."
+TRANSLATIONS_EN[spinner_launching]="Launching"
+TRANSLATIONS_EN[spinner_updating_apt_cache]="Updating APT cache"
+TRANSLATIONS_EN[spinner_installing_packages]="Installing packages:"
+TRANSLATIONS_EN[spinner_starting_docker]="Starting Docker daemon"
+TRANSLATIONS_EN[spinner_docker_already_running]="Docker daemon already running"
+TRANSLATIONS_EN[spinner_adding_user_to_group]="Adding user to group"
+TRANSLATIONS_EN[spinner_firewall_already_set]="Firewall already set"
+TRANSLATIONS_EN[spinner_configuring_firewall]="Configuring firewall"
+TRANSLATIONS_EN[spinner_auto_updates_already_set]="Auto-updates already set"
+TRANSLATIONS_EN[spinner_setting_auto_updates]="Setting auto-updates"
+TRANSLATIONS_EN[spinner_downloading_static_files]="Downloading static files for the selfsteal site..."
+
+TRANSLATIONS_EN[config_invalid_arguments]="Error: invalid number of arguments. Should be even number of keys and values."
+TRANSLATIONS_EN[config_domain_already_used]="Domain"
+TRANSLATIONS_EN[config_domains_must_be_unique]="Each domain must be unique: panel domain, subscription domain, and selfsteal domain must all be different."
+TRANSLATIONS_EN[config_caddy_port_available]="Required Caddy port 9443 is available"
+TRANSLATIONS_EN[config_caddy_port_in_use]="Required Caddy port 9443 is already in use!"
+TRANSLATIONS_EN[config_node_port_available]="Required Node API port 2222 is available"
+TRANSLATIONS_EN[config_node_port_in_use]="Required Node API port 2222 is already in use!"
+TRANSLATIONS_EN[config_separate_installation_port_required]="For separate panel and node installation, port"
+TRANSLATIONS_EN[config_free_port_and_retry]="Please free up port"
+TRANSLATIONS_EN[config_installation_cannot_continue]="Installation cannot continue with occupied port"
+
+TRANSLATIONS_EN[misc_qr_generation_failed]="QR code generation failed"
+
+TRANSLATIONS_EN[network_error_port_number]="Error: Port must be a number."
+TRANSLATIONS_EN[network_error_port_range]="Error: Port must be between 1 and 65535."
+TRANSLATIONS_EN[network_invalid_email]="Invalid email format."
+TRANSLATIONS_EN[network_proceed_with_value]="Proceed with this value? Current value:"
+TRANSLATIONS_EN[network_using_default_port]="Using default port:"
+TRANSLATIONS_EN[network_port_in_use]="port is already in use. Finding available port..."
+TRANSLATIONS_EN[network_using_port]="Using port:"
+TRANSLATIONS_EN[network_failed_find_port]="Failed to find an available port for"
+TRANSLATIONS_EN[network_invalid_domain]="Invalid domain format. Please try again."
+TRANSLATIONS_EN[network_failed_determine_ip]="Failed to determine domain or server IP address."
+TRANSLATIONS_EN[network_make_sure_domain]="Make sure that the domain"
+TRANSLATIONS_EN[network_points_to_server]="is properly configured and points to the server"
+TRANSLATIONS_EN[network_continue_despite_ip]="Continue with this domain despite being unable to verify its IP address?"
+TRANSLATIONS_EN[network_domain_points_cloudflare]="Domain"
+TRANSLATIONS_EN[network_points_cloudflare_ip]="points to Cloudflare IP"
+TRANSLATIONS_EN[network_disable_cloudflare]="Disable Cloudflare proxying - selfsteal domain proxying is not allowed."
+TRANSLATIONS_EN[network_continue_despite_cloudflare]="Continue with this domain despite Cloudflare proxy configuration issue?"
+TRANSLATIONS_EN[network_domain_points_server]="Domain"
+TRANSLATIONS_EN[network_points_this_server]="points to this server IP"
+TRANSLATIONS_EN[network_separate_installation_note]="For separate installation, selfsteal domain should point to the node server, not the panel server."
+TRANSLATIONS_EN[network_continue_despite_current_server]="Continue with this domain despite it pointing to the current server?"
+TRANSLATIONS_EN[network_domain_points_different]="Domain"
+TRANSLATIONS_EN[network_points_different_ip]="points to IP address"
+TRANSLATIONS_EN[network_differs_from_server]="which differs from the server IP"
+TRANSLATIONS_EN[network_continue_despite_mismatch]="Continue with this domain despite the IP address mismatch?"
+
+TRANSLATIONS_EN[api_empty_server_response]="Empty server response"
+TRANSLATIONS_EN[api_registration_failed]="Registration failed: unknown error"
+TRANSLATIONS_EN[api_failed_get_public_key]="Error: Failed to get public key."
+TRANSLATIONS_EN[api_failed_extract_public_key]="Error: Failed to extract public key from response."
+TRANSLATIONS_EN[api_empty_response_creating_node]="Error: Empty response from server when creating node."
+TRANSLATIONS_EN[api_failed_create_node]="Error: Failed to create node, response:"
+TRANSLATIONS_EN[api_empty_response_getting_inbounds]="Error: Empty response from server when getting inbounds."
+TRANSLATIONS_EN[api_failed_extract_uuid]="Error: Failed to extract UUID from response."
+TRANSLATIONS_EN[api_empty_response_creating_host]="Error: Empty response from server when creating host."
+TRANSLATIONS_EN[api_failed_create_host]="Error: Failed to create host."
+TRANSLATIONS_EN[api_empty_response_creating_user]="Error: Empty response from server when creating user."
+TRANSLATIONS_EN[api_failed_create_user_status]="Error: Failed to create user. HTTP status:"
+TRANSLATIONS_EN[api_failed_create_user_format]="Error: Failed to create user, invalid response format:"
+TRANSLATIONS_EN[api_failed_register_user]="Failed to register user."
+TRANSLATIONS_EN[api_request_body_was]="Request body was:"
+TRANSLATIONS_EN[api_response]="Response:"
+
+TRANSLATIONS_EN[validation_value_min]="Value must be at least"
+TRANSLATIONS_EN[validation_value_max]="Value must be at most"
+TRANSLATIONS_EN[validation_enter_numeric]="Please enter a valid numeric value."
+TRANSLATIONS_EN[validation_input_empty]="Input cannot be empty. Please enter a valid domain or IP address."
+TRANSLATIONS_EN[validation_invalid_ip]="Invalid IP address format. IP must be in format X.X.X.X, where X is a number from 0 to 255."
+TRANSLATIONS_EN[validation_invalid_domain]="Invalid domain name format. Domain must contain at least one dot and not start/end with dot or dash."
+TRANSLATIONS_EN[validation_use_only_letters]="Use only letters, digits, dots, and dashes."
+TRANSLATIONS_EN[validation_invalid_domain_ip]="Invalid domain or IP address format."
+TRANSLATIONS_EN[validation_domain_format]="Domain must contain at least one dot and not start/end with dot or dash."
+TRANSLATIONS_EN[validation_ip_format]="IP address must be in format X.X.X.X, where X is a number from 0 to 255."
+TRANSLATIONS_EN[validation_max_attempts_default]="Maximum number of attempts exceeded. Using default value:"
+TRANSLATIONS_EN[validation_max_attempts_no_input]="Maximum number of attempts exceeded. No valid input provided."
+TRANSLATIONS_EN[validation_cannot_continue]="Installation cannot continue without a valid domain or IP address."
+
+TRANSLATIONS_EN[vless_failed_generate_keys]="Error: Failed to generate keys."
+TRANSLATIONS_EN[vless_empty_response_xray]="Error: Empty response from server when updating Xray config."
+TRANSLATIONS_EN[vless_failed_update_xray]="Error: Failed to update Xray configuration."
+
+TRANSLATIONS_EN[node_port_9443_in_use]="Required Caddy port 9443 is already in use!"
+TRANSLATIONS_EN[node_separate_port_9443]="For separate node installation, port 9443 must be available."
+TRANSLATIONS_EN[node_free_port_9443]="Please free up port 9443 and try again."
+TRANSLATIONS_EN[node_cannot_continue_9443]="Installation cannot continue with occupied port 9443"
+TRANSLATIONS_EN[node_port_2222_in_use]="Required Node API port 2222 is already in use!"
+TRANSLATIONS_EN[node_separate_port_2222]="For separate node installation, port 2222 must be available."
+TRANSLATIONS_EN[node_free_port_2222]="Please free up port 2222 and try again."
+TRANSLATIONS_EN[node_cannot_continue_2222]="Installation cannot continue with occupied port 2222"
+TRANSLATIONS_EN[node_enter_ssl_cert]="Enter the server certificate in format SSL_CERT=\"...\" (paste the content and press Enter twice):"
+TRANSLATIONS_EN[node_ssl_cert_valid]="✓ SSL certificate format is valid"
+TRANSLATIONS_EN[node_ssl_cert_invalid]="✗ Invalid SSL certificate format. Please try again."
+TRANSLATIONS_EN[node_ssl_cert_expected]="Expected format: SSL_CERT=\"...eyJub2RlQ2VydFBldW0iOiAi...\""
+TRANSLATIONS_EN[node_port_info]="• Node port:"
+TRANSLATIONS_EN[node_directory_info]="• Node directory:"
+
+TRANSLATIONS_EN[container_error_provide_args]="Error: provide directory and display name"
+TRANSLATIONS_EN[container_error_directory_not_found]="Error: directory \"%s\" not found"
+TRANSLATIONS_EN[container_error_compose_not_found]="Error: docker-compose.yml not found in \"%s\""
+TRANSLATIONS_EN[container_error_docker_not_installed]="Error: Docker is not installed or not in PATH"
+TRANSLATIONS_EN[container_error_docker_not_running]="Error: Docker daemon is not running"
+TRANSLATIONS_EN[container_rate_limit_error]="✖ Docker Hub rate limit while pulling images for \"%s\"."
+TRANSLATIONS_EN[container_rate_limit_cause]="Cause: pull rate limit exceeded."
+TRANSLATIONS_EN[container_rate_limit_solutions]="Possible solutions:"
+TRANSLATIONS_EN[container_rate_limit_wait]="1. Wait ~6 h and retry"
+TRANSLATIONS_EN[container_rate_limit_login]="2. docker login"
+TRANSLATIONS_EN[container_rate_limit_vpn]="3. Use VPN / other IP"
+TRANSLATIONS_EN[container_rate_limit_mirror]="4. Set up a mirror"
+TRANSLATIONS_EN[container_success_up]="✔ \"%s\" is up (services: %s)."
+TRANSLATIONS_EN[container_failed_start]="✖ \"%s\" failed to start entirely."
+TRANSLATIONS_EN[container_compose_output]="→ docker compose output:"
+TRANSLATIONS_EN[container_problematic_services]="→ Problematic services status:"
+
+TRANSLATIONS_EN[exiting]="Exiting."
+TRANSLATIONS_EN[creating_user]="Creating user:"
+TRANSLATIONS_EN[please_wait]="Please wait..."
+TRANSLATIONS_EN[operation_completed]="Operation completed."
+
+TRANSLATIONS_EN[node_enter_selfsteal_domain]="Enter Selfsteal domain, e.g. domain.example.com"
+TRANSLATIONS_EN[node_enter_panel_ip]="Enter the IP address of the panel server (for configuring firewall)"
+TRANSLATIONS_EN[node_allow_connections]="Allow connections from panel server to node port 2222..."
+TRANSLATIONS_EN[node_enter_ssl_cert_prompt]="Enter the server certificate in format SSL_CERT=\"...\" (paste the content and press Enter twice):"
+TRANSLATIONS_EN[node_press_enter_return]="Press Enter to return to the main menu..."
+
+TRANSLATIONS_EN[vless_enter_node_host]="Enter the IP address or domain of the node server (if different from Selfsteal domain)"
+TRANSLATIONS_EN[vless_public_key_required]="Public key (required for node installation):"
+
+TRANSLATIONS_EN[container_name_remnawave_panel]="Remnawave Panel"
+TRANSLATIONS_EN[container_name_subscription_page]="Subscription Page"
+TRANSLATIONS_EN[container_name_remnawave_node]="Remnawave Node"
+
+TRANSLATIONS_EN[selfsteal_installation_stopped]="Installation stopped"
+TRANSLATIONS_EN[selfsteal_domain_info]="• Domain:"
+TRANSLATIONS_EN[selfsteal_port_info]="• Port:"
+TRANSLATIONS_EN[selfsteal_directory_info]="• Directory:"
+
+# Including module: ru.sh
+
+
+
+TRANSLATIONS_RU[error_root_required]="Ошибка: Этот скрипт должен быть запущен от имени root (sudo)"
+TRANSLATIONS_RU[error_invalid_choice]="Неверный выбор, попробуйте снова."
+TRANSLATIONS_RU[error_empty_response]="Ошибка: Пустой ответ от сервера при создании пользователя."
+TRANSLATIONS_RU[error_failed_create_user]="Ошибка: Не удалось создать пользователя. HTTP статус:"
+TRANSLATIONS_RU[error_passwords_no_match]="Пароли не совпадают. Попробуйте снова."
+TRANSLATIONS_RU[error_enter_yn]="Пожалуйста, введите 'y' или 'n'."
+TRANSLATIONS_RU[error_enter_number_between]="Пожалуйста, введите число от"
+
+TRANSLATIONS_RU[main_menu_title]="Remnawave Panel Installer by uphantom v"
+TRANSLATIONS_RU[main_menu_install_components]="Установить Панель/Ноду"
+TRANSLATIONS_RU[main_menu_restart_panel]="Перезапустить панель"
+TRANSLATIONS_RU[main_menu_remove_panel]="Удалить панель"
+TRANSLATIONS_RU[main_menu_rescue_cli]="Remnawave Rescue CLI [Сброс админа]"
+TRANSLATIONS_RU[main_menu_show_credentials]="Показать учетные данные панели"
+TRANSLATIONS_RU[main_menu_exit]="Выход"
+TRANSLATIONS_RU[main_menu_select_option]="Выберите опцию:"
+
+TRANSLATIONS_RU[install_menu_title]="Установка панели/ноды"
+TRANSLATIONS_RU[install_menu_panel_only]="Только панель:"
+TRANSLATIONS_RU[install_menu_panel_full_security]="\"FULL Caddy\" вариант установки панели (рекомендуется)"
+TRANSLATIONS_RU[install_menu_panel_simple_security]="\"SIMPLE cookie\" вариант установки панели"
+TRANSLATIONS_RU[install_menu_node_only]="Только нода:"
+TRANSLATIONS_RU[install_menu_node_separate]="Только нода (для отдельного сервера)"
+TRANSLATIONS_RU[install_menu_all_in_one]="All-in-One:"
+TRANSLATIONS_RU[install_menu_panel_node_full]="Панель + Нода \"FULL Caddy\" вариант"
+TRANSLATIONS_RU[install_menu_panel_node_simple]="Панель + Нода \"SIMPLE cookie\" вариант"
+TRANSLATIONS_RU[install_menu_back]="Назад в главное меню"
+
+TRANSLATIONS_RU[prompt_yes_no_suffix]=" (y/n): "
+TRANSLATIONS_RU[prompt_yes_no_default_suffix]=" (y/n) ["
+TRANSLATIONS_RU[prompt_enter_to_continue]="Нажмите Enter для продолжения..."
+TRANSLATIONS_RU[prompt_enter_to_return]="Нажмите Enter для возврата в меню..."
+
+TRANSLATIONS_RU[success_bbr_enabled]="BBR успешно включен"
+TRANSLATIONS_RU[success_bbr_disabled]="BBR отключен, активен cubic + fq_codel"
+TRANSLATIONS_RU[success_credentials_saved]="Учетные данные сохранены в файле:"
+TRANSLATIONS_RU[success_installation_complete]="Установка завершена. Нажмите Enter для продолжения..."
+
+TRANSLATIONS_RU[warning_skipping_telegram]="Пропускаем интеграцию с Telegram."
+TRANSLATIONS_RU[warning_bbr_not_configured]="BBR не был настроен в /etc/sysctl.conf"
+TRANSLATIONS_RU[warning_enter_different_domain]="Пожалуйста, введите другой домен для"
+
+TRANSLATIONS_RU[info_removing_bbr_config]="Удаление конфигурации BBR из /etc/sysctl.conf…"
+TRANSLATIONS_RU[info_installation_directory]="Директория установки:"
+
+TRANSLATIONS_RU[bbr_enable]="Включить BBR"
+TRANSLATIONS_RU[bbr_disable]="Отключить BBR"
+
+TRANSLATIONS_RU[telegram_enable_notifications]="Хотите ли вы включить уведомления Telegram?"
+TRANSLATIONS_RU[telegram_bot_token]="Введите токен вашего Telegram бота: "
+TRANSLATIONS_RU[telegram_users_chat_id]="Введите ID чата пользователей: "
+TRANSLATIONS_RU[telegram_nodes_chat_id]="Введите ID чата нод: "
+TRANSLATIONS_RU[telegram_use_topics]="Хотите ли вы использовать темы Telegram?"
+TRANSLATIONS_RU[telegram_users_thread_id]="Введите ID темы пользователей: "
+TRANSLATIONS_RU[telegram_nodes_thread_id]="Введите ID темы нод: "
+
+TRANSLATIONS_RU[domain_panel_prompt]="Введите домен панели (будет использоваться на сервере панели), например panel.example.com"
+TRANSLATIONS_RU[domain_subscription_prompt]="Введите домен подписки (будет использоваться на сервере панели), например sub.example.com"
+TRANSLATIONS_RU[domain_selfsteal_prompt]="Введите домен Selfsteal (будет использоваться на сервере ноды), например domain.example.com"
+
+TRANSLATIONS_RU[auth_admin_username]="Введите имя пользователя администратора: "
+TRANSLATIONS_RU[auth_admin_password]="Введите пароль администратора: "
+TRANSLATIONS_RU[auth_admin_email]="Введите email администратора для Caddy Auth"
+TRANSLATIONS_RU[auth_confirm_password]="Пожалуйста, подтвердите ваш пароль"
+
+TRANSLATIONS_RU[panel_invalid_auth_type]="Неверный тип аутентификации"
+TRANSLATIONS_RU[panel_auth_type_options]="Допустимые варианты: 'cookie' или 'full'"
+
+TRANSLATIONS_RU[results_secure_login_link]="Безопасная ссылка для входа (с секретным ключом):"
+TRANSLATIONS_RU[results_user_subscription_url]="URL подписки пользователя:"
+TRANSLATIONS_RU[results_admin_login]="Логин администратора:"
+TRANSLATIONS_RU[results_admin_password]="Пароль администратора:"
+TRANSLATIONS_RU[results_caddy_auth_login]="Логин авторизации Caddy:"
+TRANSLATIONS_RU[results_caddy_auth_password]="Пароль авторизации Caddy:"
+TRANSLATIONS_RU[results_remnawave_admin_login]="Логин администратора Remnawave:"
+TRANSLATIONS_RU[results_remnawave_admin_password]="Пароль администратора Remnawave:"
+TRANSLATIONS_RU[results_auth_portal_page]="Страница портала авторизации:"
+
+TRANSLATIONS_RU[qr_subscription_url]="QR-код URL подписки"
+
+TRANSLATIONS_RU[password_min_length]="Пароль должен содержать не менее"
+TRANSLATIONS_RU[password_min_length_suffix]="символов."
+TRANSLATIONS_RU[password_need_digit]="Пароль должен содержать хотя бы одну цифру."
+TRANSLATIONS_RU[password_need_lowercase]="Пароль должен содержать хотя бы одну строчную букву."
+TRANSLATIONS_RU[password_need_uppercase]="Пароль должен содержать хотя бы одну заглавную букву."
+TRANSLATIONS_RU[password_try_again]="Попробуйте снова."
+
+TRANSLATIONS_RU[port_panel_prompt]="Введите порт панели (по умолчанию: 443): "
+TRANSLATIONS_RU[port_node_prompt]="Введите порт ноды (по умолчанию: 2222): "
+TRANSLATIONS_RU[port_caddy_local_prompt]="Введите локальный порт Caddy (по умолчанию: 9443): "
+
+TRANSLATIONS_RU[installation_preparing]="Подготовка установки..."
+TRANSLATIONS_RU[installation_starting_services]="Запуск сервисов..."
+TRANSLATIONS_RU[installation_configuring]="Настройка..."
+
+TRANSLATIONS_RU[credentials_panel_title]="Учетные данные панели"
+TRANSLATIONS_RU[credentials_found]="Учетные данные панели найдены:"
+TRANSLATIONS_RU[credentials_not_found]="Файл учетных данных не найден!"
+TRANSLATIONS_RU[credentials_file_location]="Файл учетных данных не существует по адресу:"
+TRANSLATIONS_RU[credentials_reasons]="Обычно это означает:"
+TRANSLATIONS_RU[credentials_reason_not_installed]="Панель еще не установлена"
+TRANSLATIONS_RU[credentials_reason_incomplete]="Установка не была завершена успешно"
+TRANSLATIONS_RU[credentials_reason_deleted]="Файл учетных данных был удален вручную"
+TRANSLATIONS_RU[credentials_try_install]="Попробуйте сначала установить панель, используя опцию 1 из главного меню."
+
+TRANSLATIONS_RU[cli_container_not_running]="Контейнер Remnawave не запущен!"
+TRANSLATIONS_RU[cli_ensure_panel_running]="Пожалуйста, убедитесь, что панель установлена и запущена."
+TRANSLATIONS_RU[cli_session_completed]="Сессия CLI завершена успешно"
+TRANSLATIONS_RU[cli_session_failed]="Сессия CLI завершилась неудачно или была прервана"
+
+TRANSLATIONS_RU[removal_installation_detected]="Обнаружена установка RemnaWave."
+TRANSLATIONS_RU[removal_confirm_delete]="Вы уверены, что хотите полностью УДАЛИТЬ Remnawave? ЭТО УДАЛИТ ВСЕ ДАННЫЕ!!! Продолжить?"
+TRANSLATIONS_RU[removal_previous_detected]="Обнаружена предыдущая установка RemnaWave."
+TRANSLATIONS_RU[removal_confirm_continue]="Для продолжения необходимо УДАЛИТЬ предыдущую установку Remnawave. ЭТО УДАЛИТ ВСЕ ДАННЫЕ!!! Продолжить?"
+TRANSLATIONS_RU[removal_complete_success]="Remnawave был полностью удален из вашей системы. Нажмите любую клавишу для продолжения..."
+TRANSLATIONS_RU[removal_previous_success]="Предыдущая установка удалена."
+TRANSLATIONS_RU[removal_no_installation]="Установка Remnawave не обнаружена в этой системе."
+
+TRANSLATIONS_RU[restart_panel_dir_not_found]="Ошибка: директория панели не найдена в /opt/remnawave!"
+TRANSLATIONS_RU[restart_install_panel_first]="Пожалуйста, сначала установите панель Remnawave."
+TRANSLATIONS_RU[restart_compose_not_found]="Ошибка: docker-compose.yml не найден в директории панели!"
+TRANSLATIONS_RU[restart_installation_corrupted]="Установка панели может быть повреждена или неполная."
+TRANSLATIONS_RU[restart_starting_panel]="Запуск основной панели..."
+TRANSLATIONS_RU[restart_starting_subscription]="Запуск страницы подписки..."
+TRANSLATIONS_RU[restart_success]="Панель успешно перезапущена"
+
+TRANSLATIONS_RU[services_starting_containers]="Запуск контейнеров..."
+TRANSLATIONS_RU[services_installation_stopped]="Установка остановлена"
+
+TRANSLATIONS_RU[system_distro_not_supported]="Дистрибутив"
+TRANSLATIONS_RU[system_dependencies_success]="Все зависимости установлены и настроены."
+TRANSLATIONS_RU[system_created_directory]="Создана директория:"
+TRANSLATIONS_RU[system_installation_cancelled]="Установка отменена. Возврат в главное меню."
+
+TRANSLATIONS_RU[prompt_press_any_key]="Нажмите любую клавишу для продолжения..."
+
+TRANSLATIONS_RU[spinner_generating_keys]="Генерация ключей x25519..."
+TRANSLATIONS_RU[spinner_updating_xray]="Обновление конфигурации Xray..."
+TRANSLATIONS_RU[spinner_registering_user]="Регистрация пользователя"
+TRANSLATIONS_RU[spinner_getting_public_key]="Получение публичного ключа..."
+TRANSLATIONS_RU[spinner_creating_node]="Создание ноды..."
+TRANSLATIONS_RU[spinner_getting_inbounds]="Получение списка входящих соединений..."
+TRANSLATIONS_RU[spinner_creating_host]="Создание хоста для"
+TRANSLATIONS_RU[spinner_cleaning_services]="Очистка сервисов"
+TRANSLATIONS_RU[spinner_force_removing]="Принудительное удаление контейнера"
+TRANSLATIONS_RU[spinner_removing_directory]="Удаление директории"
+TRANSLATIONS_RU[spinner_stopping_subscription]="Остановка контейнера remnawave-subscription-page"
+TRANSLATIONS_RU[spinner_restarting_panel]="Перезапуск панели..."
+TRANSLATIONS_RU[spinner_launching]="Запуск"
+TRANSLATIONS_RU[spinner_updating_apt_cache]="Обновление кэша APT"
+TRANSLATIONS_RU[spinner_installing_packages]="Установка пакетов:"
+TRANSLATIONS_RU[spinner_starting_docker]="Запуск демона Docker"
+TRANSLATIONS_RU[spinner_docker_already_running]="Демон Docker уже запущен"
+TRANSLATIONS_RU[spinner_adding_user_to_group]="Добавление пользователя в группу"
+TRANSLATIONS_RU[spinner_firewall_already_set]="Брандмауэр уже настроен"
+TRANSLATIONS_RU[spinner_configuring_firewall]="Настройка брандмауэра"
+TRANSLATIONS_RU[spinner_auto_updates_already_set]="Автообновления уже настроены"
+TRANSLATIONS_RU[spinner_setting_auto_updates]="Настройка автообновлений"
+TRANSLATIONS_RU[spinner_downloading_static_files]="Загрузка статических файлов для сайта selfsteal..."
+
+TRANSLATIONS_RU[config_invalid_arguments]="Ошибка: неверное количество аргументов. Должно быть четное количество ключей и значений."
+TRANSLATIONS_RU[config_domain_already_used]="Домен"
+TRANSLATIONS_RU[config_domains_must_be_unique]="Каждый домен должен быть уникальным: домен панели, домен подписки и домен selfsteal должны быть разными."
+TRANSLATIONS_RU[config_caddy_port_available]="Требуемый порт Caddy 9443 доступен"
+TRANSLATIONS_RU[config_caddy_port_in_use]="Требуемый порт Caddy 9443 уже используется!"
+TRANSLATIONS_RU[config_node_port_available]="Требуемый порт API ноды 2222 доступен"
+TRANSLATIONS_RU[config_node_port_in_use]="Требуемый порт API ноды 2222 уже используется!"
+TRANSLATIONS_RU[config_separate_installation_port_required]="Для отдельной установки панели и ноды порт"
+TRANSLATIONS_RU[config_free_port_and_retry]="Пожалуйста, освободите порт"
+TRANSLATIONS_RU[config_installation_cannot_continue]="Установка не может продолжиться с занятым портом"
+
+TRANSLATIONS_RU[misc_qr_generation_failed]="Не удалось создать QR-код"
+
+TRANSLATIONS_RU[network_error_port_number]="Ошибка: Порт должен быть числом."
+TRANSLATIONS_RU[network_error_port_range]="Ошибка: Порт должен быть от 1 до 65535."
+TRANSLATIONS_RU[network_invalid_email]="Неверный формат email."
+TRANSLATIONS_RU[network_proceed_with_value]="Продолжить с этим значением? Текущее значение:"
+TRANSLATIONS_RU[network_using_default_port]="Используется порт по умолчанию:"
+TRANSLATIONS_RU[network_port_in_use]="порт уже используется. Поиск доступного порта..."
+TRANSLATIONS_RU[network_using_port]="Используется порт:"
+TRANSLATIONS_RU[network_failed_find_port]="Не удалось найти доступный порт для"
+TRANSLATIONS_RU[network_invalid_domain]="Неверный формат домена. Попробуйте снова."
+TRANSLATIONS_RU[network_failed_determine_ip]="Не удалось определить IP-адрес домена или сервера."
+TRANSLATIONS_RU[network_make_sure_domain]="Убедитесь, что домен"
+TRANSLATIONS_RU[network_points_to_server]="правильно настроен и указывает на сервер"
+TRANSLATIONS_RU[network_continue_despite_ip]="Продолжить с этим доменом, несмотря на невозможность проверить его IP-адрес?"
+TRANSLATIONS_RU[network_domain_points_cloudflare]="Домен"
+TRANSLATIONS_RU[network_points_cloudflare_ip]="указывает на IP Cloudflare"
+TRANSLATIONS_RU[network_disable_cloudflare]="Отключите проксирование Cloudflare - проксирование домена selfsteal не разрешено."
+TRANSLATIONS_RU[network_continue_despite_cloudflare]="Продолжить с этим доменом, несмотря на проблему с конфигурацией прокси Cloudflare?"
+TRANSLATIONS_RU[network_domain_points_server]="Домен"
+TRANSLATIONS_RU[network_points_this_server]="указывает на IP этого сервера"
+TRANSLATIONS_RU[network_separate_installation_note]="Для отдельной установки домен selfsteal должен указывать на сервер ноды, а не на сервер панели."
+TRANSLATIONS_RU[network_continue_despite_current_server]="Продолжить с этим доменом, несмотря на то, что он указывает на текущий сервер?"
+TRANSLATIONS_RU[network_domain_points_different]="Домен"
+TRANSLATIONS_RU[network_points_different_ip]="указывает на IP-адрес"
+TRANSLATIONS_RU[network_differs_from_server]="который отличается от IP сервера"
+TRANSLATIONS_RU[network_continue_despite_mismatch]="Продолжить с этим доменом, несмотря на несоответствие IP-адресов?"
+
+TRANSLATIONS_RU[api_empty_server_response]="Пустой ответ сервера"
+TRANSLATIONS_RU[api_registration_failed]="Регистрация не удалась: неизвестная ошибка"
+TRANSLATIONS_RU[api_failed_get_public_key]="Ошибка: Не удалось получить публичный ключ."
+TRANSLATIONS_RU[api_failed_extract_public_key]="Ошибка: Не удалось извлечь публичный ключ из ответа."
+TRANSLATIONS_RU[api_empty_response_creating_node]="Ошибка: Пустой ответ от сервера при создании ноды."
+TRANSLATIONS_RU[api_failed_create_node]="Ошибка: Не удалось создать ноду, ответ:"
+TRANSLATIONS_RU[api_empty_response_getting_inbounds]="Ошибка: Пустой ответ от сервера при получении входящих соединений."
+TRANSLATIONS_RU[api_failed_extract_uuid]="Ошибка: Не удалось извлечь UUID из ответа."
+TRANSLATIONS_RU[api_empty_response_creating_host]="Ошибка: Пустой ответ от сервера при создании хоста."
+TRANSLATIONS_RU[api_failed_create_host]="Ошибка: Не удалось создать хост."
+TRANSLATIONS_RU[api_empty_response_creating_user]="Ошибка: Пустой ответ от сервера при создании пользователя."
+TRANSLATIONS_RU[api_failed_create_user_status]="Ошибка: Не удалось создать пользователя. HTTP статус:"
+TRANSLATIONS_RU[api_failed_create_user_format]="Ошибка: Не удалось создать пользователя, неверный формат ответа:"
+TRANSLATIONS_RU[api_failed_register_user]="Не удалось зарегистрировать пользователя."
+TRANSLATIONS_RU[api_request_body_was]="Тело запроса было:"
+TRANSLATIONS_RU[api_response]="Ответ:"
+
+TRANSLATIONS_RU[validation_value_min]="Значение должно быть не менее"
+TRANSLATIONS_RU[validation_value_max]="Значение должно быть не более"
+TRANSLATIONS_RU[validation_enter_numeric]="Пожалуйста, введите корректное числовое значение."
+TRANSLATIONS_RU[validation_input_empty]="Ввод не может быть пустым. Пожалуйста, введите корректный домен или IP-адрес."
+TRANSLATIONS_RU[validation_invalid_ip]="Неверный формат IP-адреса. IP должен быть в формате X.X.X.X, где X - число от 0 до 255."
+TRANSLATIONS_RU[validation_invalid_domain]="Неверный формат доменного имени. Домен должен содержать хотя бы одну точку и не начинаться/заканчиваться точкой или тире."
+TRANSLATIONS_RU[validation_use_only_letters]="Используйте только буквы, цифры, точки и тире."
+TRANSLATIONS_RU[validation_invalid_domain_ip]="Неверный формат домена или IP-адреса."
+TRANSLATIONS_RU[validation_domain_format]="Домен должен содержать хотя бы одну точку и не начинаться/заканчиваться точкой или тире."
+TRANSLATIONS_RU[validation_ip_format]="IP-адрес должен быть в формате X.X.X.X, где X - число от 0 до 255."
+TRANSLATIONS_RU[validation_max_attempts_default]="Превышено максимальное количество попыток. Используется значение по умолчанию:"
+TRANSLATIONS_RU[validation_max_attempts_no_input]="Превышено максимальное количество попыток. Корректный ввод не предоставлен."
+TRANSLATIONS_RU[validation_cannot_continue]="Установка не может продолжиться без корректного домена или IP-адреса."
+
+TRANSLATIONS_RU[vless_failed_generate_keys]="Ошибка: Не удалось сгенерировать ключи."
+TRANSLATIONS_RU[vless_empty_response_xray]="Ошибка: Пустой ответ от сервера при обновлении конфигурации Xray."
+TRANSLATIONS_RU[vless_failed_update_xray]="Ошибка: Не удалось обновить конфигурацию Xray."
+
+TRANSLATIONS_RU[node_port_9443_in_use]="Требуемый порт Caddy 9443 уже используется!"
+TRANSLATIONS_RU[node_separate_port_9443]="Для отдельной установки ноды порт 9443 должен быть доступен."
+TRANSLATIONS_RU[node_free_port_9443]="Пожалуйста, освободите порт 9443 и попробуйте снова."
+TRANSLATIONS_RU[node_cannot_continue_9443]="Установка не может продолжиться с занятым портом 9443"
+TRANSLATIONS_RU[node_port_2222_in_use]="Требуемый порт API ноды 2222 уже используется!"
+TRANSLATIONS_RU[node_separate_port_2222]="Для отдельной установки ноды порт 2222 должен быть доступен."
+TRANSLATIONS_RU[node_free_port_2222]="Пожалуйста, освободите порт 2222 и попробуйте снова."
+TRANSLATIONS_RU[node_cannot_continue_2222]="Установка не может продолжиться с занятым портом 2222"
+TRANSLATIONS_RU[node_enter_ssl_cert]="Введите сертификат сервера в формате SSL_CERT=\"...\" (вставьте содержимое и нажмите Enter дважды):"
+TRANSLATIONS_RU[node_ssl_cert_valid]="✓ Формат SSL сертификата корректен"
+TRANSLATIONS_RU[node_ssl_cert_invalid]="✗ Неверный формат SSL сертификата. Попробуйте снова."
+TRANSLATIONS_RU[node_ssl_cert_expected]="Ожидаемый формат: SSL_CERT=\"...eyJub2RlQ2VydFBldW0iOiAi...\""
+TRANSLATIONS_RU[node_port_info]="• Порт ноды:"
+TRANSLATIONS_RU[node_directory_info]="• Директория ноды:"
+
+TRANSLATIONS_RU[container_error_provide_args]="Ошибка: укажите директорию и отображаемое имя"
+TRANSLATIONS_RU[container_error_directory_not_found]="Ошибка: директория \"%s\" не найдена"
+TRANSLATIONS_RU[container_error_compose_not_found]="Ошибка: docker-compose.yml не найден в \"%s\""
+TRANSLATIONS_RU[container_error_docker_not_installed]="Ошибка: Docker не установлен или не находится в PATH"
+TRANSLATIONS_RU[container_error_docker_not_running]="Ошибка: Демон Docker не запущен"
+TRANSLATIONS_RU[container_rate_limit_error]="✖ Ограничение скорости Docker Hub при загрузке образов для \"%s\"."
+TRANSLATIONS_RU[container_rate_limit_cause]="Причина: превышен лимит скорости загрузки."
+TRANSLATIONS_RU[container_rate_limit_solutions]="Возможные решения:"
+TRANSLATIONS_RU[container_rate_limit_wait]="1. Подождите ~6 ч и повторите попытку"
+TRANSLATIONS_RU[container_rate_limit_login]="2. docker login"
+TRANSLATIONS_RU[container_rate_limit_vpn]="3. Используйте VPN / другой IP"
+TRANSLATIONS_RU[container_rate_limit_mirror]="4. Настройте зеркало"
+TRANSLATIONS_RU[container_success_up]="✔ \"%s\" запущен (сервисы: %s)."
+TRANSLATIONS_RU[container_failed_start]="✖ \"%s\" не удалось запустить полностью."
+TRANSLATIONS_RU[container_compose_output]="→ вывод docker compose:"
+TRANSLATIONS_RU[container_problematic_services]="→ Статус проблемных сервисов:"
+
+TRANSLATIONS_RU[exiting]="Выход."
+TRANSLATIONS_RU[creating_user]="Создание пользователя:"
+TRANSLATIONS_RU[please_wait]="Пожалуйста, подождите..."
+TRANSLATIONS_RU[operation_completed]="Операция завершена."
+
+TRANSLATIONS_RU[node_enter_selfsteal_domain]="Введите домен Selfsteal, например domain.example.com"
+TRANSLATIONS_RU[node_enter_panel_ip]="Введите IP-адрес сервера панели (для настройки брандмауэра)"
+TRANSLATIONS_RU[node_allow_connections]="Разрешение соединений с сервера панели на порт ноды 2222..."
+TRANSLATIONS_RU[node_enter_ssl_cert_prompt]="Введите сертификат сервера в формате SSL_CERT=\"...\" (вставьте содержимое и нажмите Enter дважды):"
+TRANSLATIONS_RU[node_press_enter_return]="Нажмите Enter для возврата в главное меню..."
+
+TRANSLATIONS_RU[vless_enter_node_host]="Введите IP-адрес или домен сервера ноды (если отличается от домена Selfsteal)"
+TRANSLATIONS_RU[vless_public_key_required]="Публичный ключ (требуется для установки ноды):"
+
+TRANSLATIONS_RU[container_name_remnawave_panel]="Панель Remnawave"
+TRANSLATIONS_RU[container_name_subscription_page]="Страница подписки"
+TRANSLATIONS_RU[container_name_remnawave_node]="Нода Remnawave"
+
+TRANSLATIONS_RU[selfsteal_installation_stopped]="Установка остановлена"
+TRANSLATIONS_RU[selfsteal_domain_info]="• Домен:"
+TRANSLATIONS_RU[selfsteal_port_info]="• Порт:"
+TRANSLATIONS_RU[selfsteal_directory_info]="• Директория:"
+
 # Including module: system.sh
 
 
@@ -41,7 +653,7 @@ install_dependencies() {
     codename=$(lsb_release -cs)
 
     if [[ "$distro" != "ubuntu" && "$distro" != "debian" ]]; then
-        echo "❌  Distribution $distro is not supported." >&2
+        echo "❌  $(t system_distro_not_supported) $distro." >&2
         exit 1
     fi
 
@@ -57,7 +669,7 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
     fi
 
     (sudo apt-get update -qq >/dev/null 2>&1) &
-    spinner $! "Updating APT cache"
+    spinner $! "$(t spinner_updating_apt_cache)"
 
     local base_deps=(
         ca-certificates gnupg curl jq make dnsutils ufw unattended-upgrades
@@ -76,20 +688,20 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
 
     if ((${#missing[@]})); then
         (sudo apt-get install -y --no-install-recommends "${missing[@]}" -qq >/dev/null 2>&1) &
-        spinner $! "Installing ${#missing[@]} packages"
+        spinner $! "$(t spinner_installing_packages) ${#missing[@]}"
     fi
 
     if ! systemctl is-active --quiet docker; then
         (sudo systemctl enable --now docker >/dev/null 2>&1) &
-        spinner $! "Starting Docker daemon "
+        spinner $! "$(t spinner_starting_docker)"
     else
         (sleep 0.1) &
-        spinner $! "Docker daemon already running"
+        spinner $! "$(t spinner_docker_already_running)"
     fi
 
     if ! id -nG "$USER" | grep -qw docker; then
         (sudo usermod -aG docker "$USER" >/dev/null 2>&1) &
-        spinner $! "Adding user to group"
+        spinner $! "$(t spinner_adding_user_to_group)"
     fi
 
     ssh_port=$(grep -Ei '^\s*Port\s+' /etc/ssh/sshd_config | awk '{print $2}' | head -1)
@@ -102,7 +714,7 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
         ufw status | grep -qw "443/tcp" &&
         ufw status | grep -qw "80/tcp"; then
         (sleep 0.2) &
-        spinner $! "Firewall already set   "
+        spinner $! "$(t spinner_firewall_already_set)"
     else
         (
             sudo ufw --force reset
@@ -112,7 +724,7 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
             sudo ufw allow 80/tcp
             sudo ufw --force enable
         ) >/dev/null 2>&1 &
-        spinner $! "Configuring firewall   "
+        spinner $! "$(t spinner_configuring_firewall)"
     fi
 
     if dpkg -s unattended-upgrades &>/dev/null &&
@@ -121,7 +733,7 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
         grep -q '^Unattended-Upgrade::SyslogEnable.*true' \
             /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null; then
         (sleep 0.2) & # визуальный «фейковый» процесс
-        spinner $! "Auto-updates already set "
+        spinner $! "$(t spinner_auto_updates_already_set)"
     else
         (
             echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true |
@@ -133,18 +745,18 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
                 sudo tee -a /etc/apt/apt.conf.d/50unattended-upgrades >/dev/null
             sudo systemctl restart unattended-upgrades
         ) >/dev/null 2>&1 &
-        spinner $! "Setting auto-updates   "
+        spinner $! "$(t spinner_setting_auto_updates)"
     fi
 
     echo
-    show_success "All dependencies installed and configured."
+    show_success "$(t system_dependencies_success)"
 }
 
 create_dir() {
     local dir_path="$1"
     if [ ! -d "$dir_path" ]; then
         mkdir -p "$dir_path"
-        show_info "Created directory: $dir_path"
+        show_info "$(t system_created_directory) $dir_path"
     fi
 }
 
@@ -154,7 +766,7 @@ prepare_installation() {
     install_dependencies "${extra_deps[@]}"
 
     if ! remove_previous_installation; then
-        show_info "Installation cancelled. Returning to main menu."
+        show_info "$(t system_installation_cancelled)"
         return 1
     fi
 
@@ -171,13 +783,13 @@ remove_previous_installation() {
 
     if [ -d "$REMNAWAVE_DIR" ]; then
         if [ "$from_menu" = true ]; then
-            show_warning "RemnaWave installation detected."
-            if ! prompt_yes_no "Are you sure you want to completely DELETE Remnawave? IT WILL REMOVE ALL DATA!!! Continue?" "$ORANGE"; then
+            show_warning "$(t removal_installation_detected)"
+            if ! prompt_yes_no "$(t removal_confirm_delete)" "$ORANGE"; then
                 return 1
             fi
         else
-            show_warning "Previous RemnaWave installation detected."
-            if ! prompt_yes_no "To continue, you need to DELETE previous Remnawave installation. IT WILL REMOVE ALL DATA!!! Continue?" "$ORANGE"; then
+            show_warning "$(t removal_previous_detected)"
+            if ! prompt_yes_no "$(t removal_confirm_continue)" "$ORANGE"; then
                 return 1
             fi
         fi
@@ -196,7 +808,7 @@ remove_previous_installation() {
             if [ -f "$compose_file" ]; then
                 local dir_path=$(dirname "$compose_file")
                 cd "$dir_path" && docker compose down -v --rmi local --remove-orphans >/dev/null 2>&1 &
-                spinner $! "Cleaning up $(basename "$dir_path") services"
+                spinner $! "$(t spinner_cleaning_services) $(basename "$dir_path")"
             fi
         done
 
@@ -204,24 +816,24 @@ remove_previous_installation() {
         for container in "${containers[@]}"; do
             if docker ps -a --format '{{.Names}}' | grep -q "^$container$"; then
                 docker stop "$container" >/dev/null 2>&1 && docker rm "$container" >/dev/null 2>&1 &
-                spinner $! "Force removing container $container"
+                spinner $! "$(t spinner_force_removing) $container"
             fi
         done
 
         rm -rf "$REMNAWAVE_DIR" >/dev/null 2>&1 &
-        spinner $! "Removing directory $REMNAWAVE_DIR"
+        spinner $! "$(t spinner_removing_directory) $REMNAWAVE_DIR"
 
         if [ "$from_menu" = true ]; then
-            show_success "Remnawave has been completely removed from your system. Press any key to continue..."
+            show_success "$(t removal_complete_success)"
             read
         else
-            show_success "Previous installation removed."
+            show_success "$(t removal_previous_success)"
         fi
     else
         if [ "$from_menu" = true ]; then
             echo
-            show_info "No Remnawave installation detected on this system."
-            echo -e "${BOLD_GREEN}Press any key to continue...${NC}"
+            show_info "$(t removal_no_installation)"
+            echo -e "${BOLD_GREEN}$(t prompt_press_any_key)${NC}"
             read
         fi
     fi
@@ -231,12 +843,12 @@ restart_panel() {
     local no_wait=${1:-false} # Optional parameter to skip waiting for user input
     echo ''
     if [ ! -d /opt/remnawave ]; then
-        show_error "Error: panel directory not found at /opt/remnawave!"
-        show_error "Please install Remnawave panel first."
+        show_error "$(t restart_panel_dir_not_found)"
+        show_error "$(t restart_install_panel_first)"
     else
         if [ ! -f /opt/remnawave/docker-compose.yml ]; then
-            show_error "Error: docker-compose.yml not found in panel directory!"
-            show_error "Panel installation may be corrupted or incomplete."
+            show_error "$(t restart_compose_not_found)"
+            show_error "$(t restart_installation_corrupted)"
         else
             SUBSCRIPTION_PAGE_EXISTS=false
 
@@ -246,29 +858,29 @@ restart_panel() {
 
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
                 cd /opt/remnawave/subscription-page && docker compose down >/dev/null 2>&1 &
-                spinner $! "Stopping remnawave-subscription-page container"
+                spinner $! "$(t spinner_stopping_subscription)"
             fi
 
             cd /opt/remnawave && docker compose down >/dev/null 2>&1 &
-            spinner $! "Restarting panel..."
+            spinner $! "$(t spinner_restarting_panel)"
 
-            show_info "Starting main panel..." "$ORANGE"
+            show_info "$(t restart_starting_panel)" "$ORANGE"
             if ! start_container "/opt/remnawave" "Remnawave Panel"; then
                 return 1
             fi
 
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
-                show_info "Starting subscription page..." "$ORANGE"
+                show_info "$(t restart_starting_subscription)" "$ORANGE"
                 if ! start_container "/opt/remnawave/subscription-page" "Subscription Page"; then
                     return 1
                 fi
             fi
 
-            show_success "Panel restarted successfully"
+            show_success "$(t restart_success)"
         fi
     fi
     if [ "$no_wait" != "true" ]; then
-        echo -e "${BOLD_GREEN}Press Enter to continue...${NC}"
+        echo -e "${BOLD_GREEN}$(t prompt_enter_to_continue)${NC}"
         read
     fi
 }
@@ -279,11 +891,11 @@ start_container() {
     tmp_log=$(mktemp /tmp/docker-stack-XXXX.log)
 
     if [[ -z "$compose_dir" || -z "$display_name" ]]; then
-        printf "${BOLD_RED}Error:${NC} provide directory and display name\n" >&2
+        printf "${BOLD_RED}$(t container_error_provide_args)${NC}\n" >&2
         return 2
     fi
     if [[ ! -d "$compose_dir" ]]; then
-        printf "${BOLD_RED}Error:${NC} directory “%s” not found\n" "$compose_dir" >&2
+        printf "${BOLD_RED}$(t container_error_directory_not_found)${NC}\n" "$compose_dir" >&2
         return 2
     fi
     if [[ -f "$compose_dir/docker-compose.yml" ]]; then
@@ -291,34 +903,34 @@ start_container() {
     elif [[ -f "$compose_dir/docker-compose.yaml" ]]; then
         compose_file="$compose_dir/docker-compose.yaml"
     else
-        printf "${BOLD_RED}Error:${NC} docker-compose.yml not found in “%s”\n" "$compose_dir" >&2
+        printf "${BOLD_RED}$(t container_error_compose_not_found)${NC}\n" "$compose_dir" >&2
         return 2
     fi
     if ! command -v docker >/dev/null 2>&1; then
-        printf "${BOLD_RED}Error:${NC} Docker is not installed or not in PATH\n" >&2
+        printf "${BOLD_RED}$(t container_error_docker_not_installed)${NC}\n" >&2
         return 2
     fi
     if ! docker info >/dev/null 2>&1; then
-        printf "${BOLD_RED}Error:${NC} Docker daemon is not running\n" >&2
+        printf "${BOLD_RED}$(t container_error_docker_not_running)${NC}\n" >&2
         return 2
     fi
 
     (docker compose -f "$compose_file" up -d --force-recreate --remove-orphans) \
         >"$tmp_log" 2>&1 &
-    spinner $! "Launching “$display_name”"
+    spinner $! "$(t spinner_launching) $display_name"
     wait $!
 
     local output
     output=$(<"$tmp_log")
 
     if echo "$output" | grep -qiE 'toomanyrequests.*rate limit'; then
-        printf "${BOLD_RED}✖ Docker Hub rate limit while pulling images for “%s”.${NC}\n" "$display_name" >&2
-        printf "${BOLD_YELLOW}Cause:${NC} pull rate limit exceeded.\n" >&2
-        echo -e "${ORANGE}Possible solutions:${NC}" >&2
-        echo -e "${GREEN}1. Wait ~6 h and retry${NC}" >&2
-        echo -e "${GREEN}2. docker login${NC}" >&2
-        echo -e "${GREEN}3. Use VPN / other IP${NC}" >&2
-        echo -e "${GREEN}4. Set up a mirror${NC}\n" >&2
+        printf "${BOLD_RED}$(t container_rate_limit_error)${NC}\n" "$display_name" >&2
+        printf "${BOLD_YELLOW}$(t container_rate_limit_cause)${NC}\n" >&2
+        echo -e "${ORANGE}$(t container_rate_limit_solutions)${NC}" >&2
+        echo -e "${GREEN}$(t container_rate_limit_wait)${NC}" >&2
+        echo -e "${GREEN}$(t container_rate_limit_login)${NC}" >&2
+        echo -e "${GREEN}$(t container_rate_limit_vpn)${NC}" >&2
+        echo -e "${GREEN}$(t container_rate_limit_mirror)${NC}\n" >&2
         rm -f "$tmp_log"
         return 1
     fi
@@ -342,7 +954,7 @@ start_container() {
     done
 
     if $all_ok; then
-        printf "${BOLD_GREEN}✔ “%s” is up (services: %s).${NC}\n" \
+        printf "${BOLD_GREEN}$(t container_success_up)${NC}\n" \
             "$display_name" "$(
                 IFS=,
                 echo "${services[*]}"
@@ -352,10 +964,10 @@ start_container() {
         return 0
     fi
 
-    printf "${BOLD_RED}✖ “%s” failed to start entirely.${NC}\n" "$display_name" >&2
-    printf "${BOLD_RED}→ docker compose output:${NC}\n" >&2
+    printf "${BOLD_RED}$(t container_failed_start)${NC}\n" "$display_name" >&2
+    printf "${BOLD_RED}$(t container_compose_output)${NC}\n" >&2
     cat "$tmp_log" >&2
-    printf "\n${BOLD_RED}→ Problematic services status:${NC}\n" >&2
+    printf "\n${BOLD_RED}$(t container_problematic_services)${NC}\n" >&2
     docker compose -f "$compose_file" ps >&2
     rm -f "$tmp_log"
     return 1
@@ -379,53 +991,21 @@ EOF
 
 start_services() {
     echo
-    show_info "Starting containers..." "$BOLD_GREEN"
+    show_info "$(t services_starting_containers)" "$BOLD_GREEN"
 
     if ! start_container "$REMNAWAVE_DIR" "Remnawave/backend"; then
-        show_info "Installation stopped" "$BOLD_RED"
+        show_info "$(t services_installation_stopped)" "$BOLD_RED"
         exit 1
     fi
 
     if ! start_container "$REMNAWAVE_DIR/subscription-page" "Subscription page"; then
-        show_info "Installation stopped" "$BOLD_RED"
+        show_info "$(t services_installation_stopped)" "$BOLD_RED"
         exit 1
     fi
 }
 
 # Including module: display.sh
 
-
-draw_info_box() {
-    local title="$1"
-    local subtitle="$2"
-
-    local width=54
-
-    echo -e "${BOLD_GREEN}"
-    printf "┌%s┐\n" "$(printf '─%.0s' $(seq 1 $width))"
-
-    local title_padding_left=$(((width - ${#title}) / 2))
-    local title_padding_right=$((width - title_padding_left - ${#title}))
-    printf "│%*s%s%*s│\n" "$title_padding_left" "" "$title" "$title_padding_right" ""
-
-    local subtitle_padding_left=$(((width - ${#subtitle}) / 2))
-    local subtitle_padding_right=$((width - subtitle_padding_left - ${#subtitle}))
-    printf "│%*s%s%*s│\n" "$subtitle_padding_left" "" "$subtitle" "$subtitle_padding_right" ""
-
-    printf "│%*s│\n" "$width" ""
-
-    local version_text="  • Version: "
-    local version_value="$VERSION"
-    local version_value_colored="${ORANGE}${version_value}${BOLD_GREEN}"
-    local version_value_length=${#version_value}
-    local remaining_space=$((width - ${#version_text} - version_value_length))
-    printf "│%s%s%*s│\n" "$version_text" "$version_value_colored" "$remaining_space" ""
-
-    printf "│%*s│\n" "$width" ""
-
-    printf "└%s┘\n" "$(printf '─%.0s' $(seq 1 $width))"
-    echo -e "${NC}"
-}
 
 clear_screen() {
     clear
@@ -592,8 +1172,8 @@ prompt_yes_no() {
     local prompt_color="${2:-$GREEN}"
     local default="${3:-}"
 
-    local prompt_suffix=" (y/n): "
-    [ -n "$default" ] && prompt_suffix=" (y/n) [$default]: "
+    local prompt_suffix="$(t prompt_yes_no_suffix)"
+    [ -n "$default" ] && prompt_suffix="$(t prompt_yes_no_default_suffix)$default]: "
 
     while true; do
         echo -ne "${prompt_color}${prompt_text}${prompt_suffix}${NC}" >&2
@@ -612,7 +1192,7 @@ prompt_yes_no() {
         elif [ "$answer" = "n" ] || [ "$answer" = "no" ]; then
             return 1
         else
-            echo -e "${BOLD_RED}Please enter 'y' or 'n'.${NC}" >&2
+            echo -e "${BOLD_RED}$(t error_enter_yn)${NC}" >&2
             echo ''
         fi
     done
@@ -635,7 +1215,7 @@ prompt_menu_option() {
             [ "$selected_option" -le "$max" ]; then
             break
         else
-            echo -e "${BOLD_RED}Plfease enter a number between ${min} and ${max}.${NC}" >&2
+            echo -e "${BOLD_RED}$(t error_enter_number_between) ${min} and ${max}.${NC}" >&2
         fi
     done
 
@@ -649,22 +1229,22 @@ validate_password_strength() {
     local length=${#password}
 
     if [ "$length" -lt "$min_length" ]; then
-        echo "Password must contain at least $min_length characters."
+        echo "$(t password_min_length) $min_length $(t password_min_length_suffix)"
         return 1
     fi
 
     if ! [[ "$password" =~ [0-9] ]]; then
-        echo "Password must contain at least one digit."
+        echo "$(t password_need_digit)"
         return 1
     fi
 
     if ! [[ "$password" =~ [a-z] ]]; then
-        echo "Password must contain at least one lowercase letter."
+        echo "$(t password_need_lowercase)"
         return 1
     fi
 
     if ! [[ "$password" =~ [A-Z] ]]; then
-        echo "Password must contain at least one uppercase letter."
+        echo "$(t password_need_uppercase)"
         return 1
     fi
 
@@ -673,7 +1253,7 @@ validate_password_strength() {
 
 prompt_secure_password() {
     local prompt_text="$1"
-    local confirm_text="${2:-Please confirm your password}"
+    local confirm_text="${2:-$(t auth_confirm_password)}"
     local min_length=${3:-8}
 
     local password1 password2 error_message
@@ -683,7 +1263,7 @@ prompt_secure_password() {
 
         error_message=$(validate_password_strength "$password1" "$min_length")
         if [ $? -ne 0 ]; then
-            echo -e "${BOLD_RED}${error_message} Please try again.${NC}" >&2
+            echo -e "${BOLD_RED}${error_message} $(t password_try_again)${NC}" >&2
             continue
         fi
 
@@ -692,7 +1272,7 @@ prompt_secure_password() {
         if [ "$password1" = "$password2" ]; then
             break
         else
-            echo -e "${BOLD_RED}Passwords do not match. Please try again.${NC}" >&2
+            echo -e "${BOLD_RED}$(t error_passwords_no_match)${NC}" >&2
         fi
     done
 
@@ -706,12 +1286,12 @@ validate_port() {
     local port="$1"
 
     if ! [[ "$port" =~ ^[0-9]+$ ]]; then
-        echo -e "${BOLD_RED}Error: Port must be a number.${NC}" >&2
+        echo -e "${BOLD_RED}$(t network_error_port_number)${NC}" >&2
         return 1
     fi
 
     if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-        echo -e "${BOLD_RED}Error: Port must be between 1 and 65535.${NC}" >&2
+        echo -e "${BOLD_RED}$(t network_error_port_range)${NC}" >&2
         return 1
     fi
 
@@ -791,8 +1371,8 @@ prompt_email() {
         if [[ "$result" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
             break
         else
-            echo -e "${BOLD_RED}Invalid email format.${NC}" >&2
-            if prompt_yes_no "Proceed with this value? Current value: $result" "$ORANGE"; then
+            echo -e "${BOLD_RED}$(t network_invalid_email)${NC}" >&2
+            if prompt_yes_no "$(t network_proceed_with_value) $result" "$ORANGE"; then
                 break
             fi
         fi
@@ -810,19 +1390,19 @@ get_available_port() {
     local port=$(validate_port "$default_port")
 
     if is_port_available "$port"; then
-        show_info "Using default $port_name port: $port"
+        show_info "$(t network_using_default_port) $port_name port: $port"
         echo "$port"
         return 0
     else
-        show_info "Default $port_name port $port is already in use. Finding available port..."
+        show_info "Default $port_name $(t network_port_in_use)"
         local available_port=$(find_available_port "$((port + 1))")
 
         if [ $? -eq 0 ]; then
-            show_info "Using $port_name port: $available_port"
+            show_info "$(t network_using_port) $port_name port: $available_port"
             echo "$available_port"
             return 0
         else
-            show_error "Failed to find an available port for $port_name!"
+            show_error "$(t network_failed_find_port) $port_name!"
             echo "$default_port"
             return 1
         fi
@@ -856,7 +1436,7 @@ prompt_domain() {
         echo >&2
 
         if ! [[ "$domain" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
-            echo -e "${BOLD_RED}Invalid domain format. Please try again.${NC}" >&2
+            echo -e "${BOLD_RED}$(t network_invalid_domain)${NC}" >&2
             continue
         fi
 
@@ -868,9 +1448,9 @@ prompt_domain() {
 
         if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
             if [ "$show_warning" = true ]; then
-                show_warning "Failed to determine domain or server IP address." 2
-                show_warning "Make sure that the domain $domain is properly configured and points to the server ($server_ip)." 2
-                if prompt_yes_no "Continue with this domain despite being unable to verify its IP address?" "$ORANGE"; then
+                show_warning "$(t network_failed_determine_ip)" 2
+                show_warning "$(t network_make_sure_domain) $domain $(t network_points_to_server) ($server_ip)." 2
+                if prompt_yes_no "$(t network_continue_despite_ip)" "$ORANGE"; then
                     break
                 else
                     continue
@@ -892,9 +1472,9 @@ prompt_domain() {
             else
                 if [ "$show_warning" = true ]; then
                     echo
-                    show_warning "Domain $domain points to Cloudflare IP ($domain_ip)." 2
-                    show_warning "Disable Cloudflare proxying - selfsteal domain proxying is not allowed." 2
-                    if prompt_yes_no "Continue with this domain despite Cloudflare proxy configuration issue?" "$ORANGE"; then
+                    show_warning "$(t network_domain_points_cloudflare) $domain $(t network_points_cloudflare_ip) ($domain_ip)." 2
+                    show_warning "$(t network_disable_cloudflare)" 2
+                    if prompt_yes_no "$(t network_continue_despite_cloudflare)" "$ORANGE"; then
                         break
                     else
                         continue
@@ -905,9 +1485,9 @@ prompt_domain() {
             if [ "$expect_different_ip" = "true" ]; then
                 if [ "$domain_ip" = "$server_ip" ]; then
                     if [ "$show_warning" = true ]; then
-                        show_warning "Domain $domain points to this server IP ($server_ip)." 2
-                        show_warning "For separate installation, selfsteal domain should point to the node server, not the panel server." 2
-                        if prompt_yes_no "Continue with this domain despite it pointing to the current server?" "$ORANGE"; then
+                        show_warning "$(t network_domain_points_server) $domain $(t network_points_this_server) ($server_ip)." 2
+                        show_warning "$(t network_separate_installation_note)" 2
+                        if prompt_yes_no "$(t network_continue_despite_current_server)" "$ORANGE"; then
                             break
                         else
                             continue
@@ -922,8 +1502,8 @@ prompt_domain() {
             else
                 if [ "$domain_ip" != "$server_ip" ]; then
                     if [ "$show_warning" = true ]; then
-                        show_warning "Domain $domain points to IP address $domain_ip, which differs from the server IP ($server_ip)." 2
-                        if prompt_yes_no "Continue with this domain despite the IP address mismatch?" "$ORANGE"; then
+                        show_warning "$(t network_domain_points_different) $domain $(t network_points_different_ip) $domain_ip, $(t network_differs_from_server) ($server_ip)." 2
+                        if prompt_yes_no "$(t network_continue_despite_mismatch)" "$ORANGE"; then
                             break
                         else
                             continue
@@ -1118,7 +1698,7 @@ register_user() {
         while [ $(date +%s) -lt $end_time ]; do
             response=$(make_api_request "POST" "$api_url" "" "$panel_domain" "{\"username\":\"$username\",\"password\":\"$password\"}")
             if [ -z "$response" ]; then
-                reg_error="Empty server response"
+                reg_error="$(t api_empty_server_response)"
             elif [[ "$response" == *"accessToken"* ]]; then
                 reg_token=$(echo "$response" | jq -r '.response.accessToken')
                 echo "$reg_token" >"$temp_result"
@@ -1128,13 +1708,13 @@ register_user() {
             fi
             sleep 1
         done
-        echo "${reg_error:-Registration failed: unknown error}" >"$temp_result"
+        echo "${reg_error:-$(t api_registration_failed)}" >"$temp_result"
         exit 1
     } &
 
     local pid=$!
 
-    spinner "$pid" "Registering user $username..."
+    spinner "$pid" "$(t spinner_registering_user) $username..."
 
     wait $pid
     local status=$?
@@ -1154,18 +1734,18 @@ get_public_key() {
     local temp_file=$(mktemp)
 
     make_api_request "GET" "http://$panel_url/api/keygen" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
-    spinner $! "Getting public key..."
+    spinner $! "$(t spinner_getting_public_key)"
     api_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$api_response" ]; then
-        echo -e "${BOLD_RED}Error: Failed to get public key.${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_get_public_key)${NC}"
         return 1
     fi
 
     local pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
     if [ -z "$pubkey" ]; then
-        echo -e "${BOLD_RED}Error: Failed to extract public key from response.${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_extract_public_key)${NC}"
         return 1
     fi
 
@@ -1200,24 +1780,24 @@ EOF
     )
 
     make_api_request "POST" "http://$panel_url/api/nodes" "$token" "$panel_domain" "$new_node_data" >"$temp_file" 2>&1 &
-    spinner $! "Creating node..."
+    spinner $! "$(t spinner_creating_node)"
     node_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$node_response" ]; then
-        echo -e "${BOLD_RED}Error: Empty response from server when creating node.${NC}"
+        echo -e "${BOLD_RED}$(t api_empty_response_creating_node)${NC}"
         return 1
     fi
 
     if echo "$node_response" | jq -e '.response.uuid' >/dev/null; then
         return 0
     else
-        echo -e "${BOLD_RED}Error: Failed to create node, response:${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_create_node)${NC}"
         echo
-        echo "Request body was:"
+        echo "$(t api_request_body_was)"
         echo "$new_node_data"
         echo
-        echo "Response:"
+        echo "$(t api_response):"
         echo
         echo "$node_response"
         return 1
@@ -1232,18 +1812,18 @@ get_inbounds() {
     local temp_file=$(mktemp)
 
     make_api_request "GET" "http://$panel_url/api/inbounds" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
-    spinner $! "Getting list of inbounds..."
+    spinner $! "$(t spinner_getting_inbounds)"
     inbounds_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$inbounds_response" ]; then
-        echo -e "${BOLD_RED}Error: Empty response from server when getting inbounds.${NC}"
+        echo -e "${BOLD_RED}$(t api_empty_response_getting_inbounds)${NC}"
         return 1
     fi
 
     local inbound_uuid=$(echo "$inbounds_response" | jq -r '.response[0].uuid')
     if [ -z "$inbound_uuid" ]; then
-        echo -e "${BOLD_RED}Error: Failed to extract UUID from response.${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_extract_uuid)${NC}"
         return 1
     fi
 
@@ -1278,19 +1858,19 @@ EOF
     )
 
     make_api_request "POST" "http://$panel_url/api/hosts" "$token" "$panel_domain" "$host_data" >"$temp_file" 2>&1 &
-    spinner $! "Creating host for UUID: $inbound_uuid..."
+    spinner $! "$(t spinner_creating_host) UUID: $inbound_uuid..."
     host_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$host_response" ]; then
-        echo -e "${BOLD_RED}Error: Empty response from server when creating host.${NC}"
+        echo -e "${BOLD_RED}$(t api_empty_response_creating_host)${NC}"
         return 1
     fi
 
     if echo "$host_response" | jq -e '.response.uuid' >/dev/null; then
         return 0
     else
-        echo -e "${BOLD_RED}Error: Failed to create host.${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_create_host)${NC}"
         return 1
     fi
 }
@@ -1336,7 +1916,7 @@ EOF
         curl -s -w "%{http_code}" -X "POST" "http://$panel_url/api/users" "${headers[@]}" -d "$user_data" -D "$temp_headers" >"$temp_file"
     } &
 
-    spinner $! "Creating user: $username..."
+    spinner $! "$(t creating_user) $username..."
 
     local full_response=$(cat "$temp_file")
     local status_code="${full_response: -3}"   # Last 3 characters
@@ -1345,17 +1925,17 @@ EOF
     rm -f "$temp_file" "$temp_headers"
 
     if [ -z "$user_response" ]; then
-        echo -e "${BOLD_RED}Error: Empty response from server when creating user.${NC}"
+        echo -e "${BOLD_RED}$(t api_empty_response_creating_user)${NC}"
         return 1
     fi
 
     if [ "$status_code" != "201" ]; then
-        echo -e "${BOLD_RED}Error: Failed to create user. HTTP status: $status_code${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_create_user_status) $status_code${NC}"
         echo
-        echo "Request body was:"
+        echo "$(t api_request_body_was)"
         echo "$user_data"
         echo
-        echo "Response:"
+        echo "$(t api_response):"
         echo "$user_response"
         return 1
     fi
@@ -1371,12 +1951,12 @@ EOF
 
         return 0
     else
-        echo -e "${BOLD_RED}Error: Failed to create user, invalid response format:${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_create_user_format)${NC}"
         echo
-        echo "Request body was:"
+        echo "$(t api_request_body_was)"
         echo "$user_data"
         echo
-        echo "Response:"
+        echo "$(t api_response):"
         echo "$user_response"
         return 1
     fi
@@ -1386,7 +1966,7 @@ register_panel_user() {
     REG_TOKEN=$(register_user "127.0.0.1:3000" "$PANEL_DOMAIN" "$SUPERADMIN_USERNAME" "$SUPERADMIN_PASSWORD")
 
     if [ -z "$REG_TOKEN" ]; then
-        show_error "Failed to register user."
+        show_error "$(t api_failed_register_user)"
         exit 1
     fi
 }
@@ -1399,7 +1979,7 @@ update_file() {
     shift
 
     if [ "$#" -eq 0 ] || [ $(($# % 2)) -ne 0 ]; then
-        echo "Error: invalid number of arguments. Should be even number of keys and values." >&2
+        echo "$(t config_invalid_arguments)" >&2
         return 1
     fi
 
@@ -1433,18 +2013,18 @@ update_file() {
 }
 
 collect_telegram_config() {
-    if prompt_yes_no "Do you want to enable Telegram notifications?"; then
+    if prompt_yes_no "$(t telegram_enable_notifications)"; then
         IS_TELEGRAM_NOTIFICATIONS_ENABLED=true
-        TELEGRAM_BOT_TOKEN=$(prompt_input "Enter your Telegram bot token: " "$ORANGE")
-        TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "Enter the users chat ID: " "$ORANGE")
-        TELEGRAM_NOTIFY_NODES_CHAT_ID=$(prompt_input "Enter the nodes chat ID: " "$ORANGE")
+        TELEGRAM_BOT_TOKEN=$(prompt_input "$(t telegram_bot_token)" "$ORANGE")
+        TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "$(t telegram_users_chat_id)" "$ORANGE")
+        TELEGRAM_NOTIFY_NODES_CHAT_ID=$(prompt_input "$(t telegram_nodes_chat_id)" "$ORANGE")
 
-        if prompt_yes_no "Do you want to use Telegram topics?"; then
-            TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "Enter the users thread ID: " "$ORANGE")
-            TELEGRAM_NOTIFY_NODES_THREAD_ID=$(prompt_input "Enter the nodes thread ID: " "$ORANGE")
+        if prompt_yes_no "$(t telegram_use_topics)"; then
+            TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "$(t telegram_users_thread_id)" "$ORANGE")
+            TELEGRAM_NOTIFY_NODES_THREAD_ID=$(prompt_input "$(t telegram_nodes_thread_id)" "$ORANGE")
         fi
     else
-        show_warning "Skipping Telegram integration."
+        show_warning "$(t warning_skipping_telegram)"
         IS_TELEGRAM_NOTIFICATIONS_ENABLED=false
         TELEGRAM_BOT_TOKEN="change-me"
         TELEGRAM_NOTIFY_USERS_CHAT_ID="change-me"
@@ -1461,8 +2041,8 @@ check_domain_uniqueness() {
 
     for existing_domain in "${existing_domains[@]}"; do
         if [ -n "$existing_domain" ] && [ "$new_domain" = "$existing_domain" ]; then
-            show_error "Domain '$new_domain' is already used for another service!"
-            show_error "Each domain must be unique: panel domain, subscription domain, and selfsteal domain must all be different."
+            show_error "$(t config_domain_already_used) '$new_domain'"
+            show_error "$(t config_domains_must_be_unique)"
             return 1
         fi
     done
@@ -1470,15 +2050,15 @@ check_domain_uniqueness() {
 }
 
 collect_domain_config() {
-    PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel (e.g., panel.example.com)")
+    PANEL_DOMAIN=$(prompt_domain "$(t domain_panel_prompt)")
 
     while true; do
-        SUB_DOMAIN=$(prompt_domain "Enter the subscription domain (e.g., sub.example.com)")
+        SUB_DOMAIN=$(prompt_domain "$(t domain_subscription_prompt)")
 
         if check_domain_uniqueness "$SUB_DOMAIN" "subscription" "$PANEL_DOMAIN"; then
             break
         fi
-        show_warning "Please enter a different subscription domain."
+        show_warning "$(t warning_enter_different_domain) subscription."
     done
 }
 
@@ -1490,22 +2070,22 @@ collect_ports_all_in_one() {
 collect_ports_separate_installation() {
 
     if CADDY_LOCAL_PORT=$(check_required_port "9443"); then
-        show_info "Required Caddy port 9443 is available"
+        show_info "$(t config_caddy_port_available)"
     else
-        show_error "Required Caddy port 9443 is already in use!"
-        show_error "For separate panel and node installation, port 9443 must be available."
-        show_error "Please free up port 9443 and try again."
-        show_error "Installation cannot continue with occupied port 9443"
+        show_error "$(t config_caddy_port_in_use)"
+        show_error "$(t config_separate_installation_port_required) 9443."
+        show_error "$(t config_free_port_and_retry) 9443."
+        show_error "$(t config_installation_cannot_continue) 9443"
         return 1
     fi
 
     if NODE_PORT=$(check_required_port "2222"); then
-        show_info "Required Node API port 2222 is available"
+        show_info "$(t config_node_port_available)"
     else
-        show_error "Required Node API port 2222 is already in use!"
-        show_error "For separate panel and node installation, port 2222 must be available."
-        show_error "Please free up port 2222 and try again."
-        show_error "Installation cannot continue with occupied port 2222"
+        show_error "$(t config_node_port_in_use)"
+        show_error "$(t config_separate_installation_port_required) 2222."
+        show_error "$(t config_free_port_and_retry) 2222."
+        show_error "$(t config_installation_cannot_continue) 2222"
         return 1
     fi
 }
@@ -1692,18 +2272,18 @@ prompt_number() {
 
         if [[ "$number" =~ ^[0-9]+$ ]]; then
             if [ -n "$min" ] && [ "$number" -lt "$min" ]; then
-                echo -e "${BOLD_RED}Value must be at least ${min}.${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_value_min) ${min}.${NC}" >&2
                 continue
             fi
 
             if [ -n "$max" ] && [ "$number" -gt "$max" ]; then
-                echo -e "${BOLD_RED}Value must be at most ${max}.${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_value_max) ${max}.${NC}" >&2
                 continue
             fi
 
             break
         else
-            echo -e "${BOLD_RED}Please enter a valid numeric value.${NC}" >&2
+            echo -e "${BOLD_RED}$(t validation_enter_numeric)${NC}" >&2
         fi
     done
 
@@ -1770,7 +2350,7 @@ simple_read_domain_or_ip() {
         fi
 
         if [ -z "$input" ]; then
-            echo -e "${BOLD_RED}Input cannot be empty. Please enter a valid domain or IP address.${NC}" >&2
+            echo -e "${BOLD_RED}$(t validation_input_empty)${NC}" >&2
             ((attempts++))
             continue
         fi
@@ -1782,7 +2362,7 @@ simple_read_domain_or_ip() {
             if [ $status -eq 0 ]; then
                 break
             else
-                echo -e "${BOLD_RED}Invalid IP address format. IP must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_invalid_ip)${NC}" >&2
             fi
         elif [ "$validation_type" = "domain_only" ]; then
             result=$(validate_domain_name "$input")
@@ -1791,8 +2371,8 @@ simple_read_domain_or_ip() {
             if [ $status -eq 0 ]; then
                 break
             else
-                echo -e "${BOLD_RED}Invalid domain name format. Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
-                echo -e "${BOLD_RED}Use only letters, digits, dots, and dashes.${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_invalid_domain)${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_use_only_letters)${NC}" >&2
             fi
         else
             result=$(validate_domain "$input")
@@ -1801,9 +2381,9 @@ simple_read_domain_or_ip() {
             if [ $status -eq 0 ]; then
                 break
             else
-                echo -e "${BOLD_RED}Invalid domain or IP address format.${NC}" >&2
-                echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
-                echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_invalid_domain_ip)${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_domain_format)${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_ip_format)${NC}" >&2
             fi
         fi
 
@@ -1812,11 +2392,11 @@ simple_read_domain_or_ip() {
 
     if [ $attempts -eq $max_attempts ]; then
         if [ -n "$default_value" ]; then
-            echo -e "${BOLD_RED}Maximum number of attempts exceeded. Using default value: $default_value${NC}" >&2
+            echo -e "${BOLD_RED}$(t validation_max_attempts_default) $default_value${NC}" >&2
             result="$default_value"
         else
-            echo -e "${BOLD_RED}Maximum number of attempts exceeded. No valid input provided.${NC}" >&2
-            echo -e "${BOLD_RED}Installation cannot continue without a valid domain or IP address.${NC}" >&2
+            echo -e "${BOLD_RED}$(t validation_max_attempts_no_input)${NC}" >&2
+            echo -e "${BOLD_RED}$(t validation_cannot_continue)${NC}" >&2
             return 1
         fi
     fi
@@ -1846,7 +2426,7 @@ generate_qr_code() {
                 printf "    %s\n" "$line"
             done
         else
-            echo "QR code generation failed"
+            echo "$(t misc_qr_generation_failed)"
         fi
         echo
     else
@@ -1861,7 +2441,7 @@ generate_vless_keys() {
   local temp_file=$(mktemp)
 
   docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
-  spinner $! "Generating x25519 keys..."
+  spinner $! "$(t spinner_generating_keys)"
   keys=$(cat "$temp_file")
 
   local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
@@ -1869,7 +2449,7 @@ generate_vless_keys() {
   rm -f "$temp_file"
 
   if [ -z "$private_key" ] || [ -z "$public_key" ]; then
-    echo -e "${BOLD_RED}Error: Failed to generate keys.${NC}"
+    echo -e "${BOLD_RED}$(t vless_failed_generate_keys)${NC}"
     return 1
   fi
 
@@ -1974,19 +2554,19 @@ update_xray_config() {
   local new_config=$(cat "$config_file")
 
   make_api_request "PUT" "http://$panel_url/api/xray" "$token" "$panel_domain" "$new_config" >"$temp_file" 2>&1 &
-  spinner $! "Updating Xray configuration..."
+  spinner $! "$(t spinner_updating_xray)"
   local update_response=$(cat "$temp_file")
   rm -f "$temp_file"
 
   if [ -z "$update_response" ]; then
-    echo -e "${BOLD_RED}Error: Empty response from server when updating Xray config.${NC}"
+    echo -e "${BOLD_RED}$(t vless_empty_response_xray)${NC}"
     return 1
   fi
 
   if echo "$update_response" | jq -e '.response.config' >/dev/null; then
     return 0
   else
-    echo -e "${BOLD_RED}Error: Failed to update Xray configuration.${NC}"
+    echo -e "${BOLD_RED}$(t vless_failed_update_xray)${NC}"
     return 1
   fi
 }
@@ -1997,34 +2577,34 @@ run_remnawave_cli() {
     echo
 
     if ! docker ps --format '{{.Names}}' | grep -q '^remnawave$'; then
-        show_error "Remnawave container is not running!"
-        echo -e "${YELLOW}Please make sure the panel is installed and running.${NC}"
+        show_error "$(t cli_container_not_running)"
+        echo -e "${YELLOW}$(t cli_ensure_panel_running)${NC}"
         echo
-        echo -e "${BOLD_YELLOW}Press Enter to return to menu...${NC}"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
         read -r
-        return 1
+        return 0
     fi
 
     exec 3>&1 4>&2
-    exec > /dev/tty 2>&1
+    exec >/dev/tty 2>&1
 
     if docker exec -it -e TERM=xterm-256color remnawave remnawave; then
         echo
-        show_success "CLI session completed successfully"
+        show_success "$(t cli_session_completed)"
     else
         echo
-        show_error "CLI session failed or was interrupted"
+        show_error "$(t cli_session_failed)"
         exec 1>&3 2>&4
         echo
-        echo -e "${BOLD_YELLOW}Press Enter to return to menu...${NC}"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
         read -r
-        return 1
+        return 0
     fi
 
     exec 1>&3 2>&4
 
     echo
-    echo -e "${BOLD_YELLOW}Press Enter to return to menu...${NC}"
+    echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
     read -r
 }
 
@@ -2043,9 +2623,9 @@ is_bbr_enabled() {
 
 get_bbr_menu_text() {
   if is_bbr_enabled; then
-    echo "Disable BBR"
+    echo "$(t bbr_disable)"
   else
-    echo "Enable BBR"
+    echo "$(t bbr_enable)"
   fi
 }
 
@@ -2060,7 +2640,7 @@ load_bbr_module() {
 }
 
 enable_bbr() {
-  echo -e "\n${BOLD_GREEN}Enable BBR${NC}\n"
+  echo -e "\n${BOLD_GREEN}$(t bbr_enable)${NC}\n"
 
   load_bbr_module
 
@@ -2078,17 +2658,17 @@ enable_bbr() {
 
   apply_qdisc_now
 
-  show_success "BBR successfully enabled"
-  echo -e "\n${BOLD_YELLOW}Press Enter to return to menu...${NC}"
+  show_success "$(t success_bbr_enabled)"
+  echo -e "\n${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
   read -r
 }
 
 disable_bbr() {
-  echo -e "\n${BOLD_GREEN}Disable BBR${NC}\n"
+  echo -e "\n${BOLD_GREEN}$(t bbr_disable)${NC}\n"
 
   if grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf ||
     grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf; then
-    show_info "Removing BBR configuration from /etc/sysctl.conf…"
+    show_info "$(t info_removing_bbr_config)"
 
     sed -i '/net.core.default_qdisc=fq/d' /etc/sysctl.conf
     sed -i '/net.ipv4.tcp_congestion_control=bbr/d' /etc/sysctl.conf
@@ -2096,12 +2676,12 @@ disable_bbr() {
     sysctl -w net.ipv4.tcp_congestion_control=cubic >/dev/null
     sysctl -w net.core.default_qdisc=fq_codel >/dev/null
 
-    show_success "BBR disabled, active cubic + fq_codel"
+    show_success "$(t success_bbr_disabled)"
   else
-    show_warning "BBR не был настроен в /etc/sysctl.conf"
+    show_warning "$(t warning_bbr_not_configured)"
   fi
 
-  echo -e "\n${BOLD_YELLOW}Press Enter to return to menu...${NC}"
+  echo -e "\n${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
   read -r
 }
 
@@ -2117,13 +2697,13 @@ toggle_bbr() {
 
 show_panel_credentials() {
     echo
-    echo -e "${BOLD_GREEN}Panel Access Credentials${NC}"
+    echo -e "${BOLD_GREEN}$(t credentials_panel_title)${NC}"
     echo
 
     local credentials_file="/opt/remnawave/credentials.txt"
 
     if [ -f "$credentials_file" ]; then
-        echo -e "${BOLD_GREEN}Panel access credentials found:${NC}"
+        echo -e "${BOLD_GREEN}$(t credentials_found)${NC}"
         echo
 
         while IFS= read -r line; do
@@ -2140,20 +2720,20 @@ show_panel_credentials() {
             fi
         done < "$credentials_file"
     else
-        echo -e "${BOLD_RED}Credentials file not found!${NC}"
+        echo -e "${BOLD_RED}$(t credentials_not_found)${NC}"
         echo
-        echo -e "${YELLOW}The credentials file does not exist at: ${ORANGE}$credentials_file${NC}"
+        echo -e "${YELLOW}$(t credentials_file_location) ${ORANGE}$credentials_file${NC}"
         echo
-        echo -e "${YELLOW}This usually means:${NC}"
-        echo -e "  • Panel is not installed yet"
-        echo -e "  • Installation was not completed successfully"
-        echo -e "  • Credentials file was manually deleted"
+        echo -e "${YELLOW}$(t credentials_reasons)${NC}"
+        echo -e "  • $(t credentials_reason_not_installed)"
+        echo -e "  • $(t credentials_reason_incomplete)"
+        echo -e "  • $(t credentials_reason_deleted)"
         echo
-        echo -e "${YELLOW}Try installing the panel first using option 1 from the main menu.${NC}"
+        echo -e "${YELLOW}$(t credentials_try_install)${NC}"
     fi
 
     echo
-    echo -e "${BOLD_YELLOW}Press Enter to return to menu...${NC}"
+    echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
     read -r
 }
 
@@ -2161,7 +2741,7 @@ show_panel_credentials() {
 
 
 collect_full_auth_config() {
-    AUTHP_ADMIN_EMAIL=$(prompt_email "Enter the admin email for Caddy Auth")
+    AUTHP_ADMIN_EMAIL=$(prompt_email "$(t auth_admin_email)")
 }
 
 generate_full_auth_secrets() {
@@ -2172,7 +2752,7 @@ generate_full_auth_secrets() {
 
 start_caddy_full_auth() {
     if ! start_container "$REMNAWAVE_DIR/caddy" "Caddy"; then
-        show_info "Installation stopped" "$BOLD_RED"
+        show_info "$(t services_installation_stopped)" "$BOLD_RED"
         exit 1
     fi
 }
@@ -2217,44 +2797,44 @@ display_full_auth_results() {
 
     echo -e "\033[1m┌${border_line}┐\033[0m"
 
-    print_text_line "Auth Portal page:"
+    print_text_line "$(t results_auth_portal_page)"
     print_text_line "$caddy_auth_url"
     print_empty_line
 
     if [ "$installation_type" = "all-in-one" ] && [ -n "$USER_SUBSCRIPTION_URL" ] && [ "$USER_SUBSCRIPTION_URL" != "null" ]; then
-        print_text_line "Subscription URL:"
+        print_text_line "$(t results_user_subscription_url)"
         print_text_line "$USER_SUBSCRIPTION_URL"
         print_empty_line
     fi
 
-    print_text_line "Caddy auth login: $AUTHP_ADMIN_USER"
-    print_text_line "Caddy auth password: $AUTHP_ADMIN_SECRET"
+    print_text_line "$(t results_caddy_auth_login) $AUTHP_ADMIN_USER"
+    print_text_line "$(t results_caddy_auth_password) $AUTHP_ADMIN_SECRET"
     print_empty_line
-    print_text_line "Remnawave admin login: $SUPERADMIN_USERNAME"
-    print_text_line "Remnawave admin password: $SUPERADMIN_PASSWORD"
+    print_text_line "$(t results_remnawave_admin_login) $SUPERADMIN_USERNAME"
+    print_text_line "$(t results_remnawave_admin_password) $SUPERADMIN_PASSWORD"
     print_empty_line
     echo -e "\033[1m└${border_line}┘\033[0m"
 
     echo
-    show_success "Credentials saved in file: $CREDENTIALS_FILE"
-    echo -e "${BOLD_BLUE}Installation directory: ${NC}$REMNAWAVE_DIR/"
+    show_success "$(t success_credentials_saved) $CREDENTIALS_FILE"
+    echo -e "${BOLD_BLUE}$(t info_installation_directory) ${NC}$REMNAWAVE_DIR/"
     echo
 
     if [ "$installation_type" = "all-in-one" ] && [ -n "$USER_SUBSCRIPTION_URL" ] && [ "$USER_SUBSCRIPTION_URL" != "null" ]; then
-        generate_qr_code "$USER_SUBSCRIPTION_URL" "Subscription URL QR Code"
+        generate_qr_code "$USER_SUBSCRIPTION_URL" "$(t qr_subscription_url)"
         echo
     fi
 
     cd ~
 
-    echo -e "${BOLD_GREEN}Installation complete. Press Enter to continue...${NC}"
+    echo -e "${BOLD_GREEN}$(t success_installation_complete)${NC}"
     read -r
 }
 
 # Including module: cookie-auth.sh
 start_caddy_cookie_auth() {
   if ! start_container "$REMNAWAVE_DIR/caddy" "Caddy"; then
-    show_info "Installation stopped" "$BOLD_RED"
+    show_info "$(t services_installation_stopped)" "$BOLD_RED"
     exit 1
   fi
 }
@@ -2298,35 +2878,35 @@ display_cookie_auth_results() {
 
   echo -e "\033[1m┌${border_line}┐\033[0m"
 
-  print_text_line "Secure login link (with secret key):"
+  print_text_line "$(t results_secure_login_link)"
   print_empty_line
   print_text_line "$secure_panel_url"
   print_empty_line
 
   if [ "$installation_type" = "all-in-one" ] && [ -n "$USER_SUBSCRIPTION_URL" ] && [ "$USER_SUBSCRIPTION_URL" != "null" ]; then
-    print_text_line "User subscription URL:"
+    print_text_line "$(t results_user_subscription_url)"
     print_text_line "$USER_SUBSCRIPTION_URL"
     print_empty_line
   fi
 
-  print_text_line "Admin login: $SUPERADMIN_USERNAME"
-  print_text_line "Admin password: $SUPERADMIN_PASSWORD"
+  print_text_line "$(t results_admin_login) $SUPERADMIN_USERNAME"
+  print_text_line "$(t results_admin_password) $SUPERADMIN_PASSWORD"
   print_empty_line
   echo -e "\033[1m└${border_line}┘\033[0m"
 
   echo
-  show_success "Credentials saved in file: $CREDENTIALS_FILE"
-  echo -e "${BOLD_BLUE}Installation directory: ${NC}$REMNAWAVE_DIR/"
+  show_success "$(t success_credentials_saved) $CREDENTIALS_FILE"
+  echo -e "${BOLD_BLUE}$(t info_installation_directory) ${NC}$REMNAWAVE_DIR/"
   echo
 
   if [ "$installation_type" = "all-in-one" ] && [ -n "$USER_SUBSCRIPTION_URL" ] && [ "$USER_SUBSCRIPTION_URL" != "null" ]; then
-    generate_qr_code "$USER_SUBSCRIPTION_URL" "Subscription URL QR Code"
+    generate_qr_code "$USER_SUBSCRIPTION_URL" "$(t qr_subscription_url)"
     echo
   fi
 
   cd ~
 
-  echo -e "${BOLD_GREEN}Installation complete. Press Enter to continue...${NC}"
+  echo -e "${BOLD_GREEN}$(t success_installation_complete)${NC}"
   read -r
 }
 
@@ -2348,7 +2928,7 @@ create_static_site() {
   ) >/dev/null 2>&1 &
 
   download_pid=$!
-  spinner !$download_pid "Downloading static files for the selfsteal site..."
+  spinner !$download_pid "$(t spinner_downloading_static_files)"
 }
 
 # Including module: subscription-page.sh
@@ -2391,7 +2971,7 @@ configure_vless_panel_only() {
     local panel_url="127.0.0.1:3000"
     local config_file="$REMNAWAVE_DIR/config.json"
 
-    NODE_HOST=$(simple_read_domain_or_ip "Enter the IP address or domain of the node server (if different from Selfsteal domain)" "$SELF_STEAL_DOMAIN")
+    NODE_HOST=$(simple_read_domain_or_ip "$(t vless_enter_node_host)" "$SELF_STEAL_DOMAIN")
 
     local keys_result=$(generate_vless_keys)
     if [ $? -ne 0 ]; then
@@ -2426,7 +3006,7 @@ configure_vless_panel_only() {
     local pubkey=$(get_public_key "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
     if [ -n "$pubkey" ]; then
         echo
-        echo -e "${GREEN}Public key (required for node installation):${NC}"
+        echo -e "${GREEN}$(t vless_public_key_required)${NC}"
         echo
         echo -e "SSL_CERT=\"$pubkey\""
         echo
@@ -2701,12 +3281,12 @@ generate_secrets_panel_only() {
 
 collect_selfsteal_domain_for_panel() {
     while true; do
-        SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain (will be used on node server), e.g. domain.example.com" "$ORANGE" true false true)
+        SELF_STEAL_DOMAIN=$(prompt_domain "$(t domain_selfsteal_prompt)" "$ORANGE" true false true)
 
         if check_domain_uniqueness "$SELF_STEAL_DOMAIN" "selfsteal" "$PANEL_DOMAIN" "$SUB_DOMAIN"; then
             break
         fi
-        show_warning "Please enter a different domain for selfsteal service."
+        show_warning "$(t warning_enter_different_domain) selfsteal."
         echo
     done
 }
@@ -2769,7 +3349,7 @@ install_panel_only() {
     local auth_type=$1
 
     if [[ "$auth_type" != "cookie" && "$auth_type" != "full" ]]; then
-        show_error "Invalid auth type: $auth_type. Must be 'cookie' or 'full'"
+        show_error "$(t panel_invalid_auth_type): $auth_type. $(t panel_auth_type_options)"
         return 1
     fi
 
@@ -2879,16 +3459,16 @@ EOF
     mkdir -p logs
 
     if ! start_container "$SELFSTEAL_DIR" "Caddy"; then
-        show_info "Installation stopped" "$BOLD_RED"
+        show_info "$(t selfsteal_installation_stopped)" "$BOLD_RED"
         exit 1
     fi
 
     CADDY_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "caddy" && echo "running" || echo "stopped")
 
     if [ "$CADDY_STATUS" = "running" ]; then
-        echo -e "${LIGHT_GREEN}• Domain: ${BOLD_GREEN}$SELF_STEAL_DOMAIN${NC}"
-        echo -e "${LIGHT_GREEN}• Port: ${BOLD_GREEN}$CADDY_LOCAL_PORT${NC}"
-        echo -e "${LIGHT_GREEN}• Directory: ${BOLD_GREEN}$SELFSTEAL_DIR${NC}"
+        echo -e "${LIGHT_GREEN}$(t selfsteal_domain_info) ${BOLD_GREEN}$SELF_STEAL_DOMAIN${NC}"
+        echo -e "${LIGHT_GREEN}$(t selfsteal_port_info) ${BOLD_GREEN}$CADDY_LOCAL_PORT${NC}"
+        echo -e "${LIGHT_GREEN}$(t selfsteal_directory_info) ${BOLD_GREEN}$SELFSTEAL_DIR${NC}"
         echo
     fi
 
@@ -2914,34 +3494,34 @@ EOL
 }
 
 collect_node_selfsteal_domain() {
-    SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain, e.g. domain.example.com" "$ORANGE" true false false)
+    SELF_STEAL_DOMAIN=$(prompt_domain "$(t node_enter_selfsteal_domain)" "$ORANGE" true false false)
 }
 
 check_node_ports() {
     if CADDY_LOCAL_PORT=$(check_required_port "9443"); then
-        show_info "Required Caddy port 9443 is available"
+        show_info "$(t config_caddy_port_available)"
     else
-        show_error "Required Caddy port 9443 is already in use!"
-        show_error "For separate node installation, port 9443 must be available."
-        show_error "Please free up port 9443 and try again."
-        show_error "Installation cannot continue with occupied port 9443"
+        show_error "$(t node_port_9443_in_use)"
+        show_error "$(t node_separate_port_9443)"
+        show_error "$(t node_free_port_9443)"
+        show_error "$(t node_cannot_continue_9443)"
         exit 1
     fi
 
     if NODE_PORT=$(check_required_port "2222"); then
-        show_info "Required Node API port 2222 is available"
+        show_info "$(t config_node_port_available)"
     else
-        show_error "Required Node API port 2222 is already in use!"
-        show_error "For separate node installation, port 2222 must be available."
-        show_error "Please free up port 2222 and try again."
-        show_error "Installation cannot continue with occupied port 2222"
+        show_error "$(t node_port_2222_in_use)"
+        show_error "$(t node_separate_port_2222)"
+        show_error "$(t node_free_port_2222)"
+        show_error "$(t node_cannot_continue_2222)"
         exit 1
     fi
 }
 
 collect_node_ssl_certificate() {
     while true; do
-        echo -e "${ORANGE}Enter the server certificate in format SSL_CERT=\"...\" (paste the content and press Enter twice): ${NC}"
+        echo -e "${ORANGE}$(t node_enter_ssl_cert) ${NC}"
         CERTIFICATE=""
         while IFS= read -r line; do
             if [ -z "$line" ]; then
@@ -2954,12 +3534,12 @@ collect_node_ssl_certificate() {
         done
 
         if validate_ssl_certificate "$CERTIFICATE"; then
-            echo -e "${BOLD_GREEN}✓ SSL certificate format is valid${NC}"
+            echo -e "${BOLD_GREEN}$(t node_ssl_cert_valid)${NC}"
             echo
             break
         else
-            echo -e "${BOLD_RED}✗ Invalid SSL certificate format. Please try again.${NC}"
-            echo -e "${YELLOW}Expected format: SSL_CERT=\"...eyJub2RlQ2VydFBldW0iOiAi...\"${NC}"
+            echo -e "${BOLD_RED}$(t node_ssl_cert_invalid)${NC}"
+            echo -e "${YELLOW}$(t node_ssl_cert_expected)${NC}"
             echo
         fi
     done
@@ -2973,18 +3553,18 @@ create_node_env_file() {
 
 start_node_and_show_results() {
     if ! start_container "$REMNANODE_DIR" "Remnawave Node"; then
-        show_info "Installation stopped" "$BOLD_RED"
+        show_info "$(t services_installation_stopped)" "$BOLD_RED"
         exit 1
     fi
 
-    echo -e "${LIGHT_GREEN}• Node port: ${BOLD_GREEN}$NODE_PORT${NC}"
-    echo -e "${LIGHT_GREEN}• Node directory: ${BOLD_GREEN}$REMNANODE_DIR${NC}"
+    echo -e "${LIGHT_GREEN}$(t node_port_info) ${BOLD_GREEN}$NODE_PORT${NC}"
+    echo -e "${LIGHT_GREEN}$(t node_directory_info) ${BOLD_GREEN}$REMNANODE_DIR${NC}"
     echo
 }
 
 collect_panel_ip() {
     while true; do
-        PANEL_IP=$(simple_read_domain_or_ip "Enter the IP address of the panel server (for configuring firewall)" "" "ip_only")
+        PANEL_IP=$(simple_read_domain_or_ip "$(t node_enter_panel_ip)" "" "ip_only")
         if [ -n "$PANEL_IP" ]; then
             break
         fi
@@ -2992,7 +3572,7 @@ collect_panel_ip() {
 }
 
 allow_ufw_node_port_from_panel_ip() {
-    echo "Allow connections from panel server to node port 2222..."
+    echo "$(t node_allow_connections)"
     echo
     ufw allow from "$PANEL_IP" to any port 2222 proto tcp
     echo
@@ -3029,7 +3609,7 @@ setup_node() {
     unset CERTIFICATE
     unset NODE_PORT
 
-    echo -e "\n${BOLD_GREEN}Press Enter to return to the main menu...${NC}"
+    echo -e "\n${BOLD_GREEN}$(t node_press_enter_return)${NC}"
     read -r
 }
 
@@ -3115,7 +3695,7 @@ setup_and_start_all_in_one_node() {
   setup_node_all_in_one "127.0.0.1:3000" "$REG_TOKEN" "$NODE_PORT"
 
   if ! start_container "$LOCAL_REMNANODE_DIR" "Remnawave Node"; then
-    show_info "Installation stopped" "$BOLD_RED"
+    show_info "$(t services_installation_stopped)" "$BOLD_RED"
     exit 1
   fi
 }
@@ -3521,12 +4101,12 @@ display_results_all_in_one() {
 
 collect_selfsteal_domain_for_all_in_one() {
     while true; do
-        SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain (will be used on node server), e.g. domain.example.com" "$ORANGE" true false false)
+        SELF_STEAL_DOMAIN=$(prompt_domain "$(t domain_selfsteal_prompt)" "$ORANGE" true false false)
 
         if check_domain_uniqueness "$SELF_STEAL_DOMAIN" "selfsteal" "$PANEL_DOMAIN" "$SUB_DOMAIN"; then
             break
         fi
-        show_warning "Please enter a different domain for selfsteal service."
+        show_warning "$(t warning_enter_different_domain) selfsteal."
         echo
     done
 }
@@ -3577,8 +4157,25 @@ install_remnawave_all_in_one() {
 }
 
 
+LANG_CODE="en"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --lang=*)
+            LANG_CODE="${1#*=}"
+            shift
+            ;;
+        --lang)
+            LANG_CODE="$2"
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
 if [ "$(id -u)" -ne 0 ]; then
-    echo "Error: This script must be run as root (sudo)"
+    echo "$(t error_root_required)"
     exit 1
 fi
 
@@ -3587,40 +4184,40 @@ clear
 
 show_main_menu() {
     clear
-    echo -e "${BOLD_GREEN}Remnawave Panel Installer by uphantom v${VERSION}${NC}"
+    echo -e "${BOLD_GREEN}$(t main_menu_title)${VERSION}${NC}"
     echo
-    echo -e "${GREEN}1.${NC} Install components"
+    echo -e "${GREEN}1.${NC} $(t main_menu_install_components)"
     echo
-    echo -e "${GREEN}2.${NC} Restart panel"
-    echo -e "${GREEN}3.${NC} Remove panel"
-    echo -e "${GREEN}4.${NC} Remnawave Rescue CLI [Reset admin]"
-    echo -e "${GREEN}5.${NC} Show panel access credentials"
+    echo -e "${GREEN}2.${NC} $(t main_menu_restart_panel)"
+    echo -e "${GREEN}3.${NC} $(t main_menu_remove_panel)"
+    echo -e "${GREEN}4.${NC} $(t main_menu_rescue_cli)"
+    echo -e "${GREEN}5.${NC} $(t main_menu_show_credentials)"
     echo
     echo -e "${GREEN}6.${NC} $(get_bbr_menu_text)"
     echo
-    echo -e "${GREEN}0.${NC} Exit"
+    echo -e "${GREEN}0.${NC} $(t main_menu_exit)"
     echo
-    echo -ne "${BOLD_BLUE_MENU}Select option: ${NC}"
+    echo -ne "${BOLD_BLUE_MENU}$(t main_menu_select_option) ${NC}"
 }
 
 show_installation_menu() {
     clear
-    echo -e "${BOLD_GREEN}Install Components${NC}"
+    echo -e "${BOLD_GREEN}$(t install_menu_title)${NC}"
     echo
-    echo -e "${YELLOW}Panel Only:${NC}"
-    echo -e "${GREEN}1.${NC} Panel with FULL Caddy security (recommended)"
-    echo -e "${GREEN}2.${NC} Panel with SIMPLE cookie security"
+    echo -e "${YELLOW}$(t install_menu_panel_only)${NC}"
+    echo -e "${GREEN}1.${NC} $(t install_menu_panel_full_security)"
+    echo -e "${GREEN}2.${NC} $(t install_menu_panel_simple_security)"
     echo
-    echo -e "${YELLOW}Node Only:${NC}"
-    echo -e "${GREEN}3.${NC} Node only (for separate server)"
+    echo -e "${YELLOW}$(t install_menu_node_only)${NC}"
+    echo -e "${GREEN}3.${NC} $(t install_menu_node_separate)"
     echo
-    echo -e "${YELLOW}All-in-One:${NC}"
-    echo -e "${GREEN}4.${NC} Panel + Node with FULL Caddy security"
-    echo -e "${GREEN}5.${NC} Panel + Node with SIMPLE cookie security"
+    echo -e "${YELLOW}$(t install_menu_all_in_one)${NC}"
+    echo -e "${GREEN}4.${NC} $(t install_menu_panel_node_full)"
+    echo -e "${GREEN}5.${NC} $(t install_menu_panel_node_simple)"
     echo
-    echo -e "${GREEN}0.${NC} Back to main menu"
+    echo -e "${GREEN}0.${NC} $(t install_menu_back)"
     echo
-    echo -ne "${BOLD_BLUE_MENU}Select option: ${NC}"
+    echo -ne "${BOLD_BLUE_MENU}$(t main_menu_select_option) ${NC}"
 }
 
 handle_installation_menu() {
@@ -3649,7 +4246,7 @@ handle_installation_menu() {
             ;;
         *)
             clear
-            echo -e "${BOLD_RED}Invalid choice, please try again.${NC}"
+            echo -e "${BOLD_RED}$(t error_invalid_choice)${NC}"
             sleep 1
             ;;
         esac
@@ -3681,12 +4278,12 @@ main() {
             toggle_bbr
             ;;
         0)
-            echo "Exiting."
+            echo "$(t exiting)"
             break
             ;;
         *)
             clear
-            echo -e "${BOLD_RED}Invalid choice, please try again.${NC}"
+            echo -e "${BOLD_RED}$(t error_invalid_choice)${NC}"
             sleep 1
             ;;
         esac

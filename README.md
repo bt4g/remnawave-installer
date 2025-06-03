@@ -1,8 +1,10 @@
-[🇷🇺 Читать на русском](README.ru.md)
+[🇷🇺 Русский](README.ru.md)
 
-## Remnawave Installer
+# Remnawave Installer
 
 This script is designed for automated installation of **Remnawave** panel and node.
+
+> [!CAUTION] > **THIS REPOSITORY IS AN EDUCATIONAL EXAMPLE FOR LEARNING CADDY, REMNAWAVE PANEL, NODE. THIS SCRIPT DEMONSTRATES CADDY CONFIGURATION AS A REVERSE PROXY. NOT FOR PRODUCTION! IF YOU DON'T UNDERSTAND HOW THE CONTROL PANEL WORKS - THAT'S YOUR PROBLEM, NOT THE SCRIPT AUTHOR'S. USE AT YOUR OWN RISK!**
 
 **IMPORTANT!** DO NOT USE THE PANEL IN PRODUCTION without full understanding of how everything works!!!
 
@@ -56,25 +58,10 @@ Client → Port 443 → Xray → (Proxy connections)
 To run the installer, execute the following command in terminal:
 
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/dist/install_remnawave.sh)
+curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/dist/install_remnawave.sh | bash -s -- --lang=en
 ```
 
 <p align="center"><img src="./assets/menu.png" alt="Remnawave Installer Menu"></p>
-
-## Panel Protection Option Based on Cookie and URL Parameter
-
-Additional protection against panel discovery has been added to Caddy:
-
-- To access the panel, you need to open a page like:
-
-  ```
-  https://YOUR_PANEL_DOMAIN/auth/login?caddy=<SECRET_KEY>
-  ```
-
-- The parameter `?caddy=<SECRET_KEY>` sets a special cookie `caddy=<SECRET_KEY>` in the browser.
-- If the cookie is not set or the parameter is missing from the request, when accessing the panel the user will see a blank page or 404 error (depending on the requested path).
-
-Thus, even if an attacker scans the host or tries different paths, without the exact parameter and/or cookie the panel will remain invisible.
 
 ## Panel Protection Option Based on Caddy Auth (recommended)
 
@@ -123,6 +110,21 @@ Two sets of credentials are created during installation:
 
 - **Login**: Automatically generated SuperAdmin
 - **Password**: Complex password (25 characters)
+
+## Panel Protection Option Based on Cookie and URL Parameter
+
+Additional protection against panel discovery has been added to Caddy:
+
+- To access the panel, you need to open a page like:
+
+  ```
+  https://YOUR_PANEL_DOMAIN/auth/login?caddy=<SECRET_KEY>
+  ```
+
+- The parameter `?caddy=<SECRET_KEY>` sets a special cookie `caddy=<SECRET_KEY>` in the browser.
+- If the cookie is not set or the parameter is missing from the request, when accessing the panel the user will see a blank page or 404 error (depending on the requested path).
+
+Thus, even if an attacker scans the host or tries different paths, without the exact parameter and/or cookie the panel will remain invisible.
 
 ## Service Management
 

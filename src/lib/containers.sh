@@ -11,13 +11,13 @@ remove_previous_installation() {
     if [ -d "$REMNAWAVE_DIR" ]; then
         # Show warning and request confirmation (keep as is)
         if [ "$from_menu" = true ]; then
-            show_warning "RemnaWave installation detected."
-            if ! prompt_yes_no "Are you sure you want to completely DELETE Remnawave? IT WILL REMOVE ALL DATA!!! Continue?" "$ORANGE"; then
+            show_warning "$(t removal_installation_detected)"
+            if ! prompt_yes_no "$(t removal_confirm_delete)" "$ORANGE"; then
                 return 1
             fi
         else
-            show_warning "Previous RemnaWave installation detected."
-            if ! prompt_yes_no "To continue, you need to DELETE previous Remnawave installation. IT WILL REMOVE ALL DATA!!! Continue?" "$ORANGE"; then
+            show_warning "$(t removal_previous_detected)"
+            if ! prompt_yes_no "$(t removal_confirm_continue)" "$ORANGE"; then
                 return 1
             fi
         fi
@@ -38,7 +38,7 @@ remove_previous_installation() {
             if [ -f "$compose_file" ]; then
                 local dir_path=$(dirname "$compose_file")
                 cd "$dir_path" && docker compose down -v --rmi local --remove-orphans >/dev/null 2>&1 &
-                spinner $! "Cleaning up $(basename "$dir_path") services"
+                spinner $! "$(t spinner_cleaning_services) $(basename "$dir_path")"
             fi
         done
 
@@ -47,26 +47,26 @@ remove_previous_installation() {
         for container in "${containers[@]}"; do
             if docker ps -a --format '{{.Names}}' | grep -q "^$container$"; then
                 docker stop "$container" >/dev/null 2>&1 && docker rm "$container" >/dev/null 2>&1 &
-                spinner $! "Force removing container $container"
+                spinner $! "$(t spinner_force_removing) $container"
             fi
         done
 
         # Remove directory
         rm -rf "$REMNAWAVE_DIR" >/dev/null 2>&1 &
-        spinner $! "Removing directory $REMNAWAVE_DIR"
+        spinner $! "$(t spinner_removing_directory) $REMNAWAVE_DIR"
 
         # Show result
         if [ "$from_menu" = true ]; then
-            show_success "Remnawave has been completely removed from your system. Press any key to continue..."
+            show_success "$(t removal_complete_success)"
             read
         else
-            show_success "Previous installation removed."
+            show_success "$(t removal_previous_success)"
         fi
     else
         if [ "$from_menu" = true ]; then
             echo
-            show_info "No Remnawave installation detected on this system."
-            echo -e "${BOLD_GREEN}Press any key to continue...${NC}"
+            show_info "$(t removal_no_installation)"
+            echo -e "${BOLD_GREEN}$(t prompt_press_any_key)${NC}"
             read
         fi
     fi
@@ -78,13 +78,13 @@ restart_panel() {
     echo ''
     # Check for panel directory
     if [ ! -d /opt/remnawave ]; then
-        show_error "Error: panel directory not found at /opt/remnawave!"
-        show_error "Please install Remnawave panel first."
+        show_error "$(t restart_panel_dir_not_found)"
+        show_error "$(t restart_install_panel_first)"
     else
         # Check for docker-compose.yml in panel directory
         if [ ! -f /opt/remnawave/docker-compose.yml ]; then
-            show_error "Error: docker-compose.yml not found in panel directory!"
-            show_error "Panel installation may be corrupted or incomplete."
+            show_error "$(t restart_compose_not_found)"
+            show_error "$(t restart_installation_corrupted)"
         else
             # Variable to track subscription-page directory existence
             SUBSCRIPTION_PAGE_EXISTS=false
@@ -97,32 +97,32 @@ restart_panel() {
             # Stop subscription page if it exists
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
                 cd /opt/remnawave/subscription-page && docker compose down >/dev/null 2>&1 &
-                spinner $! "Stopping remnawave-subscription-page container"
+                spinner $! "$(t spinner_stopping_subscription)"
             fi
 
             # Stop panel
             cd /opt/remnawave && docker compose down >/dev/null 2>&1 &
-            spinner $! "Restarting panel..."
+            spinner $! "$(t spinner_restarting_panel)"
 
             # Start panel with error handling
-            show_info "Starting main panel..." "$ORANGE"
+            show_info "$(t restart_starting_panel)" "$ORANGE"
             if ! start_container "/opt/remnawave" "Remnawave Panel"; then
                 return 1
             fi
 
             # Start subscription page if it exists
             if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
-                show_info "Starting subscription page..." "$ORANGE"
+                show_info "$(t restart_starting_subscription)" "$ORANGE"
                 if ! start_container "/opt/remnawave/subscription-page" "Subscription Page"; then
                     return 1
                 fi
             fi
 
-            show_success "Panel restarted successfully"
+            show_success "$(t restart_success)"
         fi
     fi
     if [ "$no_wait" != "true" ]; then
-        echo -e "${BOLD_GREEN}Press Enter to continue...${NC}"
+        echo -e "${BOLD_GREEN}$(t prompt_enter_to_continue)${NC}"
         read
     fi
 }
@@ -133,11 +133,11 @@ start_container() {
     tmp_log=$(mktemp /tmp/docker-stack-XXXX.log)
 
     if [[ -z "$compose_dir" || -z "$display_name" ]]; then
-        printf "${BOLD_RED}Error:${NC} provide directory and display name\n" >&2
+        printf "${BOLD_RED}$(t container_error_provide_args)${NC}\n" >&2
         return 2
     fi
     if [[ ! -d "$compose_dir" ]]; then
-        printf "${BOLD_RED}Error:${NC} directory “%s” not found\n" "$compose_dir" >&2
+        printf "${BOLD_RED}$(t container_error_directory_not_found)${NC}\n" "$compose_dir" >&2
         return 2
     fi
     if [[ -f "$compose_dir/docker-compose.yml" ]]; then
@@ -145,34 +145,34 @@ start_container() {
     elif [[ -f "$compose_dir/docker-compose.yaml" ]]; then
         compose_file="$compose_dir/docker-compose.yaml"
     else
-        printf "${BOLD_RED}Error:${NC} docker-compose.yml not found in “%s”\n" "$compose_dir" >&2
+        printf "${BOLD_RED}$(t container_error_compose_not_found)${NC}\n" "$compose_dir" >&2
         return 2
     fi
     if ! command -v docker >/dev/null 2>&1; then
-        printf "${BOLD_RED}Error:${NC} Docker is not installed or not in PATH\n" >&2
+        printf "${BOLD_RED}$(t container_error_docker_not_installed)${NC}\n" >&2
         return 2
     fi
     if ! docker info >/dev/null 2>&1; then
-        printf "${BOLD_RED}Error:${NC} Docker daemon is not running\n" >&2
+        printf "${BOLD_RED}$(t container_error_docker_not_running)${NC}\n" >&2
         return 2
     fi
 
     (docker compose -f "$compose_file" up -d --force-recreate --remove-orphans) \
         >"$tmp_log" 2>&1 &
-    spinner $! "Launching “$display_name”"
+    spinner $! "$(t spinner_launching) $display_name"
     wait $!
 
     local output
     output=$(<"$tmp_log")
 
     if echo "$output" | grep -qiE 'toomanyrequests.*rate limit'; then
-        printf "${BOLD_RED}✖ Docker Hub rate limit while pulling images for “%s”.${NC}\n" "$display_name" >&2
-        printf "${BOLD_YELLOW}Cause:${NC} pull rate limit exceeded.\n" >&2
-        echo -e "${ORANGE}Possible solutions:${NC}" >&2
-        echo -e "${GREEN}1. Wait ~6 h and retry${NC}" >&2
-        echo -e "${GREEN}2. docker login${NC}" >&2
-        echo -e "${GREEN}3. Use VPN / other IP${NC}" >&2
-        echo -e "${GREEN}4. Set up a mirror${NC}\n" >&2
+        printf "${BOLD_RED}$(t container_rate_limit_error)${NC}\n" "$display_name" >&2
+        printf "${BOLD_YELLOW}$(t container_rate_limit_cause)${NC}\n" >&2
+        echo -e "${ORANGE}$(t container_rate_limit_solutions)${NC}" >&2
+        echo -e "${GREEN}$(t container_rate_limit_wait)${NC}" >&2
+        echo -e "${GREEN}$(t container_rate_limit_login)${NC}" >&2
+        echo -e "${GREEN}$(t container_rate_limit_vpn)${NC}" >&2
+        echo -e "${GREEN}$(t container_rate_limit_mirror)${NC}\n" >&2
         rm -f "$tmp_log"
         return 1
     fi
@@ -196,7 +196,7 @@ start_container() {
     done
 
     if $all_ok; then
-        printf "${BOLD_GREEN}✔ “%s” is up (services: %s).${NC}\n" \
+        printf "${BOLD_GREEN}$(t container_success_up)${NC}\n" \
             "$display_name" "$(
                 IFS=,
                 echo "${services[*]}"
@@ -206,10 +206,10 @@ start_container() {
         return 0
     fi
 
-    printf "${BOLD_RED}✖ “%s” failed to start entirely.${NC}\n" "$display_name" >&2
-    printf "${BOLD_RED}→ docker compose output:${NC}\n" >&2
+    printf "${BOLD_RED}$(t container_failed_start)${NC}\n" "$display_name" >&2
+    printf "${BOLD_RED}$(t container_compose_output)${NC}\n" >&2
     cat "$tmp_log" >&2
-    printf "\n${BOLD_RED}→ Problematic services status:${NC}\n" >&2
+    printf "\n${BOLD_RED}$(t container_problematic_services)${NC}\n" >&2
     docker compose -f "$compose_file" ps >&2
     rm -f "$tmp_log"
     return 1
@@ -233,15 +233,15 @@ EOF
 
 start_services() {
     echo
-    show_info "Starting containers..." "$BOLD_GREEN"
+    show_info "$(t services_starting_containers)" "$BOLD_GREEN"
 
     if ! start_container "$REMNAWAVE_DIR" "Remnawave/backend"; then
-        show_info "Installation stopped" "$BOLD_RED"
+        show_info "$(t services_installation_stopped)" "$BOLD_RED"
         exit 1
     fi
 
     if ! start_container "$REMNAWAVE_DIR/subscription-page" "Subscription page"; then
-        show_info "Installation stopped" "$BOLD_RED"
+        show_info "$(t services_installation_stopped)" "$BOLD_RED"
         exit 1
     fi
 }

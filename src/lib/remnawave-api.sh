@@ -25,7 +25,7 @@ register_user() {
         while [ $(date +%s) -lt $end_time ]; do
             response=$(make_api_request "POST" "$api_url" "" "$panel_domain" "{\"username\":\"$username\",\"password\":\"$password\"}")
             if [ -z "$response" ]; then
-                reg_error="Empty server response"
+                reg_error="$(t api_empty_server_response)"
             elif [[ "$response" == *"accessToken"* ]]; then
                 reg_token=$(echo "$response" | jq -r '.response.accessToken')
                 echo "$reg_token" >"$temp_result"
@@ -35,13 +35,13 @@ register_user() {
             fi
             sleep 1
         done
-        echo "${reg_error:-Registration failed: unknown error}" >"$temp_result"
+        echo "${reg_error:-$(t api_registration_failed)}" >"$temp_result"
         exit 1
     } &
 
     local pid=$!
 
-    spinner "$pid" "Registering user $username..."
+    spinner "$pid" "$(t spinner_registering_user) $username..."
 
     wait $pid
     local status=$?
@@ -61,18 +61,18 @@ get_public_key() {
     local temp_file=$(mktemp)
 
     make_api_request "GET" "http://$panel_url/api/keygen" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
-    spinner $! "Getting public key..."
+    spinner $! "$(t spinner_getting_public_key)"
     api_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$api_response" ]; then
-        echo -e "${BOLD_RED}Error: Failed to get public key.${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_get_public_key)${NC}"
         return 1
     fi
 
     local pubkey=$(echo "$api_response" | jq -r '.response.pubKey')
     if [ -z "$pubkey" ]; then
-        echo -e "${BOLD_RED}Error: Failed to extract public key from response.${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_extract_public_key)${NC}"
         return 1
     fi
 
@@ -109,24 +109,24 @@ EOF
     )
 
     make_api_request "POST" "http://$panel_url/api/nodes" "$token" "$panel_domain" "$new_node_data" >"$temp_file" 2>&1 &
-    spinner $! "Creating node..."
+    spinner $! "$(t spinner_creating_node)"
     node_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$node_response" ]; then
-        echo -e "${BOLD_RED}Error: Empty response from server when creating node.${NC}"
+        echo -e "${BOLD_RED}$(t api_empty_response_creating_node)${NC}"
         return 1
     fi
 
     if echo "$node_response" | jq -e '.response.uuid' >/dev/null; then
         return 0
     else
-        echo -e "${BOLD_RED}Error: Failed to create node, response:${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_create_node)${NC}"
         echo
-        echo "Request body was:"
+        echo "$(t api_request_body_was)"
         echo "$new_node_data"
         echo
-        echo "Response:"
+        echo "$(t api_response):"
         echo
         echo "$node_response"
         return 1
@@ -142,18 +142,18 @@ get_inbounds() {
     local temp_file=$(mktemp)
 
     make_api_request "GET" "http://$panel_url/api/inbounds" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
-    spinner $! "Getting list of inbounds..."
+    spinner $! "$(t spinner_getting_inbounds)"
     inbounds_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$inbounds_response" ]; then
-        echo -e "${BOLD_RED}Error: Empty response from server when getting inbounds.${NC}"
+        echo -e "${BOLD_RED}$(t api_empty_response_getting_inbounds)${NC}"
         return 1
     fi
 
     local inbound_uuid=$(echo "$inbounds_response" | jq -r '.response[0].uuid')
     if [ -z "$inbound_uuid" ]; then
-        echo -e "${BOLD_RED}Error: Failed to extract UUID from response.${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_extract_uuid)${NC}"
         return 1
     fi
 
@@ -190,19 +190,19 @@ EOF
     )
 
     make_api_request "POST" "http://$panel_url/api/hosts" "$token" "$panel_domain" "$host_data" >"$temp_file" 2>&1 &
-    spinner $! "Creating host for UUID: $inbound_uuid..."
+    spinner $! "$(t spinner_creating_host) UUID: $inbound_uuid..."
     host_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
     if [ -z "$host_response" ]; then
-        echo -e "${BOLD_RED}Error: Empty response from server when creating host.${NC}"
+        echo -e "${BOLD_RED}$(t api_empty_response_creating_host)${NC}"
         return 1
     fi
 
     if echo "$host_response" | jq -e '.response.uuid' >/dev/null; then
         return 0
     else
-        echo -e "${BOLD_RED}Error: Failed to create host.${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_create_host)${NC}"
         return 1
     fi
 }
@@ -250,7 +250,7 @@ EOF
         curl -s -w "%{http_code}" -X "POST" "http://$panel_url/api/users" "${headers[@]}" -d "$user_data" -D "$temp_headers" >"$temp_file"
     } &
 
-    spinner $! "Creating user: $username..."
+    spinner $! "$(t creating_user) $username..."
 
     # Read response and status code
     local full_response=$(cat "$temp_file")
@@ -260,18 +260,18 @@ EOF
     rm -f "$temp_file" "$temp_headers"
 
     if [ -z "$user_response" ]; then
-        echo -e "${BOLD_RED}Error: Empty response from server when creating user.${NC}"
+        echo -e "${BOLD_RED}$(t api_empty_response_creating_user)${NC}"
         return 1
     fi
 
     # Check for 201 status code
     if [ "$status_code" != "201" ]; then
-        echo -e "${BOLD_RED}Error: Failed to create user. HTTP status: $status_code${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_create_user_status) $status_code${NC}"
         echo
-        echo "Request body was:"
+        echo "$(t api_request_body_was)"
         echo "$user_data"
         echo
-        echo "Response:"
+        echo "$(t api_response):"
         echo "$user_response"
         return 1
     fi
@@ -288,12 +288,12 @@ EOF
 
         return 0
     else
-        echo -e "${BOLD_RED}Error: Failed to create user, invalid response format:${NC}"
+        echo -e "${BOLD_RED}$(t api_failed_create_user_format)${NC}"
         echo
-        echo "Request body was:"
+        echo "$(t api_request_body_was)"
         echo "$user_data"
         echo
-        echo "Response:"
+        echo "$(t api_response):"
         echo "$user_response"
         return 1
     fi
@@ -304,7 +304,7 @@ register_panel_user() {
     REG_TOKEN=$(register_user "127.0.0.1:3000" "$PANEL_DOMAIN" "$SUPERADMIN_USERNAME" "$SUPERADMIN_PASSWORD")
 
     if [ -z "$REG_TOKEN" ]; then
-        show_error "Failed to register user."
+        show_error "$(t api_failed_register_user)"
         exit 1
     fi
 }

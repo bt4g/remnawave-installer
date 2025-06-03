@@ -20,7 +20,7 @@ install_dependencies() {
     codename=$(lsb_release -cs)
 
     if [[ "$distro" != "ubuntu" && "$distro" != "debian" ]]; then
-        echo "❌  Distribution $distro is not supported." >&2
+        echo "❌  $(t system_distro_not_supported) $distro." >&2
         exit 1
     fi
 
@@ -38,7 +38,7 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
 
     # Update package lists
     (sudo apt-get update -qq >/dev/null 2>&1) &
-    spinner $! "Updating APT cache"
+    spinner $! "$(t spinner_updating_apt_cache)"
 
     # Prepare package list
     local base_deps=(
@@ -59,21 +59,21 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
     # Install missing packages
     if ((${#missing[@]})); then
         (sudo apt-get install -y --no-install-recommends "${missing[@]}" -qq >/dev/null 2>&1) &
-        spinner $! "Installing ${#missing[@]} packages"
+        spinner $! "$(t spinner_installing_packages) ${#missing[@]}"
     fi
 
     if ! systemctl is-active --quiet docker; then
         (sudo systemctl enable --now docker >/dev/null 2>&1) &
-        spinner $! "Starting Docker daemon "
+        spinner $! "$(t spinner_starting_docker)"
     else
         (sleep 0.1) &
-        spinner $! "Docker daemon already running"
+        spinner $! "$(t spinner_docker_already_running)"
     fi
 
     # Add current user to docker group
     if ! id -nG "$USER" | grep -qw docker; then
         (sudo usermod -aG docker "$USER" >/dev/null 2>&1) &
-        spinner $! "Adding user to group"
+        spinner $! "$(t spinner_adding_user_to_group)"
     fi
 
     # Configure UFW (quiet)
@@ -87,7 +87,7 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
         ufw status | grep -qw "443/tcp" &&
         ufw status | grep -qw "80/tcp"; then
         (sleep 0.2) &
-        spinner $! "Firewall already set   "
+        spinner $! "$(t spinner_firewall_already_set)"
     else
         (
             sudo ufw --force reset
@@ -97,7 +97,7 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
             sudo ufw allow 80/tcp
             sudo ufw --force enable
         ) >/dev/null 2>&1 &
-        spinner $! "Configuring firewall   "
+        spinner $! "$(t spinner_configuring_firewall)"
     fi
 
     # Enable unattended-upgrades
@@ -107,7 +107,7 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
         grep -q '^Unattended-Upgrade::SyslogEnable.*true' \
             /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null; then
         (sleep 0.2) & # визуальный «фейковый» процесс
-        spinner $! "Auto-updates already set "
+        spinner $! "$(t spinner_auto_updates_already_set)"
     else
         (
             echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true |
@@ -119,11 +119,11 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
                 sudo tee -a /etc/apt/apt.conf.d/50unattended-upgrades >/dev/null
             sudo systemctl restart unattended-upgrades
         ) >/dev/null 2>&1 &
-        spinner $! "Setting auto-updates   "
+        spinner $! "$(t spinner_setting_auto_updates)"
     fi
 
     echo
-    show_success "All dependencies installed and configured."
+    show_success "$(t system_dependencies_success)"
 }
 
 # Create directory with proper permissions
@@ -131,7 +131,7 @@ create_dir() {
     local dir_path="$1"
     if [ ! -d "$dir_path" ]; then
         mkdir -p "$dir_path"
-        show_info "Created directory: $dir_path"
+        show_info "$(t system_created_directory) $dir_path"
     fi
 }
 
@@ -142,7 +142,7 @@ prepare_installation() {
     install_dependencies "${extra_deps[@]}"
 
     if ! remove_previous_installation; then
-        show_info "Installation cancelled. Returning to main menu."
+        show_info "$(t system_installation_cancelled)"
         return 1
     fi
 

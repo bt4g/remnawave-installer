@@ -36,8 +36,8 @@ prompt_yes_no() {
     local prompt_color="${2:-$GREEN}"
     local default="${3:-}"
 
-    local prompt_suffix=" (y/n): "
-    [ -n "$default" ] && prompt_suffix=" (y/n) [$default]: "
+    local prompt_suffix="$(t prompt_yes_no_suffix)"
+    [ -n "$default" ] && prompt_suffix="$(t prompt_yes_no_default_suffix)$default]: "
 
     while true; do
         echo -ne "${prompt_color}${prompt_text}${prompt_suffix}${NC}" >&2
@@ -56,7 +56,7 @@ prompt_yes_no() {
         elif [ "$answer" = "n" ] || [ "$answer" = "no" ]; then
             return 1
         else
-            echo -e "${BOLD_RED}Please enter 'y' or 'n'.${NC}" >&2
+            echo -e "${BOLD_RED}$(t error_enter_yn)${NC}" >&2
             echo ''
         fi
     done
@@ -81,7 +81,7 @@ prompt_menu_option() {
             [ "$selected_option" -le "$max" ]; then
             break
         else
-            echo -e "${BOLD_RED}Plfease enter a number between ${min} and ${max}.${NC}" >&2
+            echo -e "${BOLD_RED}$(t error_enter_number_between) ${min} and ${max}.${NC}" >&2
         fi
     done
 
@@ -97,25 +97,25 @@ validate_password_strength() {
 
     # Check length
     if [ "$length" -lt "$min_length" ]; then
-        echo "Password must contain at least $min_length characters."
+        echo "$(t password_min_length) $min_length $(t password_min_length_suffix)"
         return 1
     fi
 
     # Check for digits
     if ! [[ "$password" =~ [0-9] ]]; then
-        echo "Password must contain at least one digit."
+        echo "$(t password_need_digit)"
         return 1
     fi
 
     # Check for lowercase letters
     if ! [[ "$password" =~ [a-z] ]]; then
-        echo "Password must contain at least one lowercase letter."
+        echo "$(t password_need_lowercase)"
         return 1
     fi
 
     # Check for uppercase letters
     if ! [[ "$password" =~ [A-Z] ]]; then
-        echo "Password must contain at least one uppercase letter."
+        echo "$(t password_need_uppercase)"
         return 1
     fi
 
@@ -126,7 +126,7 @@ validate_password_strength() {
 # Request password with confirmation and strength validation
 prompt_secure_password() {
     local prompt_text="$1"
-    local confirm_text="${2:-Please confirm your password}"
+    local confirm_text="${2:-$(t auth_confirm_password)}"
     local min_length=${3:-8}
 
     local password1 password2 error_message
@@ -138,7 +138,7 @@ prompt_secure_password() {
         # Check password strength
         error_message=$(validate_password_strength "$password1" "$min_length")
         if [ $? -ne 0 ]; then
-            echo -e "${BOLD_RED}${error_message} Please try again.${NC}" >&2
+            echo -e "${BOLD_RED}${error_message} $(t password_try_again)${NC}" >&2
             continue
         fi
 
@@ -149,7 +149,7 @@ prompt_secure_password() {
         if [ "$password1" = "$password2" ]; then
             break
         else
-            echo -e "${BOLD_RED}Passwords do not match. Please try again.${NC}" >&2
+            echo -e "${BOLD_RED}$(t error_passwords_no_match)${NC}" >&2
         fi
     done
 

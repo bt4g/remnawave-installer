@@ -98,18 +98,18 @@ prompt_number() {
         # Number validation
         if [[ "$number" =~ ^[0-9]+$ ]]; then
             if [ -n "$min" ] && [ "$number" -lt "$min" ]; then
-                echo -e "${BOLD_RED}Value must be at least ${min}.${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_value_min) ${min}.${NC}" >&2
                 continue
             fi
 
             if [ -n "$max" ] && [ "$number" -gt "$max" ]; then
-                echo -e "${BOLD_RED}Value must be at most ${max}.${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_value_max) ${max}.${NC}" >&2
                 continue
             fi
 
             break
         else
-            echo -e "${BOLD_RED}Please enter a valid numeric value.${NC}" >&2
+            echo -e "${BOLD_RED}$(t validation_enter_numeric)${NC}" >&2
         fi
     done
 
@@ -188,7 +188,7 @@ simple_read_domain_or_ip() {
 
         # If input is empty and no default value, require input
         if [ -z "$input" ]; then
-            echo -e "${BOLD_RED}Input cannot be empty. Please enter a valid domain or IP address.${NC}" >&2
+            echo -e "${BOLD_RED}$(t validation_input_empty)${NC}" >&2
             ((attempts++))
             continue
         fi
@@ -202,7 +202,7 @@ simple_read_domain_or_ip() {
             if [ $status -eq 0 ]; then
                 break
             else
-                echo -e "${BOLD_RED}Invalid IP address format. IP must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_invalid_ip)${NC}" >&2
             fi
         elif [ "$validation_type" = "domain_only" ]; then
             # Only validate as domain name
@@ -212,8 +212,8 @@ simple_read_domain_or_ip() {
             if [ $status -eq 0 ]; then
                 break
             else
-                echo -e "${BOLD_RED}Invalid domain name format. Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
-                echo -e "${BOLD_RED}Use only letters, digits, dots, and dashes.${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_invalid_domain)${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_use_only_letters)${NC}" >&2
             fi
         else
             # Default: validate as either domain or IP
@@ -223,9 +223,9 @@ simple_read_domain_or_ip() {
             if [ $status -eq 0 ]; then
                 break
             else
-                echo -e "${BOLD_RED}Invalid domain or IP address format.${NC}" >&2
-                echo -e "${BOLD_RED}Domain must contain at least one dot and not start/end with dot or dash.${NC}" >&2
-                echo -e "${BOLD_RED}IP address must be in format X.X.X.X, where X is a number from 0 to 255.${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_invalid_domain_ip)${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_domain_format)${NC}" >&2
+                echo -e "${BOLD_RED}$(t validation_ip_format)${NC}" >&2
             fi
         fi
 
@@ -234,11 +234,11 @@ simple_read_domain_or_ip() {
 
     if [ $attempts -eq $max_attempts ]; then
         if [ -n "$default_value" ]; then
-            echo -e "${BOLD_RED}Maximum number of attempts exceeded. Using default value: $default_value${NC}" >&2
+            echo -e "${BOLD_RED}$(t validation_max_attempts_default) $default_value${NC}" >&2
             result="$default_value"
         else
-            echo -e "${BOLD_RED}Maximum number of attempts exceeded. No valid input provided.${NC}" >&2
-            echo -e "${BOLD_RED}Installation cannot continue without a valid domain or IP address.${NC}" >&2
+            echo -e "${BOLD_RED}$(t validation_max_attempts_no_input)${NC}" >&2
+            echo -e "${BOLD_RED}$(t validation_cannot_continue)${NC}" >&2
             return 1
         fi
     fi

@@ -1,7 +1,7 @@
 # Start Caddy with cookie auth
 start_caddy_cookie_auth() {
   if ! start_container "$REMNAWAVE_DIR/caddy" "Caddy"; then
-    show_info "Installation stopped" "$BOLD_RED"
+    show_info "$(t services_installation_stopped)" "$BOLD_RED"
     exit 1
   fi
 }
@@ -47,36 +47,36 @@ display_cookie_auth_results() {
 
   echo -e "\033[1m┌${border_line}┐\033[0m"
 
-  print_text_line "Secure login link (with secret key):"
+  print_text_line "$(t results_secure_login_link)"
   print_empty_line
   print_text_line "$secure_panel_url"
   print_empty_line
 
   # Show subscription URL only for all-in-one installation
   if [ "$installation_type" = "all-in-one" ] && [ -n "$USER_SUBSCRIPTION_URL" ] && [ "$USER_SUBSCRIPTION_URL" != "null" ]; then
-    print_text_line "User subscription URL:"
+    print_text_line "$(t results_user_subscription_url)"
     print_text_line "$USER_SUBSCRIPTION_URL"
     print_empty_line
   fi
 
-  print_text_line "Admin login: $SUPERADMIN_USERNAME"
-  print_text_line "Admin password: $SUPERADMIN_PASSWORD"
+  print_text_line "$(t results_admin_login) $SUPERADMIN_USERNAME"
+  print_text_line "$(t results_admin_password) $SUPERADMIN_PASSWORD"
   print_empty_line
   echo -e "\033[1m└${border_line}┘\033[0m"
 
   echo
-  show_success "Credentials saved in file: $CREDENTIALS_FILE"
-  echo -e "${BOLD_BLUE}Installation directory: ${NC}$REMNAWAVE_DIR/"
+  show_success "$(t success_credentials_saved) $CREDENTIALS_FILE"
+  echo -e "${BOLD_BLUE}$(t info_installation_directory) ${NC}$REMNAWAVE_DIR/"
   echo
 
   # Show QR code for subscription URL if available
   if [ "$installation_type" = "all-in-one" ] && [ -n "$USER_SUBSCRIPTION_URL" ] && [ "$USER_SUBSCRIPTION_URL" != "null" ]; then
-    generate_qr_code "$USER_SUBSCRIPTION_URL" "Subscription URL QR Code"
+    generate_qr_code "$USER_SUBSCRIPTION_URL" "$(t qr_subscription_url)"
     echo
   fi
 
   cd ~
 
-  echo -e "${BOLD_GREEN}Installation complete. Press Enter to continue...${NC}"
+  echo -e "${BOLD_GREEN}$(t success_installation_complete)${NC}"
   read -r
 }

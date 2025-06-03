@@ -4,47 +4,6 @@
 #                                DISPLAY FUNCTIONS
 # ===================================================================================
 
-# Draw information box
-draw_info_box() {
-    local title="$1"
-    local subtitle="$2"
-
-    # Fixed block width for ideal alignment
-    local width=54
-
-    echo -e "${BOLD_GREEN}"
-    # Top border
-    printf "┌%s┐\n" "$(printf '─%.0s' $(seq 1 $width))"
-
-    # Centring title
-    local title_padding_left=$(((width - ${#title}) / 2))
-    local title_padding_right=$((width - title_padding_left - ${#title}))
-    printf "│%*s%s%*s│\n" "$title_padding_left" "" "$title" "$title_padding_right" ""
-
-    # Centring subtitle
-    local subtitle_padding_left=$(((width - ${#subtitle}) / 2))
-    local subtitle_padding_right=$((width - subtitle_padding_left - ${#subtitle}))
-    printf "│%*s%s%*s│\n" "$subtitle_padding_left" "" "$subtitle" "$subtitle_padding_right" ""
-
-    # Empty line
-    printf "│%*s│\n" "$width" ""
-
-    # Version line - careful color handling
-    local version_text="  • Version: "
-    local version_value="$VERSION"
-    local version_value_colored="${ORANGE}${version_value}${BOLD_GREEN}"
-    local version_value_length=${#version_value}
-    local remaining_space=$((width - ${#version_text} - version_value_length))
-    printf "│%s%s%*s│\n" "$version_text" "$version_value_colored" "$remaining_space" ""
-
-    # Empty line
-    printf "│%*s│\n" "$width" ""
-
-    # Bottom border
-    printf "└%s┘\n" "$(printf '─%.0s' $(seq 1 $width))"
-    echo -e "${NC}"
-}
-
 # Clear screen
 clear_screen() {
     clear

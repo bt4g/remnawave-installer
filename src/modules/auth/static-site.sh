@@ -17,5 +17,5 @@ create_static_site() {
   ) >/dev/null 2>&1 &
 
   download_pid=$!
-  spinner !$download_pid "Downloading static files for the selfsteal site..."
+  spinner !$download_pid "$(t spinner_downloading_static_files)"
 }

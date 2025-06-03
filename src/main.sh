@@ -1,8 +1,26 @@
 #!/bin/bash
 
+# Parse command line arguments for language
+LANG_CODE="en"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --lang=*)
+            LANG_CODE="${1#*=}"
+            shift
+            ;;
+        --lang)
+            LANG_CODE="$2"
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
 # Root privileges check
 if [ "$(id -u)" -ne 0 ]; then
-    echo "Error: This script must be run as root (sudo)"
+    echo "$(t error_root_required)"
     exit 1
 fi
 
@@ -16,41 +34,41 @@ clear
 # Show main menu
 show_main_menu() {
     clear
-    echo -e "${BOLD_GREEN}Remnawave Panel Installer by uphantom v${VERSION}${NC}"
+    echo -e "${BOLD_GREEN}$(t main_menu_title)${VERSION}${NC}"
     echo
-    echo -e "${GREEN}1.${NC} Install components"
+    echo -e "${GREEN}1.${NC} $(t main_menu_install_components)"
     echo
-    echo -e "${GREEN}2.${NC} Restart panel"
-    echo -e "${GREEN}3.${NC} Remove panel"
-    echo -e "${GREEN}4.${NC} Remnawave Rescue CLI [Reset admin]"
-    echo -e "${GREEN}5.${NC} Show panel access credentials"
+    echo -e "${GREEN}2.${NC} $(t main_menu_restart_panel)"
+    echo -e "${GREEN}3.${NC} $(t main_menu_remove_panel)"
+    echo -e "${GREEN}4.${NC} $(t main_menu_rescue_cli)"
+    echo -e "${GREEN}5.${NC} $(t main_menu_show_credentials)"
     echo
     echo -e "${GREEN}6.${NC} $(get_bbr_menu_text)"
     echo
-    echo -e "${GREEN}0.${NC} Exit"
+    echo -e "${GREEN}0.${NC} $(t main_menu_exit)"
     echo
-    echo -ne "${BOLD_BLUE_MENU}Select option: ${NC}"
+    echo -ne "${BOLD_BLUE_MENU}$(t main_menu_select_option) ${NC}"
 }
 
 # Show installation submenu
 show_installation_menu() {
     clear
-    echo -e "${BOLD_GREEN}Install Components${NC}"
+    echo -e "${BOLD_GREEN}$(t install_menu_title)${NC}"
     echo
-    echo -e "${YELLOW}Panel Only:${NC}"
-    echo -e "${GREEN}1.${NC} Panel with FULL Caddy security (recommended)"
-    echo -e "${GREEN}2.${NC} Panel with SIMPLE cookie security"
+    echo -e "${YELLOW}$(t install_menu_panel_only)${NC}"
+    echo -e "${GREEN}1.${NC} $(t install_menu_panel_full_security)"
+    echo -e "${GREEN}2.${NC} $(t install_menu_panel_simple_security)"
     echo
-    echo -e "${YELLOW}Node Only:${NC}"
-    echo -e "${GREEN}3.${NC} Node only (for separate server)"
+    echo -e "${YELLOW}$(t install_menu_node_only)${NC}"
+    echo -e "${GREEN}3.${NC} $(t install_menu_node_separate)"
     echo
-    echo -e "${YELLOW}All-in-One:${NC}"
-    echo -e "${GREEN}4.${NC} Panel + Node with FULL Caddy security"
-    echo -e "${GREEN}5.${NC} Panel + Node with SIMPLE cookie security"
+    echo -e "${YELLOW}$(t install_menu_all_in_one)${NC}"
+    echo -e "${GREEN}4.${NC} $(t install_menu_panel_node_full)"
+    echo -e "${GREEN}5.${NC} $(t install_menu_panel_node_simple)"
     echo
-    echo -e "${GREEN}0.${NC} Back to main menu"
+    echo -e "${GREEN}0.${NC} $(t install_menu_back)"
     echo
-    echo -ne "${BOLD_BLUE_MENU}Select option: ${NC}"
+    echo -ne "${BOLD_BLUE_MENU}$(t main_menu_select_option) ${NC}"
 }
 
 # Handle installation menu
@@ -80,7 +98,7 @@ handle_installation_menu() {
             ;;
         *)
             clear
-            echo -e "${BOLD_RED}Invalid choice, please try again.${NC}"
+            echo -e "${BOLD_RED}$(t error_invalid_choice)${NC}"
             sleep 1
             ;;
         esac
@@ -112,12 +130,12 @@ main() {
             toggle_bbr
             ;;
         0)
-            echo "Exiting."
+            echo "$(t exiting)"
             break
             ;;
         *)
             clear
-            echo -e "${BOLD_RED}Invalid choice, please try again.${NC}"
+            echo -e "${BOLD_RED}$(t error_invalid_choice)${NC}"
             sleep 1
             ;;
         esac

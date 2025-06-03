@@ -6,7 +6,7 @@
 
 # Collect full auth specific configuration from user
 collect_full_auth_config() {
-    AUTHP_ADMIN_EMAIL=$(prompt_email "Enter the admin email for Caddy Auth")
+    AUTHP_ADMIN_EMAIL=$(prompt_email "$(t auth_admin_email)")
 }
 
 # Generate full auth specific secrets
@@ -19,7 +19,7 @@ generate_full_auth_secrets() {
 # Start Caddy with full auth
 start_caddy_full_auth() {
     if ! start_container "$REMNAWAVE_DIR/caddy" "Caddy"; then
-        show_info "Installation stopped" "$BOLD_RED"
+        show_info "$(t services_installation_stopped)" "$BOLD_RED"
         exit 1
     fi
 }
@@ -66,38 +66,38 @@ display_full_auth_results() {
 
     echo -e "\033[1m┌${border_line}┐\033[0m"
 
-    print_text_line "Auth Portal page:"
+    print_text_line "$(t results_auth_portal_page)"
     print_text_line "$caddy_auth_url"
     print_empty_line
 
     # Show subscription URL only for all-in-one installation
     if [ "$installation_type" = "all-in-one" ] && [ -n "$USER_SUBSCRIPTION_URL" ] && [ "$USER_SUBSCRIPTION_URL" != "null" ]; then
-        print_text_line "Subscription URL:"
+        print_text_line "$(t results_user_subscription_url)"
         print_text_line "$USER_SUBSCRIPTION_URL"
         print_empty_line
     fi
 
-    print_text_line "Caddy auth login: $AUTHP_ADMIN_USER"
-    print_text_line "Caddy auth password: $AUTHP_ADMIN_SECRET"
+    print_text_line "$(t results_caddy_auth_login) $AUTHP_ADMIN_USER"
+    print_text_line "$(t results_caddy_auth_password) $AUTHP_ADMIN_SECRET"
     print_empty_line
-    print_text_line "Remnawave admin login: $SUPERADMIN_USERNAME"
-    print_text_line "Remnawave admin password: $SUPERADMIN_PASSWORD"
+    print_text_line "$(t results_remnawave_admin_login) $SUPERADMIN_USERNAME"
+    print_text_line "$(t results_remnawave_admin_password) $SUPERADMIN_PASSWORD"
     print_empty_line
     echo -e "\033[1m└${border_line}┘\033[0m"
 
     echo
-    show_success "Credentials saved in file: $CREDENTIALS_FILE"
-    echo -e "${BOLD_BLUE}Installation directory: ${NC}$REMNAWAVE_DIR/"
+    show_success "$(t success_credentials_saved) $CREDENTIALS_FILE"
+    echo -e "${BOLD_BLUE}$(t info_installation_directory) ${NC}$REMNAWAVE_DIR/"
     echo
 
     # Show QR code for subscription URL if available
     if [ "$installation_type" = "all-in-one" ] && [ -n "$USER_SUBSCRIPTION_URL" ] && [ "$USER_SUBSCRIPTION_URL" != "null" ]; then
-        generate_qr_code "$USER_SUBSCRIPTION_URL" "Subscription URL QR Code"
+        generate_qr_code "$USER_SUBSCRIPTION_URL" "$(t qr_subscription_url)"
         echo
     fi
 
     cd ~
 
-    echo -e "${BOLD_GREEN}Installation complete. Press Enter to continue...${NC}"
+    echo -e "${BOLD_GREEN}$(t success_installation_complete)${NC}"
     read -r
 }

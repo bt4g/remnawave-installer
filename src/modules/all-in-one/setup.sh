@@ -72,13 +72,13 @@ collect_selfsteal_domain_for_all_in_one() {
         # 3 - true show_warning
         # 4 - false allow_cf_proxy
         # 5 - false expect_different_ip
-        SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain (will be used on node server), e.g. domain.example.com" "$ORANGE" true false false)
+        SELF_STEAL_DOMAIN=$(prompt_domain "$(t domain_selfsteal_prompt)" "$ORANGE" true false false)
 
         # Check that selfsteal domain is different from panel and subscription domains
         if check_domain_uniqueness "$SELF_STEAL_DOMAIN" "selfsteal" "$PANEL_DOMAIN" "$SUB_DOMAIN"; then
             break
         fi
-        show_warning "Please enter a different domain for selfsteal service."
+        show_warning "$(t warning_enter_different_domain) selfsteal."
         echo
     done
 }

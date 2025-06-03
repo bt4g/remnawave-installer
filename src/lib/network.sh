@@ -10,13 +10,13 @@ validate_port() {
 
     # Check if port is a number
     if ! [[ "$port" =~ ^[0-9]+$ ]]; then
-        echo -e "${BOLD_RED}Error: Port must be a number.${NC}" >&2
+        echo -e "${BOLD_RED}$(t network_error_port_number)${NC}" >&2
         return 1
     fi
 
     # Check port range
     if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-        echo -e "${BOLD_RED}Error: Port must be between 1 and 65535.${NC}" >&2
+        echo -e "${BOLD_RED}$(t network_error_port_range)${NC}" >&2
         return 1
     fi
 
@@ -107,8 +107,8 @@ prompt_email() {
         if [[ "$result" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
             break
         else
-            echo -e "${BOLD_RED}Invalid email format.${NC}" >&2
-            if prompt_yes_no "Proceed with this value? Current value: $result" "$ORANGE"; then
+            echo -e "${BOLD_RED}$(t network_invalid_email)${NC}" >&2
+            if prompt_yes_no "$(t network_proceed_with_value) $result" "$ORANGE"; then
                 break
             fi
         fi
@@ -129,20 +129,20 @@ get_available_port() {
 
     # Check if port is available
     if is_port_available "$port"; then
-        show_info "Using default $port_name port: $port"
+        show_info "$(t network_using_default_port) $port_name port: $port"
         echo "$port"
         return 0
     else
         # Find next available port
-        show_info "Default $port_name port $port is already in use. Finding available port..."
+        show_info "Default $port_name $(t network_port_in_use)"
         local available_port=$(find_available_port "$((port + 1))")
 
         if [ $? -eq 0 ]; then
-            show_info "Using $port_name port: $available_port"
+            show_info "$(t network_using_port) $port_name port: $available_port"
             echo "$available_port"
             return 0
         else
-            show_error "Failed to find an available port for $port_name!"
+            show_error "$(t network_failed_find_port) $port_name!"
             # Return the default as fallback
             echo "$default_port"
             return 1
@@ -180,7 +180,7 @@ prompt_domain() {
 
         # Base domain validation
         if ! [[ "$domain" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
-            echo -e "${BOLD_RED}Invalid domain format. Please try again.${NC}" >&2
+            echo -e "${BOLD_RED}$(t network_invalid_domain)${NC}" >&2
             continue
         fi
 
@@ -195,9 +195,9 @@ prompt_domain() {
         # If unable to get IPs, warn and ask if user wants to continue
         if [ -z "$domain_ip" ] || [ -z "$server_ip" ]; then
             if [ "$show_warning" = true ]; then
-                show_warning "Failed to determine domain or server IP address." 2
-                show_warning "Make sure that the domain $domain is properly configured and points to the server ($server_ip)." 2
-                if prompt_yes_no "Continue with this domain despite being unable to verify its IP address?" "$ORANGE"; then
+                show_warning "$(t network_failed_determine_ip)" 2
+                show_warning "$(t network_make_sure_domain) $domain $(t network_points_to_server) ($server_ip)." 2
+                if prompt_yes_no "$(t network_continue_despite_ip)" "$ORANGE"; then
                     break
                 else
                     continue
@@ -226,9 +226,9 @@ prompt_domain() {
                 # Proxying not allowed — warn
                 if [ "$show_warning" = true ]; then
                     echo
-                    show_warning "Domain $domain points to Cloudflare IP ($domain_ip)." 2
-                    show_warning "Disable Cloudflare proxying - selfsteal domain proxying is not allowed." 2
-                    if prompt_yes_no "Continue with this domain despite Cloudflare proxy configuration issue?" "$ORANGE"; then
+                    show_warning "$(t network_domain_points_cloudflare) $domain $(t network_points_cloudflare_ip) ($domain_ip)." 2
+                    show_warning "$(t network_disable_cloudflare)" 2
+                    if prompt_yes_no "$(t network_continue_despite_cloudflare)" "$ORANGE"; then
                         break
                     else
                         continue
@@ -241,9 +241,9 @@ prompt_domain() {
                 # For separate installation, domain should NOT point to current server
                 if [ "$domain_ip" = "$server_ip" ]; then
                     if [ "$show_warning" = true ]; then
-                        show_warning "Domain $domain points to this server IP ($server_ip)." 2
-                        show_warning "For separate installation, selfsteal domain should point to the node server, not the panel server." 2
-                        if prompt_yes_no "Continue with this domain despite it pointing to the current server?" "$ORANGE"; then
+                        show_warning "$(t network_domain_points_server) $domain $(t network_points_this_server) ($server_ip)." 2
+                        show_warning "$(t network_separate_installation_note)" 2
+                        if prompt_yes_no "$(t network_continue_despite_current_server)" "$ORANGE"; then
                             break
                         else
                             continue
@@ -260,8 +260,8 @@ prompt_domain() {
                 # Normal case: domain should point to current server
                 if [ "$domain_ip" != "$server_ip" ]; then
                     if [ "$show_warning" = true ]; then
-                        show_warning "Domain $domain points to IP address $domain_ip, which differs from the server IP ($server_ip)." 2
-                        if prompt_yes_no "Continue with this domain despite the IP address mismatch?" "$ORANGE"; then
+                        show_warning "$(t network_domain_points_different) $domain $(t network_points_different_ip) $domain_ip, $(t network_differs_from_server) ($server_ip)." 2
+                        if prompt_yes_no "$(t network_continue_despite_mismatch)" "$ORANGE"; then
                             break
                         else
                             continue

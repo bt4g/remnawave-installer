@@ -10,7 +10,7 @@ configure_vless_panel_only() {
     local config_file="$REMNAWAVE_DIR/config.json"
 
     # Collect node host info
-    NODE_HOST=$(simple_read_domain_or_ip "Enter the IP address or domain of the node server (if different from Selfsteal domain)" "$SELF_STEAL_DOMAIN")
+    NODE_HOST=$(simple_read_domain_or_ip "$(t vless_enter_node_host)" "$SELF_STEAL_DOMAIN")
 
     # Generate VLESS keys
     local keys_result=$(generate_vless_keys)
@@ -53,7 +53,7 @@ configure_vless_panel_only() {
     local pubkey=$(get_public_key "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
     if [ -n "$pubkey" ]; then
         echo
-        echo -e "${GREEN}Public key (required for node installation):${NC}"
+        echo -e "${GREEN}$(t vless_public_key_required)${NC}"
         echo
         echo -e "SSL_CERT=\"$pubkey\""
         echo

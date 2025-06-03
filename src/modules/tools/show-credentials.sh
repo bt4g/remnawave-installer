@@ -3,14 +3,14 @@
 # Show panel credentials function
 show_panel_credentials() {
     echo
-    echo -e "${BOLD_GREEN}Panel Access Credentials${NC}"
+    echo -e "${BOLD_GREEN}$(t credentials_panel_title)${NC}"
     echo
 
     local credentials_file="/opt/remnawave/credentials.txt"
 
     # Check if credentials file exists
     if [ -f "$credentials_file" ]; then
-        echo -e "${BOLD_GREEN}Panel access credentials found:${NC}"
+        echo -e "${BOLD_GREEN}$(t credentials_found)${NC}"
         echo
 
         # Display file content with proper formatting
@@ -31,19 +31,19 @@ show_panel_credentials() {
             fi
         done < "$credentials_file"
     else
-        echo -e "${BOLD_RED}Credentials file not found!${NC}"
+        echo -e "${BOLD_RED}$(t credentials_not_found)${NC}"
         echo
-        echo -e "${YELLOW}The credentials file does not exist at: ${ORANGE}$credentials_file${NC}"
+        echo -e "${YELLOW}$(t credentials_file_location) ${ORANGE}$credentials_file${NC}"
         echo
-        echo -e "${YELLOW}This usually means:${NC}"
-        echo -e "  • Panel is not installed yet"
-        echo -e "  • Installation was not completed successfully"
-        echo -e "  • Credentials file was manually deleted"
+        echo -e "${YELLOW}$(t credentials_reasons)${NC}"
+        echo -e "  • $(t credentials_reason_not_installed)"
+        echo -e "  • $(t credentials_reason_incomplete)"
+        echo -e "  • $(t credentials_reason_deleted)"
         echo
-        echo -e "${YELLOW}Try installing the panel first using option 1 from the main menu.${NC}"
+        echo -e "${YELLOW}$(t credentials_try_install)${NC}"
     fi
 
     echo
-    echo -e "${BOLD_YELLOW}Press Enter to return to menu...${NC}"
+    echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
     read -r
 }

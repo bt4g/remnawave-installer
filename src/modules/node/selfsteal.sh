@@ -84,7 +84,7 @@ EOF
     mkdir -p logs
 
     if ! start_container "$SELFSTEAL_DIR" "Caddy"; then
-        show_info "Installation stopped" "$BOLD_RED"
+        show_info "$(t selfsteal_installation_stopped)" "$BOLD_RED"
         exit 1
     fi
 
@@ -92,9 +92,9 @@ EOF
     CADDY_STATUS=$(docker compose ps --services --filter "status=running" | grep -q "caddy" && echo "running" || echo "stopped")
 
     if [ "$CADDY_STATUS" = "running" ]; then
-        echo -e "${LIGHT_GREEN}• Domain: ${BOLD_GREEN}$SELF_STEAL_DOMAIN${NC}"
-        echo -e "${LIGHT_GREEN}• Port: ${BOLD_GREEN}$CADDY_LOCAL_PORT${NC}"
-        echo -e "${LIGHT_GREEN}• Directory: ${BOLD_GREEN}$SELFSTEAL_DIR${NC}"
+        echo -e "${LIGHT_GREEN}$(t selfsteal_domain_info) ${BOLD_GREEN}$SELF_STEAL_DOMAIN${NC}"
+        echo -e "${LIGHT_GREEN}$(t selfsteal_port_info) ${BOLD_GREEN}$CADDY_LOCAL_PORT${NC}"
+        echo -e "${LIGHT_GREEN}$(t selfsteal_directory_info) ${BOLD_GREEN}$SELFSTEAL_DIR${NC}"
         echo
     fi
 

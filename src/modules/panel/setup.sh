@@ -23,13 +23,13 @@ collect_selfsteal_domain_for_panel() {
         # 3 - true show_warning
         # 4 - false allow_cf_proxy
         # 5 - true expect_different_ip
-        SELF_STEAL_DOMAIN=$(prompt_domain "Enter Selfsteal domain (will be used on node server), e.g. domain.example.com" "$ORANGE" true false true)
+        SELF_STEAL_DOMAIN=$(prompt_domain "$(t domain_selfsteal_prompt)" "$ORANGE" true false true)
 
         # Check that selfsteal domain is different from panel and subscription domains
         if check_domain_uniqueness "$SELF_STEAL_DOMAIN" "selfsteal" "$PANEL_DOMAIN" "$SUB_DOMAIN"; then
             break
         fi
-        show_warning "Please enter a different domain for selfsteal service."
+        show_warning "$(t warning_enter_different_domain) selfsteal."
         echo
     done
 }
@@ -99,7 +99,7 @@ install_panel_only() {
 
     # Validate auth type
     if [[ "$auth_type" != "cookie" && "$auth_type" != "full" ]]; then
-        show_error "Invalid auth type: $auth_type. Must be 'cookie' or 'full'"
+        show_error "$(t panel_invalid_auth_type): $auth_type. $(t panel_auth_type_options)"
         return 1
     fi
 

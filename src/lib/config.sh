@@ -11,7 +11,7 @@ update_file() {
 
     # Check for parameters
     if [ "$#" -eq 0 ] || [ $(($# % 2)) -ne 0 ]; then
-        echo "Error: invalid number of arguments. Should be even number of keys and values." >&2
+        echo "$(t config_invalid_arguments)" >&2
         return 1
     fi
 
@@ -50,18 +50,18 @@ update_file() {
 
 # Collect Telegram configuration
 collect_telegram_config() {
-    if prompt_yes_no "Do you want to enable Telegram notifications?"; then
+    if prompt_yes_no "$(t telegram_enable_notifications)"; then
         IS_TELEGRAM_NOTIFICATIONS_ENABLED=true
-        TELEGRAM_BOT_TOKEN=$(prompt_input "Enter your Telegram bot token: " "$ORANGE")
-        TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "Enter the users chat ID: " "$ORANGE")
-        TELEGRAM_NOTIFY_NODES_CHAT_ID=$(prompt_input "Enter the nodes chat ID: " "$ORANGE")
+        TELEGRAM_BOT_TOKEN=$(prompt_input "$(t telegram_bot_token)" "$ORANGE")
+        TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "$(t telegram_users_chat_id)" "$ORANGE")
+        TELEGRAM_NOTIFY_NODES_CHAT_ID=$(prompt_input "$(t telegram_nodes_chat_id)" "$ORANGE")
 
-        if prompt_yes_no "Do you want to use Telegram topics?"; then
-            TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "Enter the users thread ID: " "$ORANGE")
-            TELEGRAM_NOTIFY_NODES_THREAD_ID=$(prompt_input "Enter the nodes thread ID: " "$ORANGE")
+        if prompt_yes_no "$(t telegram_use_topics)"; then
+            TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "$(t telegram_users_thread_id)" "$ORANGE")
+            TELEGRAM_NOTIFY_NODES_THREAD_ID=$(prompt_input "$(t telegram_nodes_thread_id)" "$ORANGE")
         fi
     else
-        show_warning "Skipping Telegram integration."
+        show_warning "$(t warning_skipping_telegram)"
         IS_TELEGRAM_NOTIFICATIONS_ENABLED=false
         TELEGRAM_BOT_TOKEN="change-me"
         TELEGRAM_NOTIFY_USERS_CHAT_ID="change-me"
@@ -79,8 +79,8 @@ check_domain_uniqueness() {
 
     for existing_domain in "${existing_domains[@]}"; do
         if [ -n "$existing_domain" ] && [ "$new_domain" = "$existing_domain" ]; then
-            show_error "Domain '$new_domain' is already used for another service!"
-            show_error "Each domain must be unique: panel domain, subscription domain, and selfsteal domain must all be different."
+            show_error "$(t config_domain_already_used) '$new_domain'"
+            show_error "$(t config_domains_must_be_unique)"
             return 1
         fi
     done
@@ -90,17 +90,17 @@ check_domain_uniqueness() {
 # Collect domain configuration (panel and subscription domains only)
 collect_domain_config() {
     # First, collect panel domain
-    PANEL_DOMAIN=$(prompt_domain "Enter the main domain for your panel (e.g., panel.example.com)")
+    PANEL_DOMAIN=$(prompt_domain "$(t domain_panel_prompt)")
 
     # Then collect subscription domain with uniqueness check
     while true; do
-        SUB_DOMAIN=$(prompt_domain "Enter the subscription domain (e.g., sub.example.com)")
+        SUB_DOMAIN=$(prompt_domain "$(t domain_subscription_prompt)")
 
         # Check that subscription domain is different from panel domain
         if check_domain_uniqueness "$SUB_DOMAIN" "subscription" "$PANEL_DOMAIN"; then
             break
         fi
-        show_warning "Please enter a different subscription domain."
+        show_warning "$(t warning_enter_different_domain) subscription."
     done
 }
 
@@ -114,23 +114,23 @@ collect_ports_separate_installation() {
 
     # Check Caddy port 9443
     if CADDY_LOCAL_PORT=$(check_required_port "9443"); then
-        show_info "Required Caddy port 9443 is available"
+        show_info "$(t config_caddy_port_available)"
     else
-        show_error "Required Caddy port 9443 is already in use!"
-        show_error "For separate panel and node installation, port 9443 must be available."
-        show_error "Please free up port 9443 and try again."
-        show_error "Installation cannot continue with occupied port 9443"
+        show_error "$(t config_caddy_port_in_use)"
+        show_error "$(t config_separate_installation_port_required) 9443."
+        show_error "$(t config_free_port_and_retry) 9443."
+        show_error "$(t config_installation_cannot_continue) 9443"
         return 1
     fi
 
     # Check Node API port 2222
     if NODE_PORT=$(check_required_port "2222"); then
-        show_info "Required Node API port 2222 is available"
+        show_info "$(t config_node_port_available)"
     else
-        show_error "Required Node API port 2222 is already in use!"
-        show_error "For separate panel and node installation, port 2222 must be available."
-        show_error "Please free up port 2222 and try again."
-        show_error "Installation cannot continue with occupied port 2222"
+        show_error "$(t config_node_port_in_use)"
+        show_error "$(t config_separate_installation_port_required) 2222."
+        show_error "$(t config_free_port_and_retry) 2222."
+        show_error "$(t config_installation_cannot_continue) 2222"
         return 1
     fi
 }
