@@ -1991,7 +1991,9 @@ update_xray_config() {
 # Including module: delete-admin.sh
 
 delete_admin() {
-    clear
+    echo
+    echo -e "${BOLD_GREEN}Reset Admin Login and Password${NC}"
+    echo
     local env_file="/opt/remnawave/.env"
 
     if [ -f "$env_file" ]; then
@@ -2010,7 +2012,9 @@ delete_admin() {
     local TABLE_NAME="admin"
 
     if ! docker ps | grep -q "$CONTAINER_NAME"; then
+        echo
         echo -e "${RED}Container $CONTAINER_NAME is not running!${NC}"
+        echo
         echo -e "${BOLD_YELLOW}Press Enter to return to menu...${NC}"
         read -r
         return 1
@@ -2079,17 +2083,16 @@ enable_bbr() {
 # Including module: show-credentials.sh
 
 show_panel_credentials() {
-    clear
-    draw_info_box "Panel Access Credentials" "Remnawave Panel Login Information"
-    
+    echo
+    echo -e "${BOLD_GREEN}Panel Access Credentials${NC}"
+    echo
+
     local credentials_file="/opt/remnawave/credentials.txt"
-    
+
     if [ -f "$credentials_file" ]; then
         echo -e "${BOLD_GREEN}Panel access credentials found:${NC}"
         echo
-        echo -e "${BOLD_BLUE_MENU}═══ CREDENTIALS ═══${NC}"
-        echo
-        
+
         while IFS= read -r line; do
             if [[ "$line" =~ ^[[:space:]]*$ ]]; then
                 echo
@@ -2103,9 +2106,6 @@ show_panel_credentials() {
                 echo -e "${NC}$line"
             fi
         done < "$credentials_file"
-        
-        echo
-        echo -e "${BOLD_BLUE_MENU}═══════════════════${NC}"
     else
         echo -e "${BOLD_RED}Credentials file not found!${NC}"
         echo
@@ -2116,9 +2116,9 @@ show_panel_credentials() {
         echo -e "  • Installation was not completed successfully"
         echo -e "  • Credentials file was manually deleted"
         echo
-        echo -e "${YELLOW}Try installing the panel first using options 1, 2, 4, or 5 from the main menu.${NC}"
+        echo -e "${YELLOW}Try installing the panel first using option 1 from the main menu.${NC}"
     fi
-    
+
     echo
     echo -e "${BOLD_YELLOW}Press Enter to return to menu...${NC}"
     read -r
@@ -3552,49 +3552,48 @@ fi
 clear
 
 
-main() {
+show_main_menu() {
+    clear
+    echo -e "${BOLD_GREEN}Remnawave Panel Installer v${VERSION}${NC}"
+    echo -e "${ORANGE}Automatic installation by uphantom${NC}"
+    echo
+    echo -e "${GREEN}1.${NC} Install components"
+    echo
+    echo -e "${GREEN}2.${NC} Restart panel"
+    echo -e "${GREEN}3.${NC} Remove panel"
+    echo -e "${GREEN}4.${NC} Reset admin login and password"
+    echo -e "${GREEN}5.${NC} Show panel access credentials"
+    echo
+    echo -e "${GREEN}6.${NC} Enable BBR"
+    echo
+    echo -e "${GREEN}0.${NC} Exit"
+    echo
+    echo -ne "${BOLD_BLUE_MENU}Select option: ${NC}"
+}
 
+show_installation_menu() {
+    clear
+    echo -e "${BOLD_GREEN}Install Components${NC}"
+    echo
+    echo -e "${YELLOW}Panel Only:${NC}"
+    echo -e "${GREEN}1.${NC} Panel with FULL Caddy security (recommended)"
+    echo -e "${GREEN}2.${NC} Panel with SIMPLE cookie security"
+    echo
+    echo -e "${YELLOW}Node Only:${NC}"
+    echo -e "${GREEN}3.${NC} Node only (for separate server)"
+    echo
+    echo -e "${YELLOW}All-in-One:${NC}"
+    echo -e "${GREEN}4.${NC} Panel + Node with FULL Caddy security"
+    echo -e "${GREEN}5.${NC} Panel + Node with SIMPLE cookie security"
+    echo
+    echo -e "${GREEN}0.${NC} Back to main menu"
+    echo
+    echo -ne "${BOLD_BLUE_MENU}Select option: ${NC}"
+}
+
+handle_installation_menu() {
     while true; do
-        draw_info_box "Remnawave Panel" "Automatic installation by uphantom"
-
-        echo -e "  ${BOLD_BLUE_MENU}═══ COMPONENT INSTALLATION ═══${NC}"
-        echo
-        echo
-        echo -e "  ${YELLOW}[PANEL ONLY]:${NC}"
-        echo
-        echo -e "  ${GREEN}1. ${NC}Panel with FULL Caddy security (recommended)"
-        echo -e "  ${GREEN}2. ${NC}Panel with SIMPLE cookie security"
-        echo
-        echo
-        echo -e "  ${YELLOW}[NODE ONLY]:${NC}"
-        echo
-        echo -e "  ${GREEN}3. ${NC}Node only (for separate server)"
-        echo
-        echo
-        echo -e "  ${YELLOW}[ALL-IN-ONE]:${NC}"
-        echo
-        echo -e "  ${GREEN}4. ${NC}Panel + Node with FULL Caddy security"
-        echo -e "  ${GREEN}5. ${NC}Panel + Node with SIMPLE cookie security"
-        echo
-
-        echo -e "  ${BOLD_BLUE_MENU}═══ PANEL MANAGEMENT ═══${NC}"
-        echo
-        echo -e "  ${GREEN}6. ${NC}Restart panel"
-        echo -e "  ${GREEN}7. ${NC}Remove panel"
-        echo -e "  ${GREEN}8. ${NC}Reset admin login and password"
-        echo -e "  ${GREEN}9. ${NC}Show panel access credentials"
-        echo
-
-        echo -e "  ${BOLD_BLUE_MENU}═══ SYSTEM MANAGEMENT ═══${NC}"
-        echo
-        echo -e "  ${GREEN}10. ${NC}Enable BBR"
-        echo
-
-        echo -e "  ${BOLD_BLUE_MENU}═══ EXIT ═══${NC}"
-        echo
-        echo -e "  ${GREEN}0. ${NC}Exit from script"
-        echo
-        echo -ne "${BOLD_BLUE_MENU}Select option (0-10): ${NC}"
+        show_installation_menu
         read choice
 
         case $choice in
@@ -3613,19 +3612,40 @@ main() {
         5)
             install_remnawave_all_in_one "cookie"
             ;;
-        6)
+        0)
+            return
+            ;;
+        *)
+            clear
+            echo -e "${BOLD_RED}Invalid choice, please try again.${NC}"
+            sleep 1
+            ;;
+        esac
+    done
+}
+
+main() {
+    while true; do
+        show_main_menu
+        read choice
+
+        case $choice in
+        1)
+            handle_installation_menu
+            ;;
+        2)
             restart_panel
             ;;
-        7)
+        3)
             remove_previous_installation true
             ;;
-        8)
+        4)
             delete_admin
             ;;
-        9)
+        5)
             show_panel_credentials
             ;;
-        10)
+        6)
             enable_bbr
             ;;
         0)
@@ -3634,7 +3654,6 @@ main() {
             ;;
         *)
             clear
-            draw_info_box "Remnawave Panel" "Automatic installation by uphantom"
             echo -e "${BOLD_RED}Invalid choice, please try again.${NC}"
             sleep 1
             ;;

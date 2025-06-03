@@ -2,7 +2,9 @@
 
 # Admin deletion function
 delete_admin() {
-    clear
+    echo
+    echo -e "${BOLD_GREEN}Reset Admin Login and Password${NC}"
+    echo
     local env_file="/opt/remnawave/.env"
 
     # Check if .env file exists
@@ -23,7 +25,9 @@ delete_admin() {
 
     # Check if container is running
     if ! docker ps | grep -q "$CONTAINER_NAME"; then
+        echo
         echo -e "${RED}Container $CONTAINER_NAME is not running!${NC}"
+        echo
         echo -e "${BOLD_YELLOW}Press Enter to return to menu...${NC}"
         read -r
         return 1

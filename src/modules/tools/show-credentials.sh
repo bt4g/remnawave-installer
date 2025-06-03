@@ -2,18 +2,17 @@
 
 # Show panel credentials function
 show_panel_credentials() {
-    clear
-    draw_info_box "Panel Access Credentials" "Remnawave Panel Login Information"
-    
+    echo
+    echo -e "${BOLD_GREEN}Panel Access Credentials${NC}"
+    echo
+
     local credentials_file="/opt/remnawave/credentials.txt"
-    
+
     # Check if credentials file exists
     if [ -f "$credentials_file" ]; then
         echo -e "${BOLD_GREEN}Panel access credentials found:${NC}"
         echo
-        echo -e "${BOLD_BLUE_MENU}═══ CREDENTIALS ═══${NC}"
-        echo
-        
+
         # Display file content with proper formatting
         while IFS= read -r line; do
             if [[ "$line" =~ ^[[:space:]]*$ ]]; then
@@ -31,9 +30,6 @@ show_panel_credentials() {
                 echo -e "${NC}$line"
             fi
         done < "$credentials_file"
-        
-        echo
-        echo -e "${BOLD_BLUE_MENU}═══════════════════${NC}"
     else
         echo -e "${BOLD_RED}Credentials file not found!${NC}"
         echo
@@ -44,9 +40,9 @@ show_panel_credentials() {
         echo -e "  • Installation was not completed successfully"
         echo -e "  • Credentials file was manually deleted"
         echo
-        echo -e "${YELLOW}Try installing the panel first using options 1, 2, 4, or 5 from the main menu.${NC}"
+        echo -e "${YELLOW}Try installing the panel first using option 1 from the main menu.${NC}"
     fi
-    
+
     echo
     echo -e "${BOLD_YELLOW}Press Enter to return to menu...${NC}"
     read -r

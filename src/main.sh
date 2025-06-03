@@ -13,52 +13,51 @@ clear
 # To run, use ONLY the built script dist/install_remnawave.sh
 # ===================================================================================
 
-main() {
+# Show main menu
+show_main_menu() {
+    clear
+    echo -e "${BOLD_GREEN}Remnawave Panel Installer v${VERSION}${NC}"
+    echo -e "${ORANGE}Automatic installation by uphantom${NC}"
+    echo
+    echo -e "${GREEN}1.${NC} Install components"
+    echo
+    echo -e "${GREEN}2.${NC} Restart panel"
+    echo -e "${GREEN}3.${NC} Remove panel"
+    echo -e "${GREEN}4.${NC} Reset admin login and password"
+    echo -e "${GREEN}5.${NC} Show panel access credentials"
+    echo
+    echo -e "${GREEN}6.${NC} Enable BBR"
+    echo
+    echo -e "${GREEN}0.${NC} Exit"
+    echo
+    echo -ne "${BOLD_BLUE_MENU}Select option: ${NC}"
+}
 
+# Show installation submenu
+show_installation_menu() {
+    clear
+    echo -e "${BOLD_GREEN}Install Components${NC}"
+    echo
+    echo -e "${YELLOW}Panel Only:${NC}"
+    echo -e "${GREEN}1.${NC} Panel with FULL Caddy security (recommended)"
+    echo -e "${GREEN}2.${NC} Panel with SIMPLE cookie security"
+    echo
+    echo -e "${YELLOW}Node Only:${NC}"
+    echo -e "${GREEN}3.${NC} Node only (for separate server)"
+    echo
+    echo -e "${YELLOW}All-in-One:${NC}"
+    echo -e "${GREEN}4.${NC} Panel + Node with FULL Caddy security"
+    echo -e "${GREEN}5.${NC} Panel + Node with SIMPLE cookie security"
+    echo
+    echo -e "${GREEN}0.${NC} Back to main menu"
+    echo
+    echo -ne "${BOLD_BLUE_MENU}Select option: ${NC}"
+}
+
+# Handle installation menu
+handle_installation_menu() {
     while true; do
-        draw_info_box "Remnawave Panel" "Automatic installation by uphantom"
-
-        # Installation section
-        echo -e "  ${BOLD_BLUE_MENU}═══ COMPONENT INSTALLATION ═══${NC}"
-        echo
-        echo
-        echo -e "  ${YELLOW}[PANEL ONLY]:${NC}"
-        echo
-        echo -e "  ${GREEN}1. ${NC}Panel with FULL Caddy security (recommended)"
-        echo -e "  ${GREEN}2. ${NC}Panel with SIMPLE cookie security"
-        echo
-        echo
-        echo -e "  ${YELLOW}[NODE ONLY]:${NC}"
-        echo
-        echo -e "  ${GREEN}3. ${NC}Node only (for separate server)"
-        echo
-        echo
-        echo -e "  ${YELLOW}[ALL-IN-ONE]:${NC}"
-        echo
-        echo -e "  ${GREEN}4. ${NC}Panel + Node with FULL Caddy security"
-        echo -e "  ${GREEN}5. ${NC}Panel + Node with SIMPLE cookie security"
-        echo
-
-        # Panel management section
-        echo -e "  ${BOLD_BLUE_MENU}═══ PANEL MANAGEMENT ═══${NC}"
-        echo
-        echo -e "  ${GREEN}6. ${NC}Restart panel"
-        echo -e "  ${GREEN}7. ${NC}Remove panel"
-        echo -e "  ${GREEN}8. ${NC}Reset admin login and password"
-        echo -e "  ${GREEN}9. ${NC}Show panel access credentials"
-        echo
-
-        # System management section
-        echo -e "  ${BOLD_BLUE_MENU}═══ SYSTEM MANAGEMENT ═══${NC}"
-        echo
-        echo -e "  ${GREEN}10. ${NC}Enable BBR"
-        echo
-
-        echo -e "  ${BOLD_BLUE_MENU}═══ EXIT ═══${NC}"
-        echo
-        echo -e "  ${GREEN}0. ${NC}Exit from script"
-        echo
-        echo -ne "${BOLD_BLUE_MENU}Select option (0-10): ${NC}"
+        show_installation_menu
         read choice
 
         case $choice in
@@ -77,19 +76,40 @@ main() {
         5)
             install_remnawave_all_in_one "cookie"
             ;;
-        6)
+        0)
+            return
+            ;;
+        *)
+            clear
+            echo -e "${BOLD_RED}Invalid choice, please try again.${NC}"
+            sleep 1
+            ;;
+        esac
+    done
+}
+
+main() {
+    while true; do
+        show_main_menu
+        read choice
+
+        case $choice in
+        1)
+            handle_installation_menu
+            ;;
+        2)
             restart_panel
             ;;
-        7)
+        3)
             remove_previous_installation true
             ;;
-        8)
+        4)
             delete_admin
             ;;
-        9)
+        5)
             show_panel_credentials
             ;;
-        10)
+        6)
             enable_bbr
             ;;
         0)
@@ -98,7 +118,6 @@ main() {
             ;;
         *)
             clear
-            draw_info_box "Remnawave Panel" "Automatic installation by uphantom"
             echo -e "${BOLD_RED}Invalid choice, please try again.${NC}"
             sleep 1
             ;;
