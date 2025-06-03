@@ -58,7 +58,7 @@ EOF
     cat >docker-compose.yml <<EOF
 services:
   caddy:
-    image: caddy:2.9.1
+    image: caddy:2.10.0
     container_name: caddy-selfsteal
     restart: unless-stopped
     volumes:

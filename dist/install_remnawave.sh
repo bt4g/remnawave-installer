@@ -2383,7 +2383,7 @@ setup_caddy_for_panel() {
 	cat >docker-compose.yml <<EOF
 services:
   caddy:
-    image: caddy:2.9.1
+    image: caddy:2.10.0
     container_name: caddy-remnawave
     restart: unless-stopped
     volumes:
@@ -2794,7 +2794,7 @@ EOF
     cat >docker-compose.yml <<EOF
 services:
   caddy:
-    image: caddy:2.9.1
+    image: caddy:2.10.0
     container_name: caddy-selfsteal
     restart: unless-stopped
     volumes:
@@ -3069,7 +3069,7 @@ create_docker_compose_cookie_auth() {
 	cat >docker-compose.yml <<EOF
 services:
   caddy:
-    image: caddy:2.9.1
+    image: caddy:2.10.0
     container_name: caddy-remnawave
     restart: unless-stopped
     volumes:
