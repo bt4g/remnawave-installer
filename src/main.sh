@@ -25,7 +25,7 @@ show_main_menu() {
     echo -e "${GREEN}4.${NC} Remnawave Rescue CLI [Reset admin]"
     echo -e "${GREEN}5.${NC} Show panel access credentials"
     echo
-    echo -e "${GREEN}6.${NC} Enable BBR"
+    echo -e "${GREEN}6.${NC} $(get_bbr_menu_text)"
     echo
     echo -e "${GREEN}0.${NC} Exit"
     echo
@@ -109,7 +109,7 @@ main() {
             show_panel_credentials
             ;;
         6)
-            enable_bbr
+            toggle_bbr
             ;;
         0)
             echo "Exiting."
