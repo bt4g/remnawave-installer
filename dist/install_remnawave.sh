@@ -166,7 +166,6 @@ TRANSLATIONS_EN[installation_preparing]="Preparing installation..."
 TRANSLATIONS_EN[installation_starting_services]="Starting services..."
 TRANSLATIONS_EN[installation_configuring]="Configuring..."
 
-TRANSLATIONS_EN[credentials_panel_title]="Panel Access Credentials"
 TRANSLATIONS_EN[credentials_found]="Panel access credentials found:"
 TRANSLATIONS_EN[credentials_not_found]="Credentials file not found!"
 TRANSLATIONS_EN[credentials_file_location]="The credentials file does not exist at:"
@@ -459,7 +458,6 @@ TRANSLATIONS_RU[installation_preparing]="Подготовка установки
 TRANSLATIONS_RU[installation_starting_services]="Запуск сервисов..."
 TRANSLATIONS_RU[installation_configuring]="Настройка..."
 
-TRANSLATIONS_RU[credentials_panel_title]="Учетные данные панели"
 TRANSLATIONS_RU[credentials_found]="Учетные данные панели найдены:"
 TRANSLATIONS_RU[credentials_not_found]="Файл учетных данных не найден!"
 TRANSLATIONS_RU[credentials_file_location]="Файл учетных данных не существует по адресу:"
@@ -2713,8 +2711,6 @@ toggle_bbr() {
 # Including module: show-credentials.sh
 
 show_panel_credentials() {
-    echo
-    echo -e "${BOLD_GREEN}$(t credentials_panel_title)${NC}"
     echo
 
     local credentials_file="/opt/remnawave/credentials.txt"

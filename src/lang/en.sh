@@ -119,7 +119,6 @@ TRANSLATIONS_EN[installation_starting_services]="Starting services..."
 TRANSLATIONS_EN[installation_configuring]="Configuring..."
 
 # Credentials
-TRANSLATIONS_EN[credentials_panel_title]="Panel Access Credentials"
 TRANSLATIONS_EN[credentials_found]="Panel access credentials found:"
 TRANSLATIONS_EN[credentials_not_found]="Credentials file not found!"
 TRANSLATIONS_EN[credentials_file_location]="The credentials file does not exist at:"

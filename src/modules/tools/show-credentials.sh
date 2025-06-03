@@ -3,8 +3,6 @@
 # Show panel credentials function
 show_panel_credentials() {
     echo
-    echo -e "${BOLD_GREEN}$(t credentials_panel_title)${NC}"
-    echo
 
     local credentials_file="/opt/remnawave/credentials.txt"
 

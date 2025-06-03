@@ -119,7 +119,6 @@ TRANSLATIONS_RU[installation_starting_services]="Запуск сервисов..
 TRANSLATIONS_RU[installation_configuring]="Настройка..."
 
 # Credentials
-TRANSLATIONS_RU[credentials_panel_title]="Учетные данные панели"
 TRANSLATIONS_RU[credentials_found]="Учетные данные панели найдены:"
 TRANSLATIONS_RU[credentials_not_found]="Файл учетных данных не найден!"
 TRANSLATIONS_RU[credentials_file_location]="Файл учетных данных не существует по адресу:"
