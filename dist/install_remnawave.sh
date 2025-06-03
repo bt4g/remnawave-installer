@@ -3527,8 +3527,7 @@ clear
 
 show_main_menu() {
     clear
-    echo -e "${BOLD_GREEN}Remnawave Panel Installer v${VERSION}${NC}"
-    echo -e "${ORANGE}Automatic installation by uphantom${NC}"
+    echo -e "${BOLD_GREEN}Remnawave Panel Installer by uphantom v${VERSION}${NC}"
     echo
     echo -e "${GREEN}1.${NC} Install components"
     echo
