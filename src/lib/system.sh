@@ -4,99 +4,126 @@
 #                                SYSTEM FUNCTIONS
 # ===================================================================================
 
-# Install common dependencies for all components
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
 install_dependencies() {
-    set -euo pipefail
-    IFS=$'\n\t'
-
     local extra_deps=("$@")
-    show_info "Checking dependencies..."
 
-    (sudo apt-get update -y -qq) &
-    spinner $! "Updating package list"
-
-    local distro
-    distro=$(lsb_release -si 2>/dev/null | tr '[:upper:]' '[:lower:]')
-    local codename
+    # Detect distro (quietly)
+    if ! command -v lsb_release &>/dev/null; then
+        sudo apt-get update -qq >/dev/null
+        sudo apt-get install -y --no-install-recommends lsb-release -qq >/dev/null
+    fi
+    distro=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
     codename=$(lsb_release -cs)
 
     if [[ "$distro" != "ubuntu" && "$distro" != "debian" ]]; then
-        show_error "Distribution $distro is not supported by this script for Docker CE."
+        echo "❌  Distribution $distro is not supported." >&2
         exit 1
     fi
 
-    # Adding Docker repository (if not exists)
-    if ! grep -Rq '^deb .*\bdocker\.com/linux' /etc/apt/sources.list.d /etc/apt/sources.list 2>/dev/null; then
-        (sudo mkdir -p /etc/apt/keyrings &&
+    # Add Docker repo if absent
+    if ! grep -Rq '^deb .*\bdocker\.com/linux' /etc/apt/sources.list{,.d/*} 2>/dev/null; then
+        {
+            sudo install -m0755 -d /etc/apt/keyrings
             curl -fsSL "https://download.docker.com/linux/${distro}/gpg" |
-            sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null &&
+                sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
             echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
 https://download.docker.com/linux/${distro} ${codename} stable" |
-            sudo tee /etc/apt/sources.list.d/docker-stable.list >/dev/null &&
-            sudo apt-get update -y -qq >/dev/null 2>&1) &
-        spinner $! "Adding Docker repository"
+                sudo tee /etc/apt/sources.list.d/docker-stable.list >/dev/null
+        } >/dev/null 2>&1
     fi
 
-    # Building package list for installation
-    local base_deps=(curl jq make dnsutils ufw unattended-upgrades
-        docker-ce docker-ce-cli containerd.io
-        docker-buildx-plugin docker-compose-plugin
-        lsb-release)
+    # Update package lists
+    (sudo apt-get update -qq >/dev/null 2>&1) &
+    spinner $! "Updating APT cache"
 
+    # Prepare package list
+    local base_deps=(
+        ca-certificates gnupg curl jq make dnsutils ufw unattended-upgrades
+        docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        lsb-release
+    )
     local all_deps=()
     for pkg in "${base_deps[@]}" "${extra_deps[@]}"; do
         [[ " ${all_deps[*]} " != *" $pkg "* ]] && all_deps+=("$pkg")
     done
 
-    # Filtering only missing packages
-    local missing_deps=()
+    local missing=()
     for dep in "${all_deps[@]}"; do
-        if ! dpkg -s "$dep" &>/dev/null; then
-            missing_deps+=("$dep")
-        fi
+        dpkg -s "$dep" &>/dev/null || missing+=("$dep")
     done
 
-    # Installing missing packages
-    if [ ${#missing_deps[@]} -gt 0 ]; then
-        (sudo apt-get install -y --no-install-recommends "${missing_deps[@]}" -qq >/dev/null 2>&1) &
-        spinner $! "Installing dependencies (${#missing_deps[@]} packages)"
+    # Install missing packages
+    if ((${#missing[@]})); then
+        (sudo apt-get install -y --no-install-recommends "${missing[@]}" -qq >/dev/null 2>&1) &
+        spinner $! "Installing ${#missing[@]} packages"
     fi
 
-    # Configuring and starting Docker
-    (sudo systemctl enable --now docker >/dev/null 2>&1) &
-    spinner $! "Starting Docker service"
+    if ! systemctl is-active --quiet docker; then
+        (sudo systemctl enable --now docker >/dev/null 2>&1) &
+        spinner $! "Starting Docker daemon "
+    else
+        (sleep 0.1) &
+        spinner $! "Docker daemon already running"
+    fi
 
-    # Adding user to docker group
+    # Add current user to docker group
     if ! id -nG "$USER" | grep -qw docker; then
         (sudo usermod -aG docker "$USER" >/dev/null 2>&1) &
-        spinner $! "Adding user to docker group"
-        show_info "User $USER added to docker group."
+        spinner $! "Adding user to group"
     fi
 
-    # Configuring UFW Firewall
-    local ssh_port
-    ssh_port=$(grep -E "^[[:space:]]*Port[[:space:]]+" /etc/ssh/sshd_config 2>/dev/null | awk '{print $2}' | head -1)
-    [ -z "$ssh_port" ] && ssh_port=22
-    (ufw --force reset &&
-        ufw allow "${ssh_port}/tcp" comment 'SSH' &&
-        ufw allow 443/tcp comment 'HTTPS' &&
-        ufw allow 80/tcp comment 'HTTP' &&
-        ufw --force enable) >/dev/null 2>&1 &
-    spinner $! "Configuring UFW Firewall"
+    # Configure UFW (quiet)
+    ssh_port=$(grep -Ei '^\s*Port\s+' /etc/ssh/sshd_config | awk '{print $2}' | head -1)
+    ssh_port=${ssh_port:-22}
 
-    # Configuring Unattended Upgrades
-    echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true |
-        sudo debconf-set-selections
-    sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+    if dpkg -s ufw &>/dev/null &&
+        ufw status | head -1 | grep -q "Status: active" &&
+        ufw status verbose | grep -q "Default: deny (incoming)" &&
+        ufw status | grep -qw "${ssh_port}/tcp" &&
+        ufw status | grep -qw "443/tcp" &&
+        ufw status | grep -qw "80/tcp"; then
+        (sleep 0.2) &
+        spinner $! "Firewall already set   "
+    else
+        (
+            sudo ufw --force reset
+            sudo ufw default deny incoming
+            sudo ufw allow "${ssh_port}/tcp"
+            sudo ufw allow 443/tcp
+            sudo ufw allow 80/tcp
+            sudo ufw --force enable
+        ) >/dev/null 2>&1 &
+        spinner $! "Configuring firewall   "
+    fi
 
-    sudo sed -i '/^Unattended-Upgrade::SyslogEnable/ d' \
-        /etc/apt/apt.conf.d/50unattended-upgrades
-    echo 'Unattended-Upgrade::SyslogEnable "true";' |
-        sudo tee -a /etc/apt/apt.conf.d/50unattended-upgrades >/dev/null
+    # Enable unattended-upgrades
+    if dpkg -s unattended-upgrades &>/dev/null &&
+        systemctl is-enabled --quiet unattended-upgrades &&
+        systemctl is-active --quiet unattended-upgrades &&
+        grep -q '^Unattended-Upgrade::SyslogEnable.*true' \
+            /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null; then
+        (sleep 0.2) & # визуальный «фейковый» процесс
+        spinner $! "Auto-updates already set "
+    else
+        (
+            echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true |
+                sudo debconf-set-selections
+            sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+            sudo sed -i '/^Unattended-Upgrade::SyslogEnable/ d' \
+                /etc/apt/apt.conf.d/50unattended-upgrades
+            echo 'Unattended-Upgrade::SyslogEnable "true";' |
+                sudo tee -a /etc/apt/apt.conf.d/50unattended-upgrades >/dev/null
+            sudo systemctl restart unattended-upgrades
+        ) >/dev/null 2>&1 &
+        spinner $! "Setting auto-updates   "
+    fi
 
-    sudo systemctl restart unattended-upgrades
-
-    show_success "All dependencies installed successfully"
+    echo
+    show_success "All dependencies installed and configured."
 }
 
 # Create directory with proper permissions
