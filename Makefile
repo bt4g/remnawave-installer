@@ -22,7 +22,7 @@ MODULES = $(LIB_DIR)/constants.sh \
           $(LIB_DIR)/validation.sh \
           $(LIB_DIR)/misc.sh \
           $(LIB_DIR)/vless.sh \
-					$(MODULES_DIR)/tools/delete-admin.sh \
+					$(MODULES_DIR)/tools/run-cli.sh \
 					$(MODULES_DIR)/tools/enable-bbr.sh \
 					$(MODULES_DIR)/tools/show-credentials.sh \
           $(MODULES_DIR)/auth/full-auth.sh \

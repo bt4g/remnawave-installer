@@ -23,7 +23,7 @@ show_main_menu() {
     echo
     echo -e "${GREEN}2.${NC} Restart panel"
     echo -e "${GREEN}3.${NC} Remove panel"
-    echo -e "${GREEN}4.${NC} Reset admin login and password"
+    echo -e "${GREEN}4.${NC} Remnawave Rescue CLI [Reset admin]"
     echo -e "${GREEN}5.${NC} Show panel access credentials"
     echo
     echo -e "${GREEN}6.${NC} Enable BBR"
@@ -104,7 +104,7 @@ main() {
             remove_previous_installation true
             ;;
         4)
-            delete_admin
+            run_remnawave_cli
             ;;
         5)
             show_panel_credentials
