@@ -110,7 +110,8 @@ TRANSLATIONS_EN[error_enter_yn]="Please enter 'y' or 'n'."
 TRANSLATIONS_EN[error_enter_number_between]="Please enter a number between"
 
 TRANSLATIONS_EN[main_menu_title]="Remnawave Panel Installer by uphantom v"
-TRANSLATIONS_EN[main_menu_branch_info]="Script branch: %s | Panel branch: %s"
+TRANSLATIONS_EN[main_menu_script_branch]="Script branch:"
+TRANSLATIONS_EN[main_menu_panel_branch]="Panel branch:"
 TRANSLATIONS_EN[main_menu_install_components]="Install Panel/Node"
 TRANSLATIONS_EN[main_menu_restart_panel]="Restart panel"
 TRANSLATIONS_EN[main_menu_remove_panel]="Remove panel"
@@ -403,7 +404,8 @@ TRANSLATIONS_RU[error_enter_yn]="Пожалуйста, введите 'y' или
 TRANSLATIONS_RU[error_enter_number_between]="Пожалуйста, введите число от"
 
 TRANSLATIONS_RU[main_menu_title]="Remnawave Panel Installer by uphantom v"
-TRANSLATIONS_RU[main_menu_branch_info]="Ветка скрипта: %s | Ветка панели: %s"
+TRANSLATIONS_RU[main_menu_script_branch]="Ветка скрипта:"
+TRANSLATIONS_RU[main_menu_panel_branch]="Ветка панели:"
 TRANSLATIONS_RU[main_menu_install_components]="Установить Панель/Ноду"
 TRANSLATIONS_RU[main_menu_restart_panel]="Перезапустить панель"
 TRANSLATIONS_RU[main_menu_remove_panel]="Удалить панель"
@@ -4215,7 +4217,7 @@ clear
 show_main_menu() {
     clear
     echo -e "${BOLD_GREEN}$(t main_menu_title)${VERSION}${NC}"
-    printf "${BLUE}$(t main_menu_branch_info)${NC}\n" "$INSTALLER_BRANCH" "$REMNAWAVE_BRANCH"
+    echo -e "${GREEN}$(t main_menu_script_branch)${NC} ${BLUE}$INSTALLER_BRANCH${NC} | ${GREEN}$(t main_menu_panel_branch)${NC} ${BLUE}$REMNAWAVE_BRANCH${NC}"
     echo
     echo -e "${GREEN}1.${NC} $(t main_menu_install_components)"
     echo

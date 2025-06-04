@@ -17,7 +17,8 @@ TRANSLATIONS_RU[error_enter_number_between]="Пожалуйста, введит�
 
 # Main menu
 TRANSLATIONS_RU[main_menu_title]="Remnawave Panel Installer by uphantom v"
-TRANSLATIONS_RU[main_menu_branch_info]="Ветка скрипта: %s | Ветка панели: %s"
+TRANSLATIONS_RU[main_menu_script_branch]="Ветка скрипта:"
+TRANSLATIONS_RU[main_menu_panel_branch]="Ветка панели:"
 TRANSLATIONS_RU[main_menu_install_components]="Установить Панель/Ноду"
 TRANSLATIONS_RU[main_menu_restart_panel]="Перезапустить панель"
 TRANSLATIONS_RU[main_menu_remove_panel]="Удалить панель"
