@@ -17,6 +17,7 @@ clear
 show_main_menu() {
     clear
     echo -e "${BOLD_GREEN}$(t main_menu_title)${VERSION}${NC}"
+    printf "${BLUE}$(t main_menu_branch_info)${NC}\n" "$INSTALLER_BRANCH" "$REMNAWAVE_BRANCH"
     echo
     echo -e "${GREEN}1.${NC} $(t main_menu_install_components)"
     echo

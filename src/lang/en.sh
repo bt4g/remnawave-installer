@@ -17,6 +17,7 @@ TRANSLATIONS_EN[error_enter_number_between]="Please enter a number between"
 
 # Main menu
 TRANSLATIONS_EN[main_menu_title]="Remnawave Panel Installer by uphantom v"
+TRANSLATIONS_EN[main_menu_branch_info]="Script branch: %s | Panel branch: %s"
 TRANSLATIONS_EN[main_menu_install_components]="Install Panel/Node"
 TRANSLATIONS_EN[main_menu_restart_panel]="Restart panel"
 TRANSLATIONS_EN[main_menu_remove_panel]="Remove panel"
