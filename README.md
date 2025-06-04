@@ -6,11 +6,8 @@
 
 This Bash script is designed for **automated installation and initial configuration of Remnawave components** (Panel, Node, Subscription-Page) and their environment (Docker, Caddy, UFW). The script simplifies deployment, helps to study the result and learn how to deploy the panel manually.
 
-> [!CAUTION] > **WARNING!**
-> This script and repository are provided as an **educational example** for studying the interaction between Caddy and Remnawave panel, as well as for demonstrating Caddy configuration as a reverse proxy.
-> **The script is not intended for production use without full understanding of its actions and Remnawave configurations.**
-> If you don't understand how the Remnawave management panel works or the configurations created by the script, it's your responsibility.
-> **USE AT YOUR OWN RISK!**
+> [!CAUTION]
+> **WARNING!** This script and repository are provided as an **educational example** for studying the interaction between Caddy and Remnawave panel, as well as for demonstrating Caddy configuration as a reverse proxy. **The script is not intended for production use without full understanding of its actions and Remnawave configurations.** If you don't understand how the Remnawave management panel works or the configurations created by the script, it's your responsibility. **USE AT YOUR OWN RISK!**
 
 ---
 
@@ -143,11 +140,13 @@ sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-i
 The script supports additional parameters to control which versions of components to use:
 
 **Use development version of Remnawave:**
+
 ```bash
 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/install.sh)" @ --lang=en --panel-branch=dev
 ```
 
 **Use development script and Remnawave version:**
+
 ```bash
 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/install.sh)" @ --lang=en --panel-branch=dev --installer-branch=dev
 ```
