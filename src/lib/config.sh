@@ -53,11 +53,24 @@ collect_telegram_config() {
     if prompt_yes_no "$(t telegram_enable_notifications)"; then
         IS_TELEGRAM_NOTIFICATIONS_ENABLED=true
         TELEGRAM_BOT_TOKEN=$(prompt_input "$(t telegram_bot_token)" "$ORANGE")
-        TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "$(t telegram_users_chat_id)" "$ORANGE")
+
+        # Ask about user notifications (optional since 1.6.7)
+        if prompt_yes_no "$(t telegram_enable_user_notifications)"; then
+            TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "$(t telegram_users_chat_id)" "$ORANGE")
+        else
+            # Leave empty to disable user notifications
+            TELEGRAM_NOTIFY_USERS_CHAT_ID=""
+        fi
+
         TELEGRAM_NOTIFY_NODES_CHAT_ID=$(prompt_input "$(t telegram_nodes_chat_id)" "$ORANGE")
 
         if prompt_yes_no "$(t telegram_use_topics)"; then
-            TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "$(t telegram_users_thread_id)" "$ORANGE")
+            # Only ask for user thread ID if user notifications are enabled
+            if [ -n "$TELEGRAM_NOTIFY_USERS_CHAT_ID" ]; then
+                TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "$(t telegram_users_thread_id)" "$ORANGE")
+            else
+                TELEGRAM_NOTIFY_USERS_THREAD_ID=""
+            fi
             TELEGRAM_NOTIFY_NODES_THREAD_ID=$(prompt_input "$(t telegram_nodes_thread_id)" "$ORANGE")
         else
             # Initialize thread ID variables as empty when not using topics

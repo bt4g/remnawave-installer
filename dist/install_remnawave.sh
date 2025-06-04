@@ -153,11 +153,12 @@ TRANSLATIONS_EN[bbr_disable]="Disable BBR"
 
 TRANSLATIONS_EN[telegram_enable_notifications]="Do you want to enable Telegram notifications?"
 TRANSLATIONS_EN[telegram_bot_token]="Enter your Telegram bot token: "
-TRANSLATIONS_EN[telegram_users_chat_id]="Enter the users chat ID: "
-TRANSLATIONS_EN[telegram_nodes_chat_id]="Enter the nodes chat ID: "
+TRANSLATIONS_EN[telegram_enable_user_notifications]="Do you want to enable notifications about user events? (if disabled, only node event notifications will be sent)"
+TRANSLATIONS_EN[telegram_users_chat_id]="Enter the chat ID for user event notifications: "
+TRANSLATIONS_EN[telegram_nodes_chat_id]="Enter the chat ID for node event notifications: "
 TRANSLATIONS_EN[telegram_use_topics]="Do you want to use Telegram topics?"
-TRANSLATIONS_EN[telegram_users_thread_id]="Enter the users thread ID: "
-TRANSLATIONS_EN[telegram_nodes_thread_id]="Enter the nodes thread ID: "
+TRANSLATIONS_EN[telegram_users_thread_id]="Enter the thread ID for user events: "
+TRANSLATIONS_EN[telegram_nodes_thread_id]="Enter the thread ID for node events: "
 
 TRANSLATIONS_EN[domain_panel_prompt]="Enter Panel domain (will be used on panel server), e.g. panel.example.com"
 TRANSLATIONS_EN[domain_subscription_prompt]="Enter Subscription domain (will be used on panel server), e.g. sub.example.com"
@@ -447,11 +448,12 @@ TRANSLATIONS_RU[bbr_disable]="Отключить BBR"
 
 TRANSLATIONS_RU[telegram_enable_notifications]="Хотите ли вы включить уведомления Telegram?"
 TRANSLATIONS_RU[telegram_bot_token]="Введите токен вашего Telegram бота: "
-TRANSLATIONS_RU[telegram_users_chat_id]="Введите ID чата пользователей: "
-TRANSLATIONS_RU[telegram_nodes_chat_id]="Введите ID чата нод: "
+TRANSLATIONS_RU[telegram_enable_user_notifications]="Хотите ли вы включить уведомления о событиях пользователей? (если отключено, будут отправляться только уведомления о событиях нод)"
+TRANSLATIONS_RU[telegram_users_chat_id]="Введите ID чата для уведомлений о событиях пользователей: "
+TRANSLATIONS_RU[telegram_nodes_chat_id]="Введите ID чата для уведомлений о событиях нод: "
 TRANSLATIONS_RU[telegram_use_topics]="Хотите ли вы использовать темы Telegram?"
-TRANSLATIONS_RU[telegram_users_thread_id]="Введите ID темы пользователей: "
-TRANSLATIONS_RU[telegram_nodes_thread_id]="Введите ID темы нод: "
+TRANSLATIONS_RU[telegram_users_thread_id]="Введите ID темы для событий пользователей: "
+TRANSLATIONS_RU[telegram_nodes_thread_id]="Введите ID темы для событий нод: "
 
 TRANSLATIONS_RU[domain_panel_prompt]="Введите домен панели (будет использоваться на сервере панели), например panel.example.com"
 TRANSLATIONS_RU[domain_subscription_prompt]="Введите домен подписки (будет использоваться на сервере панели), например sub.example.com"
@@ -2065,11 +2067,21 @@ collect_telegram_config() {
     if prompt_yes_no "$(t telegram_enable_notifications)"; then
         IS_TELEGRAM_NOTIFICATIONS_ENABLED=true
         TELEGRAM_BOT_TOKEN=$(prompt_input "$(t telegram_bot_token)" "$ORANGE")
-        TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "$(t telegram_users_chat_id)" "$ORANGE")
+
+        if prompt_yes_no "$(t telegram_enable_user_notifications)"; then
+            TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "$(t telegram_users_chat_id)" "$ORANGE")
+        else
+            TELEGRAM_NOTIFY_USERS_CHAT_ID=""
+        fi
+
         TELEGRAM_NOTIFY_NODES_CHAT_ID=$(prompt_input "$(t telegram_nodes_chat_id)" "$ORANGE")
 
         if prompt_yes_no "$(t telegram_use_topics)"; then
-            TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "$(t telegram_users_thread_id)" "$ORANGE")
+            if [ -n "$TELEGRAM_NOTIFY_USERS_CHAT_ID" ]; then
+                TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "$(t telegram_users_thread_id)" "$ORANGE")
+            else
+                TELEGRAM_NOTIFY_USERS_THREAD_ID=""
+            fi
             TELEGRAM_NOTIFY_NODES_THREAD_ID=$(prompt_input "$(t telegram_nodes_thread_id)" "$ORANGE")
         else
             TELEGRAM_NOTIFY_USERS_THREAD_ID=""
