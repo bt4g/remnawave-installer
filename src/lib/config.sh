@@ -59,6 +59,10 @@ collect_telegram_config() {
         if prompt_yes_no "$(t telegram_use_topics)"; then
             TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "$(t telegram_users_thread_id)" "$ORANGE")
             TELEGRAM_NOTIFY_NODES_THREAD_ID=$(prompt_input "$(t telegram_nodes_thread_id)" "$ORANGE")
+        else
+            # Initialize thread ID variables as empty when not using topics
+            TELEGRAM_NOTIFY_USERS_THREAD_ID=""
+            TELEGRAM_NOTIFY_NODES_THREAD_ID=""
         fi
     else
         show_warning "$(t warning_skipping_telegram)"
