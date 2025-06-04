@@ -5,6 +5,9 @@
 # Including module: constants.sh
 
 LANG_CODE="${LANG_CODE:-en}"
+REMNAWAVE_BRANCH="${REMNAWAVE_BRANCH:-main}"
+INSTALLER_BRANCH="${INSTALLER_BRANCH:-main}"
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         --lang=*)
@@ -13,6 +16,22 @@ while [[ $# -gt 0 ]]; do
             ;;
         --lang)
             LANG_CODE="$2"
+            shift 2
+            ;;
+        --panel-branch=*)
+            REMNAWAVE_BRANCH="${1#*=}"
+            shift
+            ;;
+        --panel-branch)
+            REMNAWAVE_BRANCH="$2"
+            shift 2
+            ;;
+        --installer-branch=*)
+            INSTALLER_BRANCH="${1#*=}"
+            shift
+            ;;
+        --installer-branch)
+            INSTALLER_BRANCH="$2"
             shift 2
             ;;
         *)
@@ -34,6 +53,17 @@ YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
 VERSION="1.5.0b"
+
+if [ "$REMNAWAVE_BRANCH" = "dev" ]; then
+    REMNAWAVE_BACKEND_TAG="dev"
+    REMNAWAVE_NODE_TAG="dev"
+else
+    REMNAWAVE_BACKEND_TAG="latest"
+    REMNAWAVE_NODE_TAG="latest"
+fi
+
+REMNAWAVE_BACKEND_REPO="https://raw.githubusercontent.com/remnawave/backend/refs/heads"
+INSTALLER_REPO="https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads"
 
 REMNAWAVE_DIR="/opt/remnawave"
 REMNANODE_DIR="/opt/remnanode"
@@ -2106,7 +2136,7 @@ collect_ports_separate_installation() {
 }
 
 setup_panel_environment() {
-    curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
+    curl -s -o .env "$REMNAWAVE_BACKEND_REPO/$REMNAWAVE_BRANCH/.env.sample"
 
     update_file ".env" \
         "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
@@ -2153,7 +2183,7 @@ services:
       retries: 3
 
   remnawave:
-    image: remnawave/backend:dev
+    image: remnawave/backend:REMNAWAVE_BACKEND_TAG_PLACEHOLDER
     container_name: 'remnawave'
     hostname: remnawave
     restart: always
@@ -2203,6 +2233,8 @@ volumes:
     external: false
     name: remnawave-redis-data
 EOF
+
+    sed -i "s/REMNAWAVE_BACKEND_TAG_PLACEHOLDER/$REMNAWAVE_BACKEND_TAG/g" docker-compose.yml
 }
 
 # Including module: validation.sh
@@ -3498,7 +3530,7 @@ services:
   remnanode:
     container_name: remnanode
     hostname: remnanode
-    image: remnawave/node:dev
+    image: remnawave/node:$REMNAWAVE_NODE_TAG
     env_file:
       - .env
     network_mode: host
@@ -3684,7 +3716,7 @@ services:
   remnanode:
     container_name: remnanode
     hostname: remnanode
-    image: remnawave/node:dev
+    image: remnawave/node:$REMNAWAVE_NODE_TAG
     env_file:
       - .env
     network_mode: host

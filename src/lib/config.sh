@@ -138,7 +138,7 @@ collect_ports_separate_installation() {
 # Setup common environment
 setup_panel_environment() {
     # Download environment template
-    curl -s -o .env https://raw.githubusercontent.com/remnawave/backend/refs/heads/dev/.env.sample
+    curl -s -o .env "$REMNAWAVE_BACKEND_REPO/$REMNAWAVE_BRANCH/.env.sample"
 
     # Update environment file
     update_file ".env" \
@@ -186,7 +186,7 @@ services:
       retries: 3
 
   remnawave:
-    image: remnawave/backend:dev
+    image: remnawave/backend:REMNAWAVE_BACKEND_TAG_PLACEHOLDER
     container_name: 'remnawave'
     hostname: remnawave
     restart: always
@@ -236,4 +236,7 @@ volumes:
     external: false
     name: remnawave-redis-data
 EOF
+
+    # Replace Docker image tag placeholder with actual value
+    sed -i "s/REMNAWAVE_BACKEND_TAG_PLACEHOLDER/$REMNAWAVE_BACKEND_TAG/g" docker-compose.yml
 }

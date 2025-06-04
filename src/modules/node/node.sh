@@ -10,7 +10,7 @@ services:
   remnanode:
     container_name: remnanode
     hostname: remnanode
-    image: remnawave/node:dev
+    image: remnawave/node:$REMNAWAVE_NODE_TAG
     env_file:
       - .env
     network_mode: host

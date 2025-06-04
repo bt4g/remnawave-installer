@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# Parse command line arguments for language or use environment variable
+# Parse command line arguments for language and version configuration
 LANG_CODE="${LANG_CODE:-en}"
+REMNAWAVE_BRANCH="${REMNAWAVE_BRANCH:-main}"
+INSTALLER_BRANCH="${INSTALLER_BRANCH:-main}"
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         --lang=*)
@@ -10,6 +13,22 @@ while [[ $# -gt 0 ]]; do
             ;;
         --lang)
             LANG_CODE="$2"
+            shift 2
+            ;;
+        --panel-branch=*)
+            REMNAWAVE_BRANCH="${1#*=}"
+            shift
+            ;;
+        --panel-branch)
+            REMNAWAVE_BRANCH="$2"
+            shift 2
+            ;;
+        --installer-branch=*)
+            INSTALLER_BRANCH="${1#*=}"
+            shift
+            ;;
+        --installer-branch)
+            INSTALLER_BRANCH="$2"
             shift 2
             ;;
         *)
@@ -33,6 +52,19 @@ NC=$(tput sgr0)
 
 # Script version
 VERSION="1.5.0b"
+
+# Docker image tags based on branch
+if [ "$REMNAWAVE_BRANCH" = "dev" ]; then
+    REMNAWAVE_BACKEND_TAG="dev"
+    REMNAWAVE_NODE_TAG="dev"
+else
+    REMNAWAVE_BACKEND_TAG="latest"
+    REMNAWAVE_NODE_TAG="latest"
+fi
+
+# GitHub repository URLs
+REMNAWAVE_BACKEND_REPO="https://raw.githubusercontent.com/remnawave/backend/refs/heads"
+INSTALLER_REPO="https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads"
 
 # Main directories
 REMNAWAVE_DIR="/opt/remnawave"
