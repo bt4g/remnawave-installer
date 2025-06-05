@@ -33,6 +33,7 @@ MODULES = $(LIB_DIR)/constants.sh \
 					$(MODULES_DIR)/tools/enable-bbr.sh \
 					$(MODULES_DIR)/tools/show-credentials.sh \
 					$(MODULES_DIR)/tools/update.sh \
+					$(MODULES_DIR)/tools/warp-integration.sh \
           $(MODULES_DIR)/auth/full-auth.sh \
 					$(MODULES_DIR)/auth/cookie-auth.sh \
           $(MODULES_DIR)/auth/static-site.sh \

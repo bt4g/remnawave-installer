@@ -28,6 +28,7 @@ show_main_menu() {
     echo -e "${GREEN}6.${NC} $(t main_menu_show_credentials)"
     echo
     echo -e "${GREEN}7.${NC} $(get_bbr_menu_text)"
+    echo -e "${GREEN}8.${NC} $(t main_menu_warp_integration)"
     echo
     echo -e "${GREEN}0.${NC} $(t main_menu_exit)"
     echo
@@ -115,6 +116,9 @@ main() {
             ;;
         7)
             toggle_bbr
+            ;;
+        8)
+            add_warp_integration
             ;;
         0)
             echo "$(t exiting)"

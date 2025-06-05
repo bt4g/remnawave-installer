@@ -52,7 +52,7 @@ GREEN=$(tput setaf 2)
 YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
-VERSION="1.5.1"
+VERSION="1.6.0"
 
 if [ "$REMNAWAVE_BRANCH" = "dev" ]; then
     REMNAWAVE_BACKEND_TAG="dev"
@@ -118,6 +118,7 @@ TRANSLATIONS_EN[main_menu_restart_panel]="Restart panel"
 TRANSLATIONS_EN[main_menu_remove_panel]="Remove panel"
 TRANSLATIONS_EN[main_menu_rescue_cli]="Remnawave Rescue CLI [Reset admin]"
 TRANSLATIONS_EN[main_menu_show_credentials]="Show panel access credentials"
+TRANSLATIONS_EN[main_menu_warp_integration]="Add WARP integration"
 TRANSLATIONS_EN[main_menu_exit]="Exit"
 TRANSLATIONS_EN[main_menu_select_option]="Select option:"
 
@@ -427,6 +428,34 @@ TRANSLATIONS_EN[selfsteal_domain_info]="• Domain:"
 TRANSLATIONS_EN[selfsteal_port_info]="• Port:"
 TRANSLATIONS_EN[selfsteal_directory_info]="• Directory:"
 
+TRANSLATIONS_EN[warp_title]="WARP Integration Setup"
+TRANSLATIONS_EN[warp_checking_installation]="Checking panel installation..."
+TRANSLATIONS_EN[warp_panel_not_found]="Panel installation not found"
+TRANSLATIONS_EN[warp_panel_not_running]="Panel is not running"
+TRANSLATIONS_EN[warp_credentials_not_found]="Panel credentials not found"
+TRANSLATIONS_EN[warp_terms_title]="Cloudflare WARP Terms of Service"
+TRANSLATIONS_EN[warp_terms_text]="This project is in no way affiliated with Cloudflare.\nBy proceeding, you agree to Cloudflare's Terms of Service:"
+TRANSLATIONS_EN[warp_terms_url]="https://www.cloudflare.com/application/terms/"
+TRANSLATIONS_EN[warp_terms_confirm]="Do you agree to the terms and want to continue?"
+TRANSLATIONS_EN[warp_terms_declined]="WARP integration cancelled"
+TRANSLATIONS_EN[warp_downloading_wgcf]="Downloading wgcf utility..."
+TRANSLATIONS_EN[warp_installing_wgcf]="Installing wgcf..."
+TRANSLATIONS_EN[warp_authenticating_panel]="Authenticating with panel..."
+TRANSLATIONS_EN[warp_registering_account]="Registering WARP account..."
+TRANSLATIONS_EN[warp_generating_config]="Generating WireGuard configuration..."
+TRANSLATIONS_EN[warp_getting_current_config]="Getting current XRAY configuration..."
+TRANSLATIONS_EN[warp_updating_config]="Updating XRAY configuration with WARP..."
+TRANSLATIONS_EN[warp_success]="WARP integration added successfully!"
+TRANSLATIONS_EN[warp_success_details]="WARP outbound has been added to your XRAY configuration.\nThe following domains will now route through WARP:\n- Google services (Gemini)\n- OpenAI\n- Spotify\n- Canva\n- IP info services"
+TRANSLATIONS_EN[warp_failed_download]="Failed to download wgcf"
+TRANSLATIONS_EN[warp_failed_install]="Failed to install wgcf"
+TRANSLATIONS_EN[warp_failed_register]="Failed to register WARP account"
+TRANSLATIONS_EN[warp_failed_generate]="Failed to generate WireGuard configuration"
+TRANSLATIONS_EN[warp_failed_get_config]="Failed to get current XRAY configuration"
+TRANSLATIONS_EN[warp_failed_update_config]="Failed to update XRAY configuration"
+TRANSLATIONS_EN[warp_failed_auth]="Failed to authenticate with panel"
+TRANSLATIONS_EN[warp_already_configured]="WARP is already configured in XRAY"
+
 # Including module: ru.sh
 
 
@@ -448,6 +477,7 @@ TRANSLATIONS_RU[main_menu_restart_panel]="Перезапустить панел�
 TRANSLATIONS_RU[main_menu_remove_panel]="Удалить панель"
 TRANSLATIONS_RU[main_menu_rescue_cli]="Remnawave Rescue CLI [Сброс админа]"
 TRANSLATIONS_RU[main_menu_show_credentials]="Показать учетные данные панели"
+TRANSLATIONS_RU[main_menu_warp_integration]="Добавить WARP интеграцию"
 TRANSLATIONS_RU[main_menu_exit]="Выход"
 TRANSLATIONS_RU[main_menu_select_option]="Выберите опцию:"
 
@@ -756,6 +786,34 @@ TRANSLATIONS_RU[selfsteal_installation_stopped]="Установка остано
 TRANSLATIONS_RU[selfsteal_domain_info]="• Домен:"
 TRANSLATIONS_RU[selfsteal_port_info]="• Порт:"
 TRANSLATIONS_RU[selfsteal_directory_info]="• Директория:"
+
+TRANSLATIONS_RU[warp_title]="Настройка WARP интеграции"
+TRANSLATIONS_RU[warp_checking_installation]="Проверка установки панели..."
+TRANSLATIONS_RU[warp_panel_not_found]="Установка панели не найдена"
+TRANSLATIONS_RU[warp_panel_not_running]="Панель не запущена"
+TRANSLATIONS_RU[warp_credentials_not_found]="Учетные данные панели не найдены"
+TRANSLATIONS_RU[warp_terms_title]="Условия использования Cloudflare WARP"
+TRANSLATIONS_RU[warp_terms_text]="Этот проект никак не связан с Cloudflare.\nПродолжая, вы соглашаетесь с Условиями использования Cloudflare:"
+TRANSLATIONS_RU[warp_terms_url]="https://www.cloudflare.com/application/terms/"
+TRANSLATIONS_RU[warp_terms_confirm]="Согласны ли вы с условиями и хотите продолжить?"
+TRANSLATIONS_RU[warp_terms_declined]="WARP интеграция отменена"
+TRANSLATIONS_RU[warp_downloading_wgcf]="Загрузка утилиты wgcf..."
+TRANSLATIONS_RU[warp_installing_wgcf]="Установка wgcf..."
+TRANSLATIONS_RU[warp_authenticating_panel]="Авторизация в панели..."
+TRANSLATIONS_RU[warp_registering_account]="Регистрация WARP аккаунта..."
+TRANSLATIONS_RU[warp_generating_config]="Генерация WireGuard конфигурации..."
+TRANSLATIONS_RU[warp_getting_current_config]="Получение текущей конфигурации XRAY..."
+TRANSLATIONS_RU[warp_updating_config]="Обновление конфигурации XRAY с WARP..."
+TRANSLATIONS_RU[warp_success]="WARP интеграция успешно добавлена!"
+TRANSLATIONS_RU[warp_success_details]="WARP outbound добавлен в вашу конфигурацию XRAY.\nСледующие домены теперь будут маршрутизироваться через WARP:\n- Сервисы Google (Gemini)\n- OpenAI\n- Spotify\n- Canva\n- Сервисы информации об IP"
+TRANSLATIONS_RU[warp_failed_download]="Не удалось загрузить wgcf"
+TRANSLATIONS_RU[warp_failed_install]="Не удалось установить wgcf"
+TRANSLATIONS_RU[warp_failed_register]="Не удалось зарегистрировать WARP аккаунт"
+TRANSLATIONS_RU[warp_failed_generate]="Не удалось сгенерировать WireGuard конфигурацию"
+TRANSLATIONS_RU[warp_failed_get_config]="Не удалось получить текущую конфигурацию XRAY"
+TRANSLATIONS_RU[warp_failed_update_config]="Не удалось обновить конфигурацию XRAY"
+TRANSLATIONS_RU[warp_failed_auth]="Не удалось авторизоваться в панели"
+TRANSLATIONS_RU[warp_already_configured]="WARP уже настроен в XRAY"
 
 # Including module: system.sh
 
@@ -3202,6 +3260,355 @@ handle_update_menu() {
     done
 }
 
+# Including module: warp-integration.sh
+
+
+check_panel_installation() {
+    if [ ! -d /opt/remnawave ]; then
+        show_error "$(t warp_panel_not_found)"
+        echo -e "${YELLOW}$(t update_install_first)${NC}"
+        echo
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    if ! docker ps --format '{{.Names}}' | grep -q '^remnawave$'; then
+        show_error "$(t warp_panel_not_running)"
+        echo -e "${YELLOW}$(t cli_ensure_panel_running)${NC}"
+        echo
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    if [ ! -f /opt/remnawave/credentials.txt ]; then
+        show_error "$(t warp_credentials_not_found)"
+        echo
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    return 0
+}
+
+extract_panel_credentials() {
+    local credentials_file="/opt/remnawave/credentials.txt"
+    
+    PANEL_USERNAME=$(grep "REMNAWAVE ADMIN USERNAME:" "$credentials_file" | cut -d':' -f2 | xargs)
+    PANEL_PASSWORD=$(grep "REMNAWAVE ADMIN PASSWORD:" "$credentials_file" | cut -d':' -f2 | xargs)
+    PANEL_DOMAIN=$(grep "PANEL URL:" "$credentials_file" | cut -d'/' -f3 | cut -d'?' -f1)
+    
+    if [ -z "$PANEL_USERNAME" ]; then
+        PANEL_USERNAME=$(grep "SUPERADMIN USERNAME:" "$credentials_file" | cut -d':' -f2 | xargs)
+        PANEL_PASSWORD=$(grep "SUPERADMIN PASSWORD:" "$credentials_file" | cut -d':' -f2 | xargs)
+    fi
+    
+    if [ -z "$PANEL_USERNAME" ] || [ -z "$PANEL_PASSWORD" ] || [ -z "$PANEL_DOMAIN" ]; then
+        show_error "$(t warp_failed_auth)"
+        return 1
+    fi
+    
+    return 0
+}
+
+authenticate_panel() {
+    local panel_url="127.0.0.1:3000"
+    local api_url="http://${panel_url}/api/auth/login"
+    
+    local temp_file=$(mktemp)
+    local login_data="{\"username\":\"$PANEL_USERNAME\",\"password\":\"$PANEL_PASSWORD\"}"
+    
+    make_api_request "POST" "$api_url" "" "$PANEL_DOMAIN" "$login_data" >"$temp_file" 2>&1 &
+    spinner $! "$(t warp_authenticating_panel)"
+    local response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$response" ]; then
+        show_error "$(t warp_failed_auth)"
+        return 1
+    fi
+    
+    if [[ "$response" == *"accessToken"* ]]; then
+        PANEL_TOKEN=$(echo "$response" | jq -r '.response.accessToken')
+        if [ -z "$PANEL_TOKEN" ] || [ "$PANEL_TOKEN" = "null" ]; then
+            show_error "$(t warp_failed_auth)"
+            return 1
+        fi
+        return 0
+    else
+        show_error "$(t warp_failed_auth)"
+        return 1
+    fi
+}
+
+show_warp_terms() {
+    clear
+    echo -e "${BOLD_GREEN}$(t warp_terms_title)${NC}"
+    echo
+    echo -e "${YELLOW}$(t warp_terms_text)${NC}"
+    echo -e "${BLUE}$(t warp_terms_url)${NC}"
+    echo
+    
+    if ! prompt_yes_no "$(t warp_terms_confirm)" "$YELLOW"; then
+        show_info "$(t warp_terms_declined)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+    
+    return 0
+}
+
+install_wgcf() {
+    local wgcf_version="2.2.26"
+    local wgcf_arch="linux_amd64"
+    local wgcf_url="https://github.com/ViRb3/wgcf/releases/download/v${wgcf_version}/wgcf_${wgcf_version}_${wgcf_arch}"
+    local temp_file=$(mktemp)
+    
+    (wget -q "$wgcf_url" -O "$temp_file") &
+    spinner $! "$(t warp_downloading_wgcf)"
+    
+    if [ $? -ne 0 ] || [ ! -s "$temp_file" ]; then
+        rm -f "$temp_file"
+        show_error "$(t warp_failed_download)"
+        return 1
+    fi
+    
+    (sudo mv "$temp_file" /usr/bin/wgcf && sudo chmod +x /usr/bin/wgcf) &
+    spinner $! "$(t warp_installing_wgcf)"
+    
+    if [ $? -ne 0 ]; then
+        show_error "$(t warp_failed_install)"
+        return 1
+    fi
+    
+    return 0
+}
+
+generate_warp_config() {
+    local temp_dir=$(mktemp -d)
+    cd "$temp_dir"
+    
+    (echo "Yes" | wgcf register) &
+    spinner $! "$(t warp_registering_account)"
+    
+    if [ $? -ne 0 ] || [ ! -f "wgcf-account.toml" ]; then
+        cd - >/dev/null
+        rm -rf "$temp_dir"
+        show_error "$(t warp_failed_register)"
+        return 1
+    fi
+    
+    (wgcf generate) &
+    spinner $! "$(t warp_generating_config)"
+    
+    if [ $? -ne 0 ] || [ ! -f "wgcf-profile.conf" ]; then
+        cd - >/dev/null
+        rm -rf "$temp_dir"
+        show_error "$(t warp_failed_generate)"
+        return 1
+    fi
+    
+    WARP_PRIVATE_KEY=$(grep "PrivateKey" wgcf-profile.conf | cut -d'=' -f2 | xargs)
+    WARP_PUBLIC_KEY=$(grep "PublicKey" wgcf-profile.conf | cut -d'=' -f2 | xargs)
+    
+    cd - >/dev/null
+    rm -rf "$temp_dir"
+    
+    if [ -z "$WARP_PRIVATE_KEY" ] || [ -z "$WARP_PUBLIC_KEY" ]; then
+        show_error "$(t warp_failed_generate)"
+        return 1
+    fi
+    
+    return 0
+}
+
+get_current_xray_config() {
+    local panel_url="127.0.0.1:3000"
+    local temp_file=$(mktemp)
+    
+    make_api_request "GET" "http://$panel_url/api/xray" "$PANEL_TOKEN" "$PANEL_DOMAIN" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t warp_getting_current_config)"
+    local response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$response" ]; then
+        show_error "$(t warp_failed_get_config)"
+        return 1
+    fi
+    
+    CURRENT_CONFIG=$(echo "$response" | jq -r '.response.config')
+    if [ -z "$CURRENT_CONFIG" ] || [ "$CURRENT_CONFIG" = "null" ]; then
+        show_error "$(t warp_failed_get_config)"
+        return 1
+    fi
+    
+    return 0
+}
+
+check_warp_already_configured() {
+    if echo "$CURRENT_CONFIG" | jq -e '.outbounds[] | select(.tag == "warp")' >/dev/null 2>&1; then
+        show_warning "$(t warp_already_configured)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+    return 0
+}
+
+add_warp_outbound() {
+    local warp_outbound=$(cat <<EOF
+{
+  "tag": "warp",
+  "protocol": "wireguard",
+  "settings": {
+    "secretKey": "$WARP_PRIVATE_KEY",
+    "DNS": "1.1.1.1",
+    "kernelMode": false,
+    "address": ["172.16.0.2/32"],
+    "peers": [
+      {
+        "publicKey": "$WARP_PUBLIC_KEY",
+        "endpoint": "engage.cloudflareclient.com:2408"
+      }
+    ]
+  }
+}
+EOF
+)
+
+    UPDATED_CONFIG=$(echo "$CURRENT_CONFIG" | jq --argjson warp_outbound "$warp_outbound" '.outbounds += [$warp_outbound]')
+
+    if [ $? -ne 0 ]; then
+        show_error "$(t warp_failed_update_config)"
+        return 1
+    fi
+
+    return 0
+}
+
+add_warp_routing() {
+    local warp_routing_rule=$(cat <<EOF
+{
+  "outboundTag": "warp",
+  "domain": [
+    "geosite:google-gemini",
+    "openai.com",
+    "ipinfo.io",
+    "spotify.com",
+    "canva.com"
+  ],
+  "type": "field"
+}
+EOF
+)
+
+    UPDATED_CONFIG=$(echo "$UPDATED_CONFIG" | jq --argjson warp_rule "$warp_routing_rule" '.routing.rules += [$warp_rule]')
+
+    if [ $? -ne 0 ]; then
+        show_error "$(t warp_failed_update_config)"
+        return 1
+    fi
+
+    return 0
+}
+
+update_xray_with_warp() {
+    local panel_url="127.0.0.1:3000"
+    local config_file=$(mktemp)
+
+    echo "$UPDATED_CONFIG" > "$config_file"
+
+    if ! update_xray_config "$panel_url" "$PANEL_TOKEN" "$PANEL_DOMAIN" "$config_file"; then
+        rm -f "$config_file"
+        show_error "$(t warp_failed_update_config)"
+        return 1
+    fi
+
+    rm -f "$config_file"
+    return 0
+}
+
+add_warp_integration() {
+    clear
+    echo -e "${BOLD_GREEN}$(t warp_title)${NC}"
+    echo
+
+    show_info "$(t warp_checking_installation)" "$ORANGE"
+    if ! check_panel_installation; then
+        return 0
+    fi
+
+    if ! show_warp_terms; then
+        return 0
+    fi
+
+    if ! extract_panel_credentials; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! authenticate_panel; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! get_current_xray_config; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! check_warp_already_configured; then
+        return 0
+    fi
+
+    if ! command -v wgcf &> /dev/null; then
+        if ! install_wgcf; then
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 0
+        fi
+    fi
+
+    if ! generate_warp_config; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! add_warp_outbound; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! add_warp_routing; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    show_info "$(t warp_updating_config)" "$ORANGE"
+    if ! update_xray_with_warp; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    echo
+    show_success "$(t warp_success)"
+    echo
+    echo -e "${GREEN}$(t warp_success_details)${NC}"
+    echo
+    echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+    read -r
+}
+
 # Including module: full-auth.sh
 
 
@@ -3312,8 +3719,8 @@ save_credentials_cookie_auth() {
   CREDENTIALS_FILE="$REMNAWAVE_DIR/credentials.txt"
   echo "PANEL URL: https://$PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
   echo >>"$CREDENTIALS_FILE"
-  echo "SUPERADMIN USERNAME: $SUPERADMIN_USERNAME" >>"$CREDENTIALS_FILE"
-  echo "SUPERADMIN PASSWORD: $SUPERADMIN_PASSWORD" >>"$CREDENTIALS_FILE"
+  echo "REMNAWAVE ADMIN USERNAME: $SUPERADMIN_USERNAME" >>"$CREDENTIALS_FILE"
+  echo "REMNAWAVE ADMIN PASSWORD: $SUPERADMIN_PASSWORD" >>"$CREDENTIALS_FILE"
 
   chmod 600 "$CREDENTIALS_FILE"
 }
@@ -4644,6 +5051,7 @@ show_main_menu() {
     echo -e "${GREEN}6.${NC} $(t main_menu_show_credentials)"
     echo
     echo -e "${GREEN}7.${NC} $(get_bbr_menu_text)"
+    echo -e "${GREEN}8.${NC} $(t main_menu_warp_integration)"
     echo
     echo -e "${GREEN}0.${NC} $(t main_menu_exit)"
     echo
@@ -4729,6 +5137,9 @@ main() {
             ;;
         7)
             toggle_bbr
+            ;;
+        8)
+            add_warp_integration
             ;;
         0)
             echo "$(t exiting)"
