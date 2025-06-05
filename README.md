@@ -235,14 +235,6 @@ After launch, the script will display the main menu. Language selection is done 
 
 ![Main Menu](assets/menu.png)
 
-### Main menu
-
-The main menu provides access to all installer functions. Menu options are visible in the screenshot above.
-
-### Installation menu
-
-The installation menu offers different deployment scenarios for Remnawave components.
-
 ---
 
 ### Domains
