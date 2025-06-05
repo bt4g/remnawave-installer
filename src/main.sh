@@ -21,12 +21,13 @@ show_main_menu() {
     echo
     echo -e "${GREEN}1.${NC} $(t main_menu_install_components)"
     echo
-    echo -e "${GREEN}2.${NC} $(t main_menu_restart_panel)"
-    echo -e "${GREEN}3.${NC} $(t main_menu_remove_panel)"
-    echo -e "${GREEN}4.${NC} $(t main_menu_rescue_cli)"
-    echo -e "${GREEN}5.${NC} $(t main_menu_show_credentials)"
+    echo -e "${GREEN}2.${NC} $(t main_menu_update_components)"
+    echo -e "${GREEN}3.${NC} $(t main_menu_restart_panel)"
+    echo -e "${GREEN}4.${NC} $(t main_menu_remove_panel)"
+    echo -e "${GREEN}5.${NC} $(t main_menu_rescue_cli)"
+    echo -e "${GREEN}6.${NC} $(t main_menu_show_credentials)"
     echo
-    echo -e "${GREEN}6.${NC} $(get_bbr_menu_text)"
+    echo -e "${GREEN}7.${NC} $(get_bbr_menu_text)"
     echo
     echo -e "${GREEN}0.${NC} $(t main_menu_exit)"
     echo
@@ -98,18 +99,21 @@ main() {
             handle_installation_menu
             ;;
         2)
-            restart_panel
+            handle_update_menu
             ;;
         3)
-            remove_previous_installation true
+            restart_panel
             ;;
         4)
-            run_remnawave_cli
+            remove_previous_installation true
             ;;
         5)
-            show_panel_credentials
+            run_remnawave_cli
             ;;
         6)
+            show_panel_credentials
+            ;;
+        7)
             toggle_bbr
             ;;
         0)

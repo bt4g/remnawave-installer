@@ -52,7 +52,7 @@ GREEN=$(tput setaf 2)
 YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
-VERSION="1.5.0b"
+VERSION="1.5.1"
 
 if [ "$REMNAWAVE_BRANCH" = "dev" ]; then
     REMNAWAVE_BACKEND_TAG="dev"
@@ -113,6 +113,7 @@ TRANSLATIONS_EN[main_menu_title]="Remnawave Panel Installer by uphantom v"
 TRANSLATIONS_EN[main_menu_script_branch]="Script branch:"
 TRANSLATIONS_EN[main_menu_panel_branch]="Panel branch:"
 TRANSLATIONS_EN[main_menu_install_components]="Install Panel/Node"
+TRANSLATIONS_EN[main_menu_update_components]="Update Panel/Node"
 TRANSLATIONS_EN[main_menu_restart_panel]="Restart panel"
 TRANSLATIONS_EN[main_menu_remove_panel]="Remove panel"
 TRANSLATIONS_EN[main_menu_rescue_cli]="Remnawave Rescue CLI [Reset admin]"
@@ -130,6 +131,13 @@ TRANSLATIONS_EN[install_menu_all_in_one]="All-in-One:"
 TRANSLATIONS_EN[install_menu_panel_node_full]="Panel + Node with FULL Caddy security"
 TRANSLATIONS_EN[install_menu_panel_node_simple]="Panel + Node with SIMPLE cookie security"
 TRANSLATIONS_EN[install_menu_back]="Back to main menu"
+
+TRANSLATIONS_EN[update_menu_title]="Update Panel/Node"
+TRANSLATIONS_EN[update_menu_panel_only]="Panel Only:"
+TRANSLATIONS_EN[update_menu_panel_update]="Update Panel"
+TRANSLATIONS_EN[update_menu_node_only]="Node Only:"
+TRANSLATIONS_EN[update_menu_node_separate]="Update Node (separate server)"
+TRANSLATIONS_EN[update_menu_back]="Back to main menu"
 
 TRANSLATIONS_EN[prompt_yes_no_suffix]=" (y/n): "
 TRANSLATIONS_EN[prompt_yes_no_default_suffix]=" (y/n) ["
@@ -228,6 +236,33 @@ TRANSLATIONS_EN[restart_installation_corrupted]="Panel installation may be corru
 TRANSLATIONS_EN[restart_starting_panel]="Starting main panel..."
 TRANSLATIONS_EN[restart_starting_subscription]="Starting subscription page..."
 TRANSLATIONS_EN[restart_success]="Panel restarted successfully"
+
+TRANSLATIONS_EN[update_panel_dir_not_found]="Error: panel directory not found at /opt/remnawave!"
+TRANSLATIONS_EN[update_node_dir_not_found]="Error: node directory not found at /opt/remnanode!"
+TRANSLATIONS_EN[update_install_first]="Please install components first."
+TRANSLATIONS_EN[update_compose_not_found]="Error: docker-compose.yml not found!"
+TRANSLATIONS_EN[update_installation_corrupted]="Installation may be corrupted or incomplete."
+TRANSLATIONS_EN[update_warning_title]="⚠️  IMPORTANT: Before updating"
+TRANSLATIONS_EN[update_warning_backup]="• Make sure you have backups of your data"
+TRANSLATIONS_EN[update_warning_changelog]="• Read the changelog before updating:"
+TRANSLATIONS_EN[update_warning_panel_releases]="  Panel: https://github.com/remnawave/panel/releases/"
+TRANSLATIONS_EN[update_warning_node_releases]="  Node: https://hub.remna.st/changelog"
+TRANSLATIONS_EN[update_warning_downtime]="• Update process will cause temporary service downtime"
+TRANSLATIONS_EN[update_warning_confirm]="Do you want to continue with the update?"
+TRANSLATIONS_EN[update_checking_images]="Checking for image updates..."
+TRANSLATIONS_EN[update_pulling_images]="Pulling latest images..."
+TRANSLATIONS_EN[update_no_updates_available]="No updates available - all images are already up to date"
+TRANSLATIONS_EN[update_images_updated]="New images downloaded, proceeding with restart..."
+TRANSLATIONS_EN[update_pull_failed]="Failed to pull images"
+TRANSLATIONS_EN[update_stopping_services]="Stopping services..."
+TRANSLATIONS_EN[update_starting_services]="Starting updated services..."
+TRANSLATIONS_EN[update_panel_success]="Panel updated successfully"
+TRANSLATIONS_EN[update_node_success]="Node updated successfully"
+TRANSLATIONS_EN[update_all_success]="Panel and Node updated successfully"
+TRANSLATIONS_EN[update_no_restart_needed]="No restart needed - services are already running the latest versions"
+TRANSLATIONS_EN[update_cleaning_images]="Cleaning unused images..."
+TRANSLATIONS_EN[update_cleanup_complete]="Cleanup completed"
+TRANSLATIONS_EN[update_cancelled]="Update cancelled by user"
 
 TRANSLATIONS_EN[services_starting_containers]="Starting containers..."
 TRANSLATIONS_EN[services_installation_stopped]="Installation stopped"
@@ -408,6 +443,7 @@ TRANSLATIONS_RU[main_menu_title]="Remnawave Panel Installer by uphantom v"
 TRANSLATIONS_RU[main_menu_script_branch]="Ветка скрипта:"
 TRANSLATIONS_RU[main_menu_panel_branch]="Ветка панели:"
 TRANSLATIONS_RU[main_menu_install_components]="Установить Панель/Ноду"
+TRANSLATIONS_RU[main_menu_update_components]="Обновить Панель/Ноду"
 TRANSLATIONS_RU[main_menu_restart_panel]="Перезапустить панель"
 TRANSLATIONS_RU[main_menu_remove_panel]="Удалить панель"
 TRANSLATIONS_RU[main_menu_rescue_cli]="Remnawave Rescue CLI [Сброс админа]"
@@ -425,6 +461,13 @@ TRANSLATIONS_RU[install_menu_all_in_one]="All-in-One:"
 TRANSLATIONS_RU[install_menu_panel_node_full]="Панель + Нода \"FULL Caddy\" вариант"
 TRANSLATIONS_RU[install_menu_panel_node_simple]="Панель + Нода \"SIMPLE cookie\" вариант"
 TRANSLATIONS_RU[install_menu_back]="Назад в главное меню"
+
+TRANSLATIONS_RU[update_menu_title]="Обновление панели/ноды"
+TRANSLATIONS_RU[update_menu_panel_only]="Только панель:"
+TRANSLATIONS_RU[update_menu_panel_update]="Обновить панель (также обновит ноду, если на том же сервере)"
+TRANSLATIONS_RU[update_menu_node_only]="Только нода:"
+TRANSLATIONS_RU[update_menu_node_separate]="Обновить ноду (для отдельного сервера)"
+TRANSLATIONS_RU[update_menu_back]="Назад в главное меню"
 
 TRANSLATIONS_RU[prompt_yes_no_suffix]=" (y/n): "
 TRANSLATIONS_RU[prompt_yes_no_default_suffix]=" (y/n) ["
@@ -523,6 +566,33 @@ TRANSLATIONS_RU[restart_installation_corrupted]="Установка панели
 TRANSLATIONS_RU[restart_starting_panel]="Запуск основной панели..."
 TRANSLATIONS_RU[restart_starting_subscription]="Запуск страницы подписки..."
 TRANSLATIONS_RU[restart_success]="Панель успешно перезапущена"
+
+TRANSLATIONS_RU[update_panel_dir_not_found]="Ошибка: директория панели не найдена в /opt/remnawave!"
+TRANSLATIONS_RU[update_node_dir_not_found]="Ошибка: директория ноды не найдена в /opt/remnanode!"
+TRANSLATIONS_RU[update_install_first]="Пожалуйста, сначала установите компоненты."
+TRANSLATIONS_RU[update_compose_not_found]="Ошибка: docker-compose.yml не найден!"
+TRANSLATIONS_RU[update_installation_corrupted]="Установка может быть повреждена или неполная."
+TRANSLATIONS_RU[update_warning_title]="⚠️  ВАЖНО: Перед обновлением"
+TRANSLATIONS_RU[update_warning_backup]="• Убедитесь, что у вас есть резервные копии данных"
+TRANSLATIONS_RU[update_warning_changelog]="• Прочитайте changelog перед обновлением:"
+TRANSLATIONS_RU[update_warning_panel_releases]="  Панель: https://github.com/remnawave/panel/releases/"
+TRANSLATIONS_RU[update_warning_node_releases]="  Нода: https://hub.remna.st/changelog"
+TRANSLATIONS_RU[update_warning_downtime]="• Процесс обновления вызовет временную недоступность сервисов"
+TRANSLATIONS_RU[update_warning_confirm]="Хотите ли вы продолжить обновление?"
+TRANSLATIONS_RU[update_checking_images]="Проверка обновлений образов..."
+TRANSLATIONS_RU[update_pulling_images]="Загрузка последних образов..."
+TRANSLATIONS_RU[update_no_updates_available]="Обновления недоступны - все образы уже актуальны"
+TRANSLATIONS_RU[update_images_updated]="Новые образы загружены, выполняется перезапуск..."
+TRANSLATIONS_RU[update_pull_failed]="Не удалось загрузить образы"
+TRANSLATIONS_RU[update_stopping_services]="Остановка сервисов..."
+TRANSLATIONS_RU[update_starting_services]="Запуск обновленных сервисов..."
+TRANSLATIONS_RU[update_panel_success]="Панель успешно обновлена"
+TRANSLATIONS_RU[update_node_success]="Нода успешно обновлена"
+TRANSLATIONS_RU[update_all_success]="Панель и нода успешно обновлены"
+TRANSLATIONS_RU[update_no_restart_needed]="Перезапуск не требуется - сервисы уже используют последние версии"
+TRANSLATIONS_RU[update_cleaning_images]="Очистка неиспользуемых образов..."
+TRANSLATIONS_RU[update_cleanup_complete]="Очистка завершена"
+TRANSLATIONS_RU[update_cancelled]="Обновление отменено пользователем"
 
 TRANSLATIONS_RU[services_starting_containers]="Запуск контейнеров..."
 TRANSLATIONS_RU[services_installation_stopped]="Установка остановлена"
@@ -2801,6 +2871,337 @@ show_panel_credentials() {
     read -r
 }
 
+# Including module: update.sh
+
+
+check_images_updated() {
+    local compose_dir="$1"
+    local result_var="$2"
+
+    cd "$compose_dir"
+
+    local images_list=$(docker compose config --images 2>/dev/null)
+    if [ -z "$images_list" ]; then
+        eval "$result_var=error"
+        return
+    fi
+
+    local updates_found=false
+
+    while IFS= read -r image; do
+        if [ -n "$image" ]; then
+            local output=$(docker pull "$image" 2>&1)
+            if echo "$output" | grep -q "Downloaded newer image"; then
+                updates_found=true
+                break
+            fi
+        fi
+    done <<< "$images_list"
+
+    if [ "$updates_found" = true ]; then
+        eval "$result_var=updated"
+    else
+        eval "$result_var=no_updates"
+    fi
+}
+
+show_update_warning() {
+    local component_type="$1"  # "panel", "node", or "all"
+
+    echo
+    echo -e "${YELLOW}$(t update_warning_title)${NC}"
+    echo
+    echo -e "${YELLOW}$(t update_warning_backup)${NC}"
+    echo -e "${YELLOW}$(t update_warning_changelog)${NC}"
+
+    if [[ "$component_type" == "panel" || "$component_type" == "all" ]]; then
+        echo -e "${BLUE}$(t update_warning_panel_releases)${NC}"
+    fi
+    if [[ "$component_type" == "node" || "$component_type" == "all" ]]; then
+        echo -e "${BLUE}$(t update_warning_node_releases)${NC}"
+    fi
+
+    echo -e "${YELLOW}$(t update_warning_downtime)${NC}"
+    echo
+
+    if ! prompt_yes_no "$(t update_warning_confirm)" "$YELLOW"; then
+        show_info "$(t update_cancelled)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    return 0
+}
+
+update_panel_only() {
+    echo
+
+    if [ ! -d /opt/remnawave ]; then
+        show_error "$(t update_panel_dir_not_found)"
+        show_error "$(t update_install_first)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if [ ! -f /opt/remnawave/docker-compose.yml ]; then
+        show_error "$(t update_compose_not_found)"
+        show_error "$(t update_installation_corrupted)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    NODE_EXISTS=false
+    if [ -d /opt/remnanode ] && [ -f /opt/remnanode/docker-compose.yml ]; then
+        NODE_EXISTS=true
+    fi
+
+    if [ "$NODE_EXISTS" = true ]; then
+        if ! show_update_warning "all"; then
+            return 0
+        fi
+    else
+        if ! show_update_warning "panel"; then
+            return 0
+        fi
+    fi
+    
+    SUBSCRIPTION_PAGE_EXISTS=false
+    if [ -d /opt/remnawave/subscription-page ] && [ -f /opt/remnawave/subscription-page/docker-compose.yml ]; then
+        SUBSCRIPTION_PAGE_EXISTS=true
+    fi
+
+    local panel_updated=false
+    local subscription_updated=false
+    local node_updated=false
+    local any_updates=false
+
+    local panel_updated=false
+    local subscription_updated=false
+    local node_updated=false
+    local any_updates=false
+
+    show_info "$(t update_checking_images)" "$ORANGE"
+    local panel_result=""
+    check_images_updated "/opt/remnawave" panel_result &
+    local check_pid=$!
+    spinner $check_pid "$(t update_checking_images)"
+    wait $check_pid
+
+    if [ "$panel_result" = "updated" ]; then
+        panel_updated=true
+        any_updates=true
+    elif [ "$panel_result" = "error" ]; then
+        show_error "$(t update_pull_failed)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
+        local subscription_result=""
+        check_images_updated "/opt/remnawave/subscription-page" subscription_result &
+        local check_pid=$!
+        spinner $check_pid "$(t update_checking_images)"
+        wait $check_pid
+
+        if [ "$subscription_result" = "updated" ]; then
+            subscription_updated=true
+            any_updates=true
+        elif [ "$subscription_result" = "error" ]; then
+            show_error "$(t update_pull_failed)"
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 1
+        fi
+    fi
+
+    if [ "$NODE_EXISTS" = true ]; then
+        local node_result=""
+        check_images_updated "/opt/remnanode" node_result &
+        local check_pid=$!
+        spinner $check_pid "$(t update_checking_images)"
+        wait $check_pid
+
+        if [ "$node_result" = "updated" ]; then
+            node_updated=true
+            any_updates=true
+        elif [ "$node_result" = "error" ]; then
+            show_error "$(t update_pull_failed)"
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 1
+        fi
+    fi
+
+    if [ "$any_updates" = false ]; then
+        show_success "$(t update_no_updates_available)"
+        show_info "$(t update_no_restart_needed)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    show_info "$(t update_images_updated)"
+
+    show_info "$(t update_starting_services)" "$ORANGE"
+
+    if [ "$panel_updated" = true ]; then
+        cd /opt/remnawave && docker compose up -d --remove-orphans --force-recreate >/dev/null 2>&1 &
+        spinner $! "$(t update_starting_services)"
+        if [ $? -ne 0 ]; then
+            show_error "Failed to recreate panel services"
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 1
+        fi
+    fi
+
+    if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ] && [ "$subscription_updated" = true ]; then
+        cd /opt/remnawave/subscription-page && docker compose up -d --remove-orphans --force-recreate >/dev/null 2>&1 &
+        spinner $! "$(t update_starting_services)"
+        if [ $? -ne 0 ]; then
+            show_error "Failed to recreate subscription page services"
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 1
+        fi
+    fi
+
+    if [ "$NODE_EXISTS" = true ] && [ "$node_updated" = true ]; then
+        cd /opt/remnanode && docker compose up -d --remove-orphans --force-recreate >/dev/null 2>&1 &
+        spinner $! "$(t update_starting_services)"
+        if [ $? -ne 0 ]; then
+            show_error "Failed to recreate node services"
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 1
+        fi
+    fi
+    
+    show_info "$(t update_cleaning_images)" "$ORANGE"
+    docker image prune -f >/dev/null 2>&1 &
+    spinner $! "$(t update_cleaning_images)"
+    
+    if [ "$NODE_EXISTS" = true ]; then
+        show_success "$(t update_all_success)"
+    else
+        show_success "$(t update_panel_success)"
+    fi
+    
+    show_info "$(t update_cleanup_complete)"
+    
+    echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+    read -r
+}
+
+update_node_only() {
+    echo
+
+    if [ ! -d /opt/remnanode ]; then
+        show_error "$(t update_node_dir_not_found)"
+        show_error "$(t update_install_first)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if [ ! -f /opt/remnanode/docker-compose.yml ]; then
+        show_error "$(t update_compose_not_found)"
+        show_error "$(t update_installation_corrupted)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! show_update_warning "node"; then
+        return 0
+    fi
+
+    show_info "$(t update_checking_images)" "$ORANGE"
+    local node_result=""
+    check_images_updated "/opt/remnanode" node_result &
+    local check_pid=$!
+    spinner $check_pid "$(t update_checking_images)"
+    wait $check_pid
+
+    if [ "$node_result" = "updated" ]; then
+        show_info "$(t update_images_updated)"
+    elif [ "$node_result" = "no_updates" ]; then
+        show_success "$(t update_no_updates_available)"
+        show_info "$(t update_no_restart_needed)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    else
+        show_error "$(t update_pull_failed)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    show_info "$(t update_starting_services)" "$ORANGE"
+    cd /opt/remnanode && docker compose up -d --remove-orphans --force-recreate >/dev/null 2>&1 &
+    spinner $! "$(t update_starting_services)"
+    if [ $? -ne 0 ]; then
+        show_error "Failed to recreate node services"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+    
+    show_info "$(t update_cleaning_images)" "$ORANGE"
+    docker image prune -f >/dev/null 2>&1 &
+    spinner $! "$(t update_cleaning_images)"
+    
+    show_success "$(t update_node_success)"
+    show_info "$(t update_cleanup_complete)"
+    
+    echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+    read -r
+}
+
+show_update_menu() {
+    clear
+    echo -e "${BOLD_GREEN}$(t update_menu_title)${NC}"
+    echo
+    echo -e "${YELLOW}$(t update_menu_panel_only)${NC}"
+    echo -e "${GREEN}1.${NC} $(t update_menu_panel_update)"
+    echo
+    echo -e "${YELLOW}$(t update_menu_node_only)${NC}"
+    echo -e "${GREEN}2.${NC} $(t update_menu_node_separate)"
+    echo
+    echo -e "${GREEN}0.${NC} $(t update_menu_back)"
+    echo
+    echo -ne "${BOLD_BLUE_MENU}$(t main_menu_select_option) ${NC}"
+}
+
+handle_update_menu() {
+    while true; do
+        show_update_menu
+        read choice
+
+        case $choice in
+        1)
+            update_panel_only
+            ;;
+        2)
+            update_node_only
+            ;;
+        0)
+            return
+            ;;
+        *)
+            clear
+            echo -e "${BOLD_RED}$(t error_invalid_choice)${NC}"
+            sleep 1
+            ;;
+        esac
+    done
+}
+
 # Including module: full-auth.sh
 
 
@@ -4236,12 +4637,13 @@ show_main_menu() {
     echo
     echo -e "${GREEN}1.${NC} $(t main_menu_install_components)"
     echo
-    echo -e "${GREEN}2.${NC} $(t main_menu_restart_panel)"
-    echo -e "${GREEN}3.${NC} $(t main_menu_remove_panel)"
-    echo -e "${GREEN}4.${NC} $(t main_menu_rescue_cli)"
-    echo -e "${GREEN}5.${NC} $(t main_menu_show_credentials)"
+    echo -e "${GREEN}2.${NC} $(t main_menu_update_components)"
+    echo -e "${GREEN}3.${NC} $(t main_menu_restart_panel)"
+    echo -e "${GREEN}4.${NC} $(t main_menu_remove_panel)"
+    echo -e "${GREEN}5.${NC} $(t main_menu_rescue_cli)"
+    echo -e "${GREEN}6.${NC} $(t main_menu_show_credentials)"
     echo
-    echo -e "${GREEN}6.${NC} $(get_bbr_menu_text)"
+    echo -e "${GREEN}7.${NC} $(get_bbr_menu_text)"
     echo
     echo -e "${GREEN}0.${NC} $(t main_menu_exit)"
     echo
@@ -4311,18 +4713,21 @@ main() {
             handle_installation_menu
             ;;
         2)
-            restart_panel
+            handle_update_menu
             ;;
         3)
-            remove_previous_installation true
+            restart_panel
             ;;
         4)
-            run_remnawave_cli
+            remove_previous_installation true
             ;;
         5)
-            show_panel_credentials
+            run_remnawave_cli
             ;;
         6)
+            show_panel_credentials
+            ;;
+        7)
             toggle_bbr
             ;;
         0)

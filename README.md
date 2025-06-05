@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-1.5.1-blue.svg)](https://github.com/xxphantom/remnawave-installer)
+[![Version](https://img.shields.io/badge/version-1.6.0-blue.svg)](https://github.com/xxphantom/remnawave-installer)
 [![Language](https://img.shields.io/badge/language-Bash-green.svg)]()
 [![OS Support](https://img.shields.io/badge/OS-Ubuntu-orange.svg)]()
 

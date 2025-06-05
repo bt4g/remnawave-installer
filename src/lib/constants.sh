@@ -51,7 +51,7 @@ YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
 # Script version
-VERSION="1.5.1"
+VERSION="1.6.0"
 
 # Docker image tags based on branch
 if [ "$REMNAWAVE_BRANCH" = "dev" ]; then
