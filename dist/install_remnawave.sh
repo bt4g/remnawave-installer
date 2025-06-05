@@ -52,7 +52,7 @@ GREEN=$(tput setaf 2)
 YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
-VERSION="1.5.0"
+VERSION="1.6.0"
 
 if [ "$REMNAWAVE_BRANCH" = "dev" ]; then
     REMNAWAVE_BACKEND_TAG="dev"
@@ -113,10 +113,12 @@ TRANSLATIONS_EN[main_menu_title]="Remnawave Panel Installer by uphantom v"
 TRANSLATIONS_EN[main_menu_script_branch]="Script branch:"
 TRANSLATIONS_EN[main_menu_panel_branch]="Panel branch:"
 TRANSLATIONS_EN[main_menu_install_components]="Install Panel/Node"
+TRANSLATIONS_EN[main_menu_update_components]="Update Panel/Node"
 TRANSLATIONS_EN[main_menu_restart_panel]="Restart panel"
 TRANSLATIONS_EN[main_menu_remove_panel]="Remove panel"
 TRANSLATIONS_EN[main_menu_rescue_cli]="Remnawave Rescue CLI [Reset admin]"
 TRANSLATIONS_EN[main_menu_show_credentials]="Show panel access credentials"
+TRANSLATIONS_EN[main_menu_warp_integration]="Add WARP integration"
 TRANSLATIONS_EN[main_menu_exit]="Exit"
 TRANSLATIONS_EN[main_menu_select_option]="Select option:"
 
@@ -130,6 +132,13 @@ TRANSLATIONS_EN[install_menu_all_in_one]="All-in-One:"
 TRANSLATIONS_EN[install_menu_panel_node_full]="Panel + Node with FULL Caddy security"
 TRANSLATIONS_EN[install_menu_panel_node_simple]="Panel + Node with SIMPLE cookie security"
 TRANSLATIONS_EN[install_menu_back]="Back to main menu"
+
+TRANSLATIONS_EN[update_menu_title]="Update Panel/Node"
+TRANSLATIONS_EN[update_menu_panel_only]="Panel Only:"
+TRANSLATIONS_EN[update_menu_panel_update]="Update Panel"
+TRANSLATIONS_EN[update_menu_node_only]="Node Only:"
+TRANSLATIONS_EN[update_menu_node_separate]="Update Node (separate server)"
+TRANSLATIONS_EN[update_menu_back]="Back to main menu"
 
 TRANSLATIONS_EN[prompt_yes_no_suffix]=" (y/n): "
 TRANSLATIONS_EN[prompt_yes_no_default_suffix]=" (y/n) ["
@@ -153,11 +162,12 @@ TRANSLATIONS_EN[bbr_disable]="Disable BBR"
 
 TRANSLATIONS_EN[telegram_enable_notifications]="Do you want to enable Telegram notifications?"
 TRANSLATIONS_EN[telegram_bot_token]="Enter your Telegram bot token: "
-TRANSLATIONS_EN[telegram_users_chat_id]="Enter the users chat ID: "
-TRANSLATIONS_EN[telegram_nodes_chat_id]="Enter the nodes chat ID: "
+TRANSLATIONS_EN[telegram_enable_user_notifications]="Do you want to enable notifications about user events? (if disabled, only node event notifications will be sent)"
+TRANSLATIONS_EN[telegram_users_chat_id]="Enter the chat ID for user event notifications: "
+TRANSLATIONS_EN[telegram_nodes_chat_id]="Enter the chat ID for node event notifications: "
 TRANSLATIONS_EN[telegram_use_topics]="Do you want to use Telegram topics?"
-TRANSLATIONS_EN[telegram_users_thread_id]="Enter the users thread ID: "
-TRANSLATIONS_EN[telegram_nodes_thread_id]="Enter the nodes thread ID: "
+TRANSLATIONS_EN[telegram_users_thread_id]="Enter the thread ID for user events: "
+TRANSLATIONS_EN[telegram_nodes_thread_id]="Enter the thread ID for node events: "
 
 TRANSLATIONS_EN[domain_panel_prompt]="Enter Panel domain (will be used on panel server), e.g. panel.example.com"
 TRANSLATIONS_EN[domain_subscription_prompt]="Enter Subscription domain (will be used on panel server), e.g. sub.example.com"
@@ -227,6 +237,33 @@ TRANSLATIONS_EN[restart_installation_corrupted]="Panel installation may be corru
 TRANSLATIONS_EN[restart_starting_panel]="Starting main panel..."
 TRANSLATIONS_EN[restart_starting_subscription]="Starting subscription page..."
 TRANSLATIONS_EN[restart_success]="Panel restarted successfully"
+
+TRANSLATIONS_EN[update_panel_dir_not_found]="Error: panel directory not found at /opt/remnawave!"
+TRANSLATIONS_EN[update_node_dir_not_found]="Error: node directory not found at /opt/remnanode!"
+TRANSLATIONS_EN[update_install_first]="Please install components first."
+TRANSLATIONS_EN[update_compose_not_found]="Error: docker-compose.yml not found!"
+TRANSLATIONS_EN[update_installation_corrupted]="Installation may be corrupted or incomplete."
+TRANSLATIONS_EN[update_warning_title]="⚠️  IMPORTANT: Before updating"
+TRANSLATIONS_EN[update_warning_backup]="• Make sure you have backups of your data"
+TRANSLATIONS_EN[update_warning_changelog]="• Read the changelog before updating:"
+TRANSLATIONS_EN[update_warning_panel_releases]="  Panel: https://github.com/remnawave/panel/releases/"
+TRANSLATIONS_EN[update_warning_node_releases]="  Node: https://hub.remna.st/changelog"
+TRANSLATIONS_EN[update_warning_downtime]="• Update process will cause temporary service downtime"
+TRANSLATIONS_EN[update_warning_confirm]="Do you want to continue with the update?"
+TRANSLATIONS_EN[update_checking_images]="Checking for image updates..."
+TRANSLATIONS_EN[update_pulling_images]="Pulling latest images..."
+TRANSLATIONS_EN[update_no_updates_available]="No updates available - all images are already up to date"
+TRANSLATIONS_EN[update_images_updated]="New images downloaded, proceeding with restart..."
+TRANSLATIONS_EN[update_pull_failed]="Failed to pull images"
+TRANSLATIONS_EN[update_stopping_services]="Stopping services..."
+TRANSLATIONS_EN[update_starting_services]="Starting updated services..."
+TRANSLATIONS_EN[update_panel_success]="Panel updated successfully"
+TRANSLATIONS_EN[update_node_success]="Node updated successfully"
+TRANSLATIONS_EN[update_all_success]="Panel and Node updated successfully"
+TRANSLATIONS_EN[update_no_restart_needed]="No restart needed - services are already running the latest versions"
+TRANSLATIONS_EN[update_cleaning_images]="Cleaning unused images..."
+TRANSLATIONS_EN[update_cleanup_complete]="Cleanup completed"
+TRANSLATIONS_EN[update_cancelled]="Update cancelled by user"
 
 TRANSLATIONS_EN[services_starting_containers]="Starting containers..."
 TRANSLATIONS_EN[services_installation_stopped]="Installation stopped"
@@ -391,6 +428,34 @@ TRANSLATIONS_EN[selfsteal_domain_info]="• Domain:"
 TRANSLATIONS_EN[selfsteal_port_info]="• Port:"
 TRANSLATIONS_EN[selfsteal_directory_info]="• Directory:"
 
+TRANSLATIONS_EN[warp_title]="WARP Integration Setup"
+TRANSLATIONS_EN[warp_checking_installation]="Checking panel installation..."
+TRANSLATIONS_EN[warp_panel_not_found]="Panel installation not found"
+TRANSLATIONS_EN[warp_panel_not_running]="Panel is not running"
+TRANSLATIONS_EN[warp_credentials_not_found]="Panel credentials not found"
+TRANSLATIONS_EN[warp_terms_title]="Cloudflare WARP Terms of Service"
+TRANSLATIONS_EN[warp_terms_text]="This project is in no way affiliated with Cloudflare.\nBy proceeding, you agree to Cloudflare's Terms of Service:"
+TRANSLATIONS_EN[warp_terms_url]="https://www.cloudflare.com/application/terms/"
+TRANSLATIONS_EN[warp_terms_confirm]="Do you agree to the terms and want to continue?"
+TRANSLATIONS_EN[warp_terms_declined]="WARP integration cancelled"
+TRANSLATIONS_EN[warp_downloading_wgcf]="Downloading wgcf utility..."
+TRANSLATIONS_EN[warp_installing_wgcf]="Installing wgcf..."
+TRANSLATIONS_EN[warp_authenticating_panel]="Authenticating with panel..."
+TRANSLATIONS_EN[warp_registering_account]="Registering WARP account..."
+TRANSLATIONS_EN[warp_generating_config]="Generating WireGuard configuration..."
+TRANSLATIONS_EN[warp_getting_current_config]="Getting current XRAY configuration..."
+TRANSLATIONS_EN[warp_updating_config]="Updating XRAY configuration with WARP..."
+TRANSLATIONS_EN[warp_success]="WARP integration added successfully!"
+TRANSLATIONS_EN[warp_success_details]="WARP outbound has been added to your XRAY configuration.\nThe following domains will now route through WARP:\n- Google services (Gemini)\n- OpenAI\n- Spotify\n- Canva\n- ipinfo.io \n- You can add more domains in the panel, by editing the Xray config."
+TRANSLATIONS_EN[warp_failed_download]="Failed to download wgcf"
+TRANSLATIONS_EN[warp_failed_install]="Failed to install wgcf"
+TRANSLATIONS_EN[warp_failed_register]="Failed to register WARP account"
+TRANSLATIONS_EN[warp_failed_generate]="Failed to generate WireGuard configuration"
+TRANSLATIONS_EN[warp_failed_get_config]="Failed to get current XRAY configuration"
+TRANSLATIONS_EN[warp_failed_update_config]="Failed to update XRAY configuration"
+TRANSLATIONS_EN[warp_failed_auth]="Failed to authenticate with panel"
+TRANSLATIONS_EN[warp_already_configured]="WARP is already configured in XRAY"
+
 # Including module: ru.sh
 
 
@@ -407,10 +472,12 @@ TRANSLATIONS_RU[main_menu_title]="Remnawave Panel Installer by uphantom v"
 TRANSLATIONS_RU[main_menu_script_branch]="Ветка скрипта:"
 TRANSLATIONS_RU[main_menu_panel_branch]="Ветка панели:"
 TRANSLATIONS_RU[main_menu_install_components]="Установить Панель/Ноду"
+TRANSLATIONS_RU[main_menu_update_components]="Обновить Панель/Ноду"
 TRANSLATIONS_RU[main_menu_restart_panel]="Перезапустить панель"
 TRANSLATIONS_RU[main_menu_remove_panel]="Удалить панель"
 TRANSLATIONS_RU[main_menu_rescue_cli]="Remnawave Rescue CLI [Сброс админа]"
 TRANSLATIONS_RU[main_menu_show_credentials]="Показать учетные данные панели"
+TRANSLATIONS_RU[main_menu_warp_integration]="Добавить WARP интеграцию"
 TRANSLATIONS_RU[main_menu_exit]="Выход"
 TRANSLATIONS_RU[main_menu_select_option]="Выберите опцию:"
 
@@ -424,6 +491,13 @@ TRANSLATIONS_RU[install_menu_all_in_one]="All-in-One:"
 TRANSLATIONS_RU[install_menu_panel_node_full]="Панель + Нода \"FULL Caddy\" вариант"
 TRANSLATIONS_RU[install_menu_panel_node_simple]="Панель + Нода \"SIMPLE cookie\" вариант"
 TRANSLATIONS_RU[install_menu_back]="Назад в главное меню"
+
+TRANSLATIONS_RU[update_menu_title]="Обновление панели/ноды"
+TRANSLATIONS_RU[update_menu_panel_only]="Только панель:"
+TRANSLATIONS_RU[update_menu_panel_update]="Обновить панель (также обновит ноду, если на том же сервере)"
+TRANSLATIONS_RU[update_menu_node_only]="Только нода:"
+TRANSLATIONS_RU[update_menu_node_separate]="Обновить ноду (для отдельного сервера)"
+TRANSLATIONS_RU[update_menu_back]="Назад в главное меню"
 
 TRANSLATIONS_RU[prompt_yes_no_suffix]=" (y/n): "
 TRANSLATIONS_RU[prompt_yes_no_default_suffix]=" (y/n) ["
@@ -447,11 +521,12 @@ TRANSLATIONS_RU[bbr_disable]="Отключить BBR"
 
 TRANSLATIONS_RU[telegram_enable_notifications]="Хотите ли вы включить уведомления Telegram?"
 TRANSLATIONS_RU[telegram_bot_token]="Введите токен вашего Telegram бота: "
-TRANSLATIONS_RU[telegram_users_chat_id]="Введите ID чата пользователей: "
-TRANSLATIONS_RU[telegram_nodes_chat_id]="Введите ID чата нод: "
+TRANSLATIONS_RU[telegram_enable_user_notifications]="Хотите ли вы включить уведомления о событиях пользователей? (если отключено, будут отправляться только уведомления о событиях нод)"
+TRANSLATIONS_RU[telegram_users_chat_id]="Введите ID чата для уведомлений о событиях пользователей: "
+TRANSLATIONS_RU[telegram_nodes_chat_id]="Введите ID чата для уведомлений о событиях нод: "
 TRANSLATIONS_RU[telegram_use_topics]="Хотите ли вы использовать темы Telegram?"
-TRANSLATIONS_RU[telegram_users_thread_id]="Введите ID темы пользователей: "
-TRANSLATIONS_RU[telegram_nodes_thread_id]="Введите ID темы нод: "
+TRANSLATIONS_RU[telegram_users_thread_id]="Введите ID темы для событий пользователей: "
+TRANSLATIONS_RU[telegram_nodes_thread_id]="Введите ID темы для событий нод: "
 
 TRANSLATIONS_RU[domain_panel_prompt]="Введите домен панели (будет использоваться на сервере панели), например panel.example.com"
 TRANSLATIONS_RU[domain_subscription_prompt]="Введите домен подписки (будет использоваться на сервере панели), например sub.example.com"
@@ -521,6 +596,33 @@ TRANSLATIONS_RU[restart_installation_corrupted]="Установка панели
 TRANSLATIONS_RU[restart_starting_panel]="Запуск основной панели..."
 TRANSLATIONS_RU[restart_starting_subscription]="Запуск страницы подписки..."
 TRANSLATIONS_RU[restart_success]="Панель успешно перезапущена"
+
+TRANSLATIONS_RU[update_panel_dir_not_found]="Ошибка: директория панели не найдена в /opt/remnawave!"
+TRANSLATIONS_RU[update_node_dir_not_found]="Ошибка: директория ноды не найдена в /opt/remnanode!"
+TRANSLATIONS_RU[update_install_first]="Пожалуйста, сначала установите компоненты."
+TRANSLATIONS_RU[update_compose_not_found]="Ошибка: docker-compose.yml не найден!"
+TRANSLATIONS_RU[update_installation_corrupted]="Установка может быть повреждена или неполная."
+TRANSLATIONS_RU[update_warning_title]="⚠️  ВАЖНО: Перед обновлением"
+TRANSLATIONS_RU[update_warning_backup]="• Убедитесь, что у вас есть резервные копии данных"
+TRANSLATIONS_RU[update_warning_changelog]="• Прочитайте changelog перед обновлением:"
+TRANSLATIONS_RU[update_warning_panel_releases]="  Панель: https://github.com/remnawave/panel/releases/"
+TRANSLATIONS_RU[update_warning_node_releases]="  Нода: https://hub.remna.st/changelog"
+TRANSLATIONS_RU[update_warning_downtime]="• Процесс обновления вызовет временную недоступность сервисов"
+TRANSLATIONS_RU[update_warning_confirm]="Хотите ли вы продолжить обновление?"
+TRANSLATIONS_RU[update_checking_images]="Проверка обновлений образов..."
+TRANSLATIONS_RU[update_pulling_images]="Загрузка последних образов..."
+TRANSLATIONS_RU[update_no_updates_available]="Обновления недоступны - все образы уже актуальны"
+TRANSLATIONS_RU[update_images_updated]="Новые образы загружены, выполняется перезапуск..."
+TRANSLATIONS_RU[update_pull_failed]="Не удалось загрузить образы"
+TRANSLATIONS_RU[update_stopping_services]="Остановка сервисов..."
+TRANSLATIONS_RU[update_starting_services]="Запуск обновленных сервисов..."
+TRANSLATIONS_RU[update_panel_success]="Панель успешно обновлена"
+TRANSLATIONS_RU[update_node_success]="Нода успешно обновлена"
+TRANSLATIONS_RU[update_all_success]="Панель и нода успешно обновлены"
+TRANSLATIONS_RU[update_no_restart_needed]="Перезапуск не требуется - сервисы уже используют последние версии"
+TRANSLATIONS_RU[update_cleaning_images]="Очистка неиспользуемых образов..."
+TRANSLATIONS_RU[update_cleanup_complete]="Очистка завершена"
+TRANSLATIONS_RU[update_cancelled]="Обновление отменено пользователем"
 
 TRANSLATIONS_RU[services_starting_containers]="Запуск контейнеров..."
 TRANSLATIONS_RU[services_installation_stopped]="Установка остановлена"
@@ -684,6 +786,34 @@ TRANSLATIONS_RU[selfsteal_installation_stopped]="Установка остано
 TRANSLATIONS_RU[selfsteal_domain_info]="• Домен:"
 TRANSLATIONS_RU[selfsteal_port_info]="• Порт:"
 TRANSLATIONS_RU[selfsteal_directory_info]="• Директория:"
+
+TRANSLATIONS_RU[warp_title]="Настройка WARP интеграции"
+TRANSLATIONS_RU[warp_checking_installation]="Проверка установки панели..."
+TRANSLATIONS_RU[warp_panel_not_found]="Установка панели не найдена"
+TRANSLATIONS_RU[warp_panel_not_running]="Панель не запущена"
+TRANSLATIONS_RU[warp_credentials_not_found]="Учетные данные панели не найдены"
+TRANSLATIONS_RU[warp_terms_title]="Условия использования Cloudflare WARP"
+TRANSLATIONS_RU[warp_terms_text]="Этот проект никак не связан с Cloudflare.\nПродолжая, вы соглашаетесь с Условиями использования Cloudflare:"
+TRANSLATIONS_RU[warp_terms_url]="https://www.cloudflare.com/application/terms/"
+TRANSLATIONS_RU[warp_terms_confirm]="Согласны ли вы с условиями и хотите продолжить?"
+TRANSLATIONS_RU[warp_terms_declined]="WARP интеграция отменена"
+TRANSLATIONS_RU[warp_downloading_wgcf]="Загрузка утилиты wgcf..."
+TRANSLATIONS_RU[warp_installing_wgcf]="Установка wgcf..."
+TRANSLATIONS_RU[warp_authenticating_panel]="Авторизация в панели..."
+TRANSLATIONS_RU[warp_registering_account]="Регистрация WARP аккаунта..."
+TRANSLATIONS_RU[warp_generating_config]="Генерация WireGuard конфигурации..."
+TRANSLATIONS_RU[warp_getting_current_config]="Получение текущей конфигурации XRAY..."
+TRANSLATIONS_RU[warp_updating_config]="Обновление конфигурации XRAY с WARP..."
+TRANSLATIONS_RU[warp_success]="WARP интеграция успешно добавлена!"
+TRANSLATIONS_RU[warp_success_details]="WARP outbound добавлен в вашу конфигурацию XRAY.\nСледующие домены теперь будут маршрутизироваться через WARP:\n- Сервисы Google (Gemini)\n- OpenAI\n- Spotify\n- Canva\n- ipinfo.io \n- Вы можете добавить больше доменов в панели изменив Xray конфиг."
+TRANSLATIONS_RU[warp_failed_download]="Не удалось загрузить wgcf"
+TRANSLATIONS_RU[warp_failed_install]="Не удалось установить wgcf"
+TRANSLATIONS_RU[warp_failed_register]="Не удалось зарегистрировать WARP аккаунт"
+TRANSLATIONS_RU[warp_failed_generate]="Не удалось сгенерировать WireGuard конфигурацию"
+TRANSLATIONS_RU[warp_failed_get_config]="Не удалось получить текущую конфигурацию XRAY"
+TRANSLATIONS_RU[warp_failed_update_config]="Не удалось обновить конфигурацию XRAY"
+TRANSLATIONS_RU[warp_failed_auth]="Не удалось авторизоваться в панели"
+TRANSLATIONS_RU[warp_already_configured]="WARP уже настроен в XRAY"
 
 # Including module: system.sh
 
@@ -2065,11 +2195,21 @@ collect_telegram_config() {
     if prompt_yes_no "$(t telegram_enable_notifications)"; then
         IS_TELEGRAM_NOTIFICATIONS_ENABLED=true
         TELEGRAM_BOT_TOKEN=$(prompt_input "$(t telegram_bot_token)" "$ORANGE")
-        TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "$(t telegram_users_chat_id)" "$ORANGE")
+
+        if prompt_yes_no "$(t telegram_enable_user_notifications)"; then
+            TELEGRAM_NOTIFY_USERS_CHAT_ID=$(prompt_input "$(t telegram_users_chat_id)" "$ORANGE")
+        else
+            TELEGRAM_NOTIFY_USERS_CHAT_ID=""
+        fi
+
         TELEGRAM_NOTIFY_NODES_CHAT_ID=$(prompt_input "$(t telegram_nodes_chat_id)" "$ORANGE")
 
         if prompt_yes_no "$(t telegram_use_topics)"; then
-            TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "$(t telegram_users_thread_id)" "$ORANGE")
+            if [ -n "$TELEGRAM_NOTIFY_USERS_CHAT_ID" ]; then
+                TELEGRAM_NOTIFY_USERS_THREAD_ID=$(prompt_input "$(t telegram_users_thread_id)" "$ORANGE")
+            else
+                TELEGRAM_NOTIFY_USERS_THREAD_ID=""
+            fi
             TELEGRAM_NOTIFY_NODES_THREAD_ID=$(prompt_input "$(t telegram_nodes_thread_id)" "$ORANGE")
         else
             TELEGRAM_NOTIFY_USERS_THREAD_ID=""
@@ -2789,6 +2929,686 @@ show_panel_credentials() {
     read -r
 }
 
+# Including module: update.sh
+
+
+check_images_updated() {
+    local compose_dir="$1"
+    local result_var="$2"
+
+    cd "$compose_dir"
+
+    local images_list=$(docker compose config --images 2>/dev/null)
+    if [ -z "$images_list" ]; then
+        eval "$result_var=error"
+        return
+    fi
+
+    local updates_found=false
+
+    while IFS= read -r image; do
+        if [ -n "$image" ]; then
+            local output=$(docker pull "$image" 2>&1)
+            if echo "$output" | grep -q "Downloaded newer image"; then
+                updates_found=true
+                break
+            fi
+        fi
+    done <<< "$images_list"
+
+    if [ "$updates_found" = true ]; then
+        eval "$result_var=updated"
+    else
+        eval "$result_var=no_updates"
+    fi
+}
+
+show_update_warning() {
+    local component_type="$1"  # "panel", "node", or "all"
+
+    echo
+    echo -e "${YELLOW}$(t update_warning_title)${NC}"
+    echo
+    echo -e "${YELLOW}$(t update_warning_backup)${NC}"
+    echo -e "${YELLOW}$(t update_warning_changelog)${NC}"
+
+    if [[ "$component_type" == "panel" || "$component_type" == "all" ]]; then
+        echo -e "${BLUE}$(t update_warning_panel_releases)${NC}"
+    fi
+    if [[ "$component_type" == "node" || "$component_type" == "all" ]]; then
+        echo -e "${BLUE}$(t update_warning_node_releases)${NC}"
+    fi
+
+    echo -e "${YELLOW}$(t update_warning_downtime)${NC}"
+    echo
+
+    if ! prompt_yes_no "$(t update_warning_confirm)" "$YELLOW"; then
+        show_info "$(t update_cancelled)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    return 0
+}
+
+update_panel_only() {
+    echo
+
+    if [ ! -d /opt/remnawave ]; then
+        show_error "$(t update_panel_dir_not_found)"
+        show_error "$(t update_install_first)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if [ ! -f /opt/remnawave/docker-compose.yml ]; then
+        show_error "$(t update_compose_not_found)"
+        show_error "$(t update_installation_corrupted)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    NODE_EXISTS=false
+    if [ -d /opt/remnanode ] && [ -f /opt/remnanode/docker-compose.yml ]; then
+        NODE_EXISTS=true
+    fi
+
+    if [ "$NODE_EXISTS" = true ]; then
+        if ! show_update_warning "all"; then
+            return 0
+        fi
+    else
+        if ! show_update_warning "panel"; then
+            return 0
+        fi
+    fi
+    
+    SUBSCRIPTION_PAGE_EXISTS=false
+    if [ -d /opt/remnawave/subscription-page ] && [ -f /opt/remnawave/subscription-page/docker-compose.yml ]; then
+        SUBSCRIPTION_PAGE_EXISTS=true
+    fi
+
+    local panel_updated=false
+    local subscription_updated=false
+    local node_updated=false
+    local any_updates=false
+
+    local panel_updated=false
+    local subscription_updated=false
+    local node_updated=false
+    local any_updates=false
+
+    show_info "$(t update_checking_images)" "$ORANGE"
+    local panel_result=""
+    check_images_updated "/opt/remnawave" panel_result &
+    local check_pid=$!
+    spinner $check_pid "$(t update_checking_images)"
+    wait $check_pid
+
+    if [ "$panel_result" = "updated" ]; then
+        panel_updated=true
+        any_updates=true
+    elif [ "$panel_result" = "error" ]; then
+        show_error "$(t update_pull_failed)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ]; then
+        local subscription_result=""
+        check_images_updated "/opt/remnawave/subscription-page" subscription_result &
+        local check_pid=$!
+        spinner $check_pid "$(t update_checking_images)"
+        wait $check_pid
+
+        if [ "$subscription_result" = "updated" ]; then
+            subscription_updated=true
+            any_updates=true
+        elif [ "$subscription_result" = "error" ]; then
+            show_error "$(t update_pull_failed)"
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 1
+        fi
+    fi
+
+    if [ "$NODE_EXISTS" = true ]; then
+        local node_result=""
+        check_images_updated "/opt/remnanode" node_result &
+        local check_pid=$!
+        spinner $check_pid "$(t update_checking_images)"
+        wait $check_pid
+
+        if [ "$node_result" = "updated" ]; then
+            node_updated=true
+            any_updates=true
+        elif [ "$node_result" = "error" ]; then
+            show_error "$(t update_pull_failed)"
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 1
+        fi
+    fi
+
+    if [ "$any_updates" = false ]; then
+        show_success "$(t update_no_updates_available)"
+        show_info "$(t update_no_restart_needed)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    show_info "$(t update_images_updated)"
+
+    show_info "$(t update_starting_services)" "$ORANGE"
+
+    if [ "$panel_updated" = true ]; then
+        cd /opt/remnawave && docker compose up -d --remove-orphans --force-recreate >/dev/null 2>&1 &
+        spinner $! "$(t update_starting_services)"
+        if [ $? -ne 0 ]; then
+            show_error "Failed to recreate panel services"
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 1
+        fi
+    fi
+
+    if [ "$SUBSCRIPTION_PAGE_EXISTS" = true ] && [ "$subscription_updated" = true ]; then
+        cd /opt/remnawave/subscription-page && docker compose up -d --remove-orphans --force-recreate >/dev/null 2>&1 &
+        spinner $! "$(t update_starting_services)"
+        if [ $? -ne 0 ]; then
+            show_error "Failed to recreate subscription page services"
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 1
+        fi
+    fi
+
+    if [ "$NODE_EXISTS" = true ] && [ "$node_updated" = true ]; then
+        cd /opt/remnanode && docker compose up -d --remove-orphans --force-recreate >/dev/null 2>&1 &
+        spinner $! "$(t update_starting_services)"
+        if [ $? -ne 0 ]; then
+            show_error "Failed to recreate node services"
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 1
+        fi
+    fi
+    
+    show_info "$(t update_cleaning_images)" "$ORANGE"
+    docker image prune -f >/dev/null 2>&1 &
+    spinner $! "$(t update_cleaning_images)"
+    
+    if [ "$NODE_EXISTS" = true ]; then
+        show_success "$(t update_all_success)"
+    else
+        show_success "$(t update_panel_success)"
+    fi
+    
+    show_info "$(t update_cleanup_complete)"
+    
+    echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+    read -r
+}
+
+update_node_only() {
+    echo
+
+    if [ ! -d /opt/remnanode ]; then
+        show_error "$(t update_node_dir_not_found)"
+        show_error "$(t update_install_first)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if [ ! -f /opt/remnanode/docker-compose.yml ]; then
+        show_error "$(t update_compose_not_found)"
+        show_error "$(t update_installation_corrupted)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! show_update_warning "node"; then
+        return 0
+    fi
+
+    show_info "$(t update_checking_images)" "$ORANGE"
+    local node_result=""
+    check_images_updated "/opt/remnanode" node_result &
+    local check_pid=$!
+    spinner $check_pid "$(t update_checking_images)"
+    wait $check_pid
+
+    if [ "$node_result" = "updated" ]; then
+        show_info "$(t update_images_updated)"
+    elif [ "$node_result" = "no_updates" ]; then
+        show_success "$(t update_no_updates_available)"
+        show_info "$(t update_no_restart_needed)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    else
+        show_error "$(t update_pull_failed)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    show_info "$(t update_starting_services)" "$ORANGE"
+    cd /opt/remnanode && docker compose up -d --remove-orphans --force-recreate >/dev/null 2>&1 &
+    spinner $! "$(t update_starting_services)"
+    if [ $? -ne 0 ]; then
+        show_error "Failed to recreate node services"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+    
+    show_info "$(t update_cleaning_images)" "$ORANGE"
+    docker image prune -f >/dev/null 2>&1 &
+    spinner $! "$(t update_cleaning_images)"
+    
+    show_success "$(t update_node_success)"
+    show_info "$(t update_cleanup_complete)"
+    
+    echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+    read -r
+}
+
+show_update_menu() {
+    clear
+    echo -e "${BOLD_GREEN}$(t update_menu_title)${NC}"
+    echo
+    echo -e "${YELLOW}$(t update_menu_panel_only)${NC}"
+    echo -e "${GREEN}1.${NC} $(t update_menu_panel_update)"
+    echo
+    echo -e "${YELLOW}$(t update_menu_node_only)${NC}"
+    echo -e "${GREEN}2.${NC} $(t update_menu_node_separate)"
+    echo
+    echo -e "${GREEN}0.${NC} $(t update_menu_back)"
+    echo
+    echo -ne "${BOLD_BLUE_MENU}$(t main_menu_select_option) ${NC}"
+}
+
+handle_update_menu() {
+    while true; do
+        show_update_menu
+        read choice
+
+        case $choice in
+        1)
+            update_panel_only
+            ;;
+        2)
+            update_node_only
+            ;;
+        0)
+            return
+            ;;
+        *)
+            clear
+            echo -e "${BOLD_RED}$(t error_invalid_choice)${NC}"
+            sleep 1
+            ;;
+        esac
+    done
+}
+
+# Including module: warp-integration.sh
+
+
+check_panel_installation() {
+    if [ ! -d /opt/remnawave ]; then
+        show_error "$(t warp_panel_not_found)"
+        echo -e "${YELLOW}$(t update_install_first)${NC}"
+        echo
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    if ! docker ps --format '{{.Names}}' | grep -q '^remnawave$'; then
+        show_error "$(t warp_panel_not_running)"
+        echo -e "${YELLOW}$(t cli_ensure_panel_running)${NC}"
+        echo
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    if [ ! -f /opt/remnawave/credentials.txt ]; then
+        show_error "$(t warp_credentials_not_found)"
+        echo
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+
+    return 0
+}
+
+extract_panel_credentials() {
+    local credentials_file="/opt/remnawave/credentials.txt"
+    
+    PANEL_USERNAME=$(grep "REMNAWAVE ADMIN USERNAME:" "$credentials_file" | cut -d':' -f2 | xargs)
+    PANEL_PASSWORD=$(grep "REMNAWAVE ADMIN PASSWORD:" "$credentials_file" | cut -d':' -f2 | xargs)
+    PANEL_DOMAIN=$(grep "PANEL URL:" "$credentials_file" | cut -d'/' -f3 | cut -d'?' -f1)
+    
+    if [ -z "$PANEL_USERNAME" ]; then
+        PANEL_USERNAME=$(grep "SUPERADMIN USERNAME:" "$credentials_file" | cut -d':' -f2 | xargs)
+        PANEL_PASSWORD=$(grep "SUPERADMIN PASSWORD:" "$credentials_file" | cut -d':' -f2 | xargs)
+    fi
+    
+    if [ -z "$PANEL_USERNAME" ] || [ -z "$PANEL_PASSWORD" ] || [ -z "$PANEL_DOMAIN" ]; then
+        show_error "$(t warp_failed_auth)"
+        return 1
+    fi
+    
+    return 0
+}
+
+authenticate_panel() {
+    local panel_url="127.0.0.1:3000"
+    local api_url="http://${panel_url}/api/auth/login"
+    
+    local temp_file=$(mktemp)
+    local login_data="{\"username\":\"$PANEL_USERNAME\",\"password\":\"$PANEL_PASSWORD\"}"
+    
+    make_api_request "POST" "$api_url" "" "$PANEL_DOMAIN" "$login_data" >"$temp_file" 2>&1 &
+    spinner $! "$(t warp_authenticating_panel)"
+    local response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$response" ]; then
+        show_error "$(t warp_failed_auth)"
+        return 1
+    fi
+    
+    if [[ "$response" == *"accessToken"* ]]; then
+        PANEL_TOKEN=$(echo "$response" | jq -r '.response.accessToken')
+        if [ -z "$PANEL_TOKEN" ] || [ "$PANEL_TOKEN" = "null" ]; then
+            show_error "$(t warp_failed_auth)"
+            return 1
+        fi
+        return 0
+    else
+        show_error "$(t warp_failed_auth)"
+        return 1
+    fi
+}
+
+show_warp_terms() {
+    clear
+    echo -e "${BOLD_GREEN}$(t warp_terms_title)${NC}"
+    echo
+    echo -e "${YELLOW}$(t warp_terms_text)${NC}"
+    echo -e "${BLUE}$(t warp_terms_url)${NC}"
+    echo
+    
+    if ! prompt_yes_no "$(t warp_terms_confirm)" "$YELLOW"; then
+        show_info "$(t warp_terms_declined)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+    
+    return 0
+}
+
+install_wgcf() {
+    local wgcf_version="2.2.26"
+    local wgcf_arch="linux_amd64"
+    local wgcf_url="https://github.com/ViRb3/wgcf/releases/download/v${wgcf_version}/wgcf_${wgcf_version}_${wgcf_arch}"
+    local temp_file=$(mktemp)
+    
+    (wget -q "$wgcf_url" -O "$temp_file") &
+    spinner $! "$(t warp_downloading_wgcf)"
+    
+    if [ $? -ne 0 ] || [ ! -s "$temp_file" ]; then
+        rm -f "$temp_file"
+        show_error "$(t warp_failed_download)"
+        return 1
+    fi
+    
+    (sudo mv "$temp_file" /usr/bin/wgcf && sudo chmod +x /usr/bin/wgcf) &
+    spinner $! "$(t warp_installing_wgcf)"
+    
+    if [ $? -ne 0 ]; then
+        show_error "$(t warp_failed_install)"
+        return 1
+    fi
+    
+    return 0
+}
+
+generate_warp_config() {
+    local temp_dir=$(mktemp -d)
+    cd "$temp_dir"
+    
+    (echo "Yes" | wgcf register) &
+    spinner $! "$(t warp_registering_account)"
+    
+    if [ $? -ne 0 ] || [ ! -f "wgcf-account.toml" ]; then
+        cd - >/dev/null
+        rm -rf "$temp_dir"
+        show_error "$(t warp_failed_register)"
+        return 1
+    fi
+    
+    (wgcf generate) &
+    spinner $! "$(t warp_generating_config)"
+    
+    if [ $? -ne 0 ] || [ ! -f "wgcf-profile.conf" ]; then
+        cd - >/dev/null
+        rm -rf "$temp_dir"
+        show_error "$(t warp_failed_generate)"
+        return 1
+    fi
+    
+    WARP_PRIVATE_KEY=$(grep "PrivateKey" wgcf-profile.conf | cut -d'=' -f2 | xargs)
+    WARP_PUBLIC_KEY=$(grep "PublicKey" wgcf-profile.conf | cut -d'=' -f2 | xargs)
+    
+    cd - >/dev/null
+    rm -rf "$temp_dir"
+    
+    if [ -z "$WARP_PRIVATE_KEY" ] || [ -z "$WARP_PUBLIC_KEY" ]; then
+        show_error "$(t warp_failed_generate)"
+        return 1
+    fi
+    
+    return 0
+}
+
+get_current_xray_config() {
+    local panel_url="127.0.0.1:3000"
+    local temp_file=$(mktemp)
+    
+    make_api_request "GET" "http://$panel_url/api/xray" "$PANEL_TOKEN" "$PANEL_DOMAIN" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t warp_getting_current_config)"
+    local response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$response" ]; then
+        show_error "$(t warp_failed_get_config)"
+        return 1
+    fi
+    
+    CURRENT_CONFIG=$(echo "$response" | jq -r '.response.config')
+    if [ -z "$CURRENT_CONFIG" ] || [ "$CURRENT_CONFIG" = "null" ]; then
+        show_error "$(t warp_failed_get_config)"
+        return 1
+    fi
+    
+    return 0
+}
+
+check_warp_already_configured() {
+    if echo "$CURRENT_CONFIG" | jq -e '.outbounds[] | select(.tag == "warp")' >/dev/null 2>&1; then
+        show_warning "$(t warp_already_configured)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 1
+    fi
+    return 0
+}
+
+add_warp_outbound() {
+    local warp_outbound=$(cat <<EOF
+{
+  "tag": "warp",
+  "protocol": "wireguard",
+  "settings": {
+    "secretKey": "$WARP_PRIVATE_KEY",
+    "DNS": "1.1.1.1",
+    "kernelMode": false,
+    "address": ["172.16.0.2/32"],
+    "peers": [
+      {
+        "publicKey": "$WARP_PUBLIC_KEY",
+        "endpoint": "engage.cloudflareclient.com:2408"
+      }
+    ]
+  }
+}
+EOF
+)
+
+    UPDATED_CONFIG=$(echo "$CURRENT_CONFIG" | jq --argjson warp_outbound "$warp_outbound" '.outbounds += [$warp_outbound]')
+
+    if [ $? -ne 0 ]; then
+        show_error "$(t warp_failed_update_config)"
+        return 1
+    fi
+
+    return 0
+}
+
+add_warp_routing() {
+    local warp_routing_rule=$(cat <<EOF
+{
+  "outboundTag": "warp",
+  "domain": [
+    "geosite:google-gemini",
+    "openai.com",
+    "ipinfo.io",
+    "spotify.com",
+    "canva.com"
+  ],
+  "type": "field"
+}
+EOF
+)
+
+    UPDATED_CONFIG=$(echo "$UPDATED_CONFIG" | jq --argjson warp_rule "$warp_routing_rule" '.routing.rules += [$warp_rule]')
+
+    if [ $? -ne 0 ]; then
+        show_error "$(t warp_failed_update_config)"
+        return 1
+    fi
+
+    return 0
+}
+
+update_xray_with_warp() {
+    local panel_url="127.0.0.1:3000"
+    local config_file=$(mktemp)
+
+    echo "$UPDATED_CONFIG" > "$config_file"
+
+    if ! update_xray_config "$panel_url" "$PANEL_TOKEN" "$PANEL_DOMAIN" "$config_file"; then
+        rm -f "$config_file"
+        show_error "$(t warp_failed_update_config)"
+        return 1
+    fi
+
+    rm -f "$config_file"
+    return 0
+}
+
+add_warp_integration() {
+    clear
+    echo -e "${BOLD_GREEN}$(t warp_title)${NC}"
+    echo
+
+    show_info "$(t warp_checking_installation)" "$ORANGE"
+    if ! check_panel_installation; then
+        return 0
+    fi
+
+    if ! show_warp_terms; then
+        return 0
+    fi
+
+    if ! extract_panel_credentials; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! authenticate_panel; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! get_current_xray_config; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! check_warp_already_configured; then
+        return 0
+    fi
+
+    if ! command -v wgcf &> /dev/null; then
+        if ! install_wgcf; then
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 0
+        fi
+    fi
+
+    if ! generate_warp_config; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! add_warp_outbound; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    if ! add_warp_routing; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    show_info "$(t warp_updating_config)" "$ORANGE"
+    if ! update_xray_with_warp; then
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+
+    echo
+    show_success "$(t warp_success)"
+    echo
+    echo -e "${GREEN}$(t warp_success_details)${NC}"
+    echo
+    echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+    read -r
+}
+
 # Including module: full-auth.sh
 
 
@@ -2899,8 +3719,8 @@ save_credentials_cookie_auth() {
   CREDENTIALS_FILE="$REMNAWAVE_DIR/credentials.txt"
   echo "PANEL URL: https://$PANEL_DOMAIN?caddy=$PANEL_SECRET_KEY" >>"$CREDENTIALS_FILE"
   echo >>"$CREDENTIALS_FILE"
-  echo "SUPERADMIN USERNAME: $SUPERADMIN_USERNAME" >>"$CREDENTIALS_FILE"
-  echo "SUPERADMIN PASSWORD: $SUPERADMIN_PASSWORD" >>"$CREDENTIALS_FILE"
+  echo "REMNAWAVE ADMIN USERNAME: $SUPERADMIN_USERNAME" >>"$CREDENTIALS_FILE"
+  echo "REMNAWAVE ADMIN PASSWORD: $SUPERADMIN_PASSWORD" >>"$CREDENTIALS_FILE"
 
   chmod 600 "$CREDENTIALS_FILE"
 }
@@ -4224,12 +5044,14 @@ show_main_menu() {
     echo
     echo -e "${GREEN}1.${NC} $(t main_menu_install_components)"
     echo
-    echo -e "${GREEN}2.${NC} $(t main_menu_restart_panel)"
-    echo -e "${GREEN}3.${NC} $(t main_menu_remove_panel)"
-    echo -e "${GREEN}4.${NC} $(t main_menu_rescue_cli)"
-    echo -e "${GREEN}5.${NC} $(t main_menu_show_credentials)"
+    echo -e "${GREEN}2.${NC} $(t main_menu_update_components)"
+    echo -e "${GREEN}3.${NC} $(t main_menu_restart_panel)"
+    echo -e "${GREEN}4.${NC} $(t main_menu_remove_panel)"
+    echo -e "${GREEN}5.${NC} $(t main_menu_rescue_cli)"
+    echo -e "${GREEN}6.${NC} $(t main_menu_show_credentials)"
     echo
-    echo -e "${GREEN}6.${NC} $(get_bbr_menu_text)"
+    echo -e "${GREEN}7.${NC} $(get_bbr_menu_text)"
+    echo -e "${GREEN}8.${NC} $(t main_menu_warp_integration)"
     echo
     echo -e "${GREEN}0.${NC} $(t main_menu_exit)"
     echo
@@ -4299,19 +5121,25 @@ main() {
             handle_installation_menu
             ;;
         2)
-            restart_panel
+            handle_update_menu
             ;;
         3)
-            remove_previous_installation true
+            restart_panel
             ;;
         4)
-            run_remnawave_cli
+            remove_previous_installation true
             ;;
         5)
-            show_panel_credentials
+            run_remnawave_cli
             ;;
         6)
+            show_panel_credentials
+            ;;
+        7)
             toggle_bbr
+            ;;
+        8)
+            add_warp_integration
             ;;
         0)
             echo "$(t exiting)"
