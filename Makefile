@@ -29,6 +29,7 @@ MODULES = $(LIB_DIR)/constants.sh \
           $(LIB_DIR)/validation.sh \
           $(LIB_DIR)/misc.sh \
           $(LIB_DIR)/vless.sh \
+          $(LIB_DIR)/generate-selfsteal.sh \
 					$(MODULES_DIR)/tools/run-cli.sh \
 					$(MODULES_DIR)/tools/enable-bbr.sh \
 					$(MODULES_DIR)/tools/show-credentials.sh \
