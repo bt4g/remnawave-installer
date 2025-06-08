@@ -183,24 +183,7 @@ volumes:
         name: remnawave-caddy-ssl-data
 EOF
 
-	# Creating Makefile
-	create_makefile "$REMNAWAVE_DIR/caddy"
-
-	mkdir -p $REMNAWAVE_DIR/caddy/html/assets
-
-	# Start downloading files in the background with output redirection
-	(
-		# Download index.html
-		curl -s -o ./html/index.html https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/index.html
-
-		# Download assets files
-		curl -s -o ./html/assets/index-BilmB03J.css https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-BilmB03J.css
-		curl -s -o ./html/assets/index-CRT2NuFx.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-CRT2NuFx.js
-		curl -s -o ./html/assets/index-legacy-D44yECni.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/index-legacy-D44yECni.js
-		curl -s -o ./html/assets/polyfills-legacy-B97CwC2N.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/polyfills-legacy-B97CwC2N.js
-		curl -s -o ./html/assets/vendor-DHVSyNSs.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/vendor-DHVSyNSs.js
-		curl -s -o ./html/assets/vendor-legacy-Cq-AagHX.js https://raw.githubusercontent.com/xxphantom/caddy-for-remnawave/refs/heads/main/html/assets/vendor-legacy-Cq-AagHX.js
-	) >/dev/null 2>&1 &
-
-	download_pid=$!
+    # Creating Makefile
+    create_makefile "$REMNAWAVE_DIR/caddy"
+    create_static_site "$REMNAWAVE_DIR/caddy"
 }

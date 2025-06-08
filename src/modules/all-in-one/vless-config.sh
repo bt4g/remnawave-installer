@@ -19,7 +19,7 @@ configure_vless_all_in_one() {
     local private_key=$(echo "$keys_result" | cut -d':' -f1)
     
     # Generate Xray configuration
-    generate_xray_config "$config_file" "$PANEL_DOMAIN" "$CADDY_LOCAL_PORT" "$private_key"
+    generate_xray_config "$config_file" "$SELF_STEAL_DOMAIN" "$CADDY_LOCAL_PORT" "$private_key"
     
     # Update Xray configuration on panel
     if ! update_xray_config "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$config_file"; then
@@ -38,7 +38,7 @@ configure_vless_all_in_one() {
     fi
     
     # Create host entry
-    if ! create_host "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$inbound_uuid" "$PANEL_DOMAIN"; then
+    if ! create_host "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$inbound_uuid" "$SELF_STEAL_DOMAIN"; then
         return 1
     fi
 

@@ -44,7 +44,7 @@ https://download.docker.com/linux/${distro} ${codename} stable" |
     local base_deps=(
         ca-certificates gnupg curl jq make dnsutils ufw unattended-upgrades
         docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-        lsb-release
+        lsb-release coreutils
     )
     local all_deps=()
     for pkg in "${base_deps[@]}" "${extra_deps[@]}"; do
