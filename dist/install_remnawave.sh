@@ -52,7 +52,7 @@ GREEN=$(tput setaf 2)
 YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
-VERSION="1.6.0"
+VERSION="1.6.2"
 
 if [ "$REMNAWAVE_BRANCH" = "dev" ]; then
     REMNAWAVE_BACKEND_TAG="dev"
@@ -272,6 +272,28 @@ TRANSLATIONS_EN[system_distro_not_supported]="Distribution"
 TRANSLATIONS_EN[system_dependencies_success]="All dependencies installed and configured."
 TRANSLATIONS_EN[system_created_directory]="Created directory:"
 TRANSLATIONS_EN[system_installation_cancelled]="Installation cancelled. Returning to main menu."
+TRANSLATIONS_EN[system_distro_not_supported]="Distribution not supported:"
+TRANSLATIONS_EN[docker_already_installed]="Modern Docker is already installed and up-to-date:"
+TRANSLATIONS_EN[docker_check_failed]="Modern Docker installation not found. Proceeding with a full (re)installation."
+TRANSLATIONS_EN[removing_old_docker]="Removing old or conflicting Docker installation..."
+TRANSLATIONS_EN[old_docker_removed]="Old Docker installation successfully removed."
+TRANSLATIONS_EN[deleting_docker_data]="WARNING: Deleting all existing Docker data (images, containers, volumes)..."
+TRANSLATIONS_EN[spinner_updating_apt_cache]="Updating package cache (apt)..."
+TRANSLATIONS_EN[spinner_installing_packages]="Installing required packages:"
+TRANSLATIONS_EN[packages_already_installed]="Required packages are already installed."
+TRANSLATIONS_EN[installing_docker]="Installing Docker Engine..."
+TRANSLATIONS_EN[docker_installed]="Docker Engine has been successfully installed."
+TRANSLATIONS_EN[spinner_starting_docker]="Starting Docker service..."
+TRANSLATIONS_EN[spinner_docker_already_running]="Docker service is already running."
+TRANSLATIONS_EN[spinner_adding_user_to_group]="Adding current user to the 'docker' group..."
+TRANSLATIONS_EN[relogin_required]="You need to log out and log back in for group changes to take effect."
+TRANSLATIONS_EN[spinner_firewall_already_set]="Firewall rules are already configured."
+TRANSLATIONS_EN[spinner_configuring_firewall]="Configuring firewall (UFW)..."
+TRANSLATIONS_EN[ufw_ports_opened]="Firewall configured. Opened TCP ports:"
+TRANSLATIONS_EN[spinner_auto_updates_already_set]="Automatic security updates are already enabled."
+TRANSLATIONS_EN[spinner_setting_auto_updates]="Enabling automatic security updates..."
+TRANSLATIONS_EN[auto_updates_enabled]="Automatic security updates have been enabled."
+TRANSLATIONS_EN[all_dependencies_installed]="All dependencies and basic setup are complete."
 
 TRANSLATIONS_EN[prompt_press_any_key]="Press any key to continue..."
 
@@ -292,7 +314,6 @@ TRANSLATIONS_EN[spinner_updating_apt_cache]="Updating APT cache"
 TRANSLATIONS_EN[spinner_installing_packages]="Installing packages:"
 TRANSLATIONS_EN[spinner_starting_docker]="Starting Docker daemon"
 TRANSLATIONS_EN[spinner_docker_already_running]="Docker daemon already running"
-TRANSLATIONS_EN[spinner_adding_user_to_group]="Adding user to group"
 TRANSLATIONS_EN[spinner_firewall_already_set]="Firewall already set"
 TRANSLATIONS_EN[spinner_configuring_firewall]="Configuring firewall"
 TRANSLATIONS_EN[spinner_auto_updates_already_set]="Auto-updates already set"
@@ -631,6 +652,28 @@ TRANSLATIONS_RU[system_distro_not_supported]="Дистрибутив"
 TRANSLATIONS_RU[system_dependencies_success]="Все зависимости установлены и настроены."
 TRANSLATIONS_RU[system_created_directory]="Создана директория:"
 TRANSLATIONS_RU[system_installation_cancelled]="Установка отменена. Возврат в главное меню."
+TRANSLATIONS_RU[system_distro_not_supported]="Дистрибутив не поддерживается:"
+TRANSLATIONS_RU[docker_already_installed]="Современная версия Docker уже установлена:"
+TRANSLATIONS_RU[docker_check_failed]="Современная версия Docker не найдена. Выполняется полная (пере)установка."
+TRANSLATIONS_RU[removing_old_docker]="Удаление старой или конфликтующей версии Docker..."
+TRANSLATIONS_RU[old_docker_removed]="Старая версия Docker успешно удалена."
+TRANSLATIONS_RU[deleting_docker_data]="ВНИМАНИЕ: Удаление всех существующих данных Docker (образы, контейнеры, тома)..."
+TRANSLATIONS_RU[spinner_updating_apt_cache]="Обновление кэша пакетов (apt)..."
+TRANSLATIONS_RU[spinner_installing_packages]="Установка необходимых пакетов:"
+TRANSLATIONS_RU[packages_already_installed]="Необходимые пакеты уже установлены."
+TRANSLATIONS_RU[installing_docker]="Установка Docker Engine..."
+TRANSLATIONS_RU[docker_installed]="Docker Engine успешно установлен."
+TRANSLATIONS_RU[spinner_starting_docker]="Запуск службы Docker..."
+TRANSLATIONS_RU[spinner_docker_already_running]="Служба Docker уже запущена."
+TRANSLATIONS_RU[spinner_adding_user_to_group]="Добавление текущего пользователя в группу 'docker'..."
+TRANSLATIONS_RU[relogin_required]="Необходимо выйти из системы и войти снова, чтобы изменения вступили в силу."
+TRANSLATIONS_RU[spinner_firewall_already_set]="Правила брандмауэра уже настроены."
+TRANSLATIONS_RU[spinner_configuring_firewall]="Настройка брандмауэра (UFW)..."
+TRANSLATIONS_RU[ufw_ports_opened]="Брандмауэр настроен. Открыты TCP порты:"
+TRANSLATIONS_RU[spinner_auto_updates_already_set]="Автоматические обновления безопасности уже включены."
+TRANSLATIONS_RU[spinner_setting_auto_updates]="Включение автоматических обновлений безопасности..."
+TRANSLATIONS_RU[auto_updates_enabled]="Автоматические обновления безопасности включены."
+TRANSLATIONS_RU[all_dependencies_installed]="Все зависимости и базовая настройка завершены."
 
 TRANSLATIONS_RU[prompt_press_any_key]="Нажмите любую клавишу для продолжения..."
 
@@ -651,7 +694,6 @@ TRANSLATIONS_RU[spinner_updating_apt_cache]="Обновление кэша APT"
 TRANSLATIONS_RU[spinner_installing_packages]="Установка пакетов:"
 TRANSLATIONS_RU[spinner_starting_docker]="Запуск демона Docker"
 TRANSLATIONS_RU[spinner_docker_already_running]="Демон Docker уже запущен"
-TRANSLATIONS_RU[spinner_adding_user_to_group]="Добавление пользователя в группу"
 TRANSLATIONS_RU[spinner_firewall_already_set]="Брандмауэр уже настроен"
 TRANSLATIONS_RU[spinner_configuring_firewall]="Настройка брандмауэра"
 TRANSLATIONS_RU[spinner_auto_updates_already_set]="Автообновления уже настроены"
@@ -825,110 +867,127 @@ install_dependencies() {
     local extra_deps=("$@")
 
     if ! command -v lsb_release &>/dev/null; then
-        sudo apt-get update -qq >/dev/null
-        sudo apt-get install -y --no-install-recommends lsb-release -qq >/dev/null
+        show_info "Installing lsb-release..."
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends lsb-release
     fi
+    local distro
     distro=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
+    local codename
     codename=$(lsb_release -cs)
-
     if [[ "$distro" != "ubuntu" && "$distro" != "debian" ]]; then
-        echo "❌  $(t system_distro_not_supported) $distro." >&2
+        show_error "$(t system_distro_not_supported) $distro"
         exit 1
     fi
 
-    if ! grep -Rq '^deb .*\bdocker\.com/linux' /etc/apt/sources.list{,.d/*} 2>/dev/null; then
-        {
-            sudo install -m0755 -d /etc/apt/keyrings
-            curl -fsSL "https://download.docker.com/linux/${distro}/gpg" |
-                sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-https://download.docker.com/linux/${distro} ${codename} stable" |
-                sudo tee /etc/apt/sources.list.d/docker-stable.list >/dev/null
-        } >/dev/null 2>&1
+    local docker_ready=false
+    if command -v docker &>/dev/null && docker info &>/dev/null && docker compose version &>/dev/null; then
+        show_success "$(t docker_already_installed) $(docker --version)"
+        docker_ready=true
     fi
 
-    (sudo apt-get update -qq >/dev/null 2>&1) &
-    spinner $! "$(t spinner_updating_apt_cache)"
+    if ! $docker_ready; then
+        show_info "$(t removing_old_docker)"
 
-    local base_deps=(
-        ca-certificates gnupg curl jq make dnsutils ufw unattended-upgrades
-        docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-        lsb-release coreutils
-    )
-    local all_deps=()
-    for pkg in "${base_deps[@]}" "${extra_deps[@]}"; do
-        [[ " ${all_deps[*]} " != *" $pkg "* ]] && all_deps+=("$pkg")
+        local bad_pkgs=(
+            docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc
+            docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        )
+        sudo apt-get remove -y --purge "${bad_pkgs[@]}" || true
+        sudo apt-get autoremove -y || true
+
+        show_success "$(t old_docker_removed)"
+    fi
+
+    local base_deps=(ca-certificates curl gnupg jq make dnsutils ufw unattended-upgrades lsb-release coreutils)
+    for pkg in "${extra_deps[@]}"; do
+        [[ " ${base_deps[*]} " != *" $pkg "* ]] && base_deps+=("$pkg")
     done
 
+    show_info "$(t spinner_updating_apt_cache)"
+    sudo apt-get update
+
     local missing=()
-    for dep in "${all_deps[@]}"; do
-        dpkg -s "$dep" &>/dev/null || missing+=("$dep")
+    for pkg in "${base_deps[@]}"; do
+        dpkg -s "$pkg" &>/dev/null || missing+=("$pkg")
     done
 
     if ((${#missing[@]})); then
-        (sudo apt-get install -y --no-install-recommends "${missing[@]}" -qq >/dev/null 2>&1) &
-        spinner $! "$(t spinner_installing_packages) ${#missing[@]}"
+        local missing_str="${missing[*]}"
+        show_info "$(t spinner_installing_packages) $missing_str"
+        sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get -y install --no-install-recommends "${missing[@]}"
+        show_success "$(t spinner_installing_packages) $missing_str"
+    else
+        show_info "$(t packages_already_installed)"
+    fi
+
+    if ! $docker_ready; then
+        show_info "$(t installing_docker)"
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL "https://download.docker.com/linux/${distro}/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${distro} ${codename} stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+
+        show_info "$(t spinner_updating_apt_cache)"
+        sudo apt-get update
+
+        local docker_pkgs=(docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin)
+        show_info "$(t spinner_installing_packages) ${docker_pkgs[*]}"
+        sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get -y install "${docker_pkgs[@]}"
+        show_success "$(t docker_installed)"
     fi
 
     if ! systemctl is-active --quiet docker; then
         (sudo systemctl enable --now docker >/dev/null 2>&1) &
         spinner $! "$(t spinner_starting_docker)"
     else
-        (sleep 0.1) &
+        (sleep 0.2) &
         spinner $! "$(t spinner_docker_already_running)"
     fi
 
-    if ! id -nG "$USER" | grep -qw docker; then
-        (sudo usermod -aG docker "$USER" >/dev/null 2>&1) &
-        spinner $! "$(t spinner_adding_user_to_group)"
+    if dpkg -s ufw &>/dev/null; then
+        local ssh_port=$(grep -Ei '^\s*Port\s+' /etc/ssh/sshd_config | awk '{print $2}' | head -1)
+        ssh_port=${ssh_port:-22}
+
+        if ufw status | head -1 | grep -q "Status: active" &&
+           ufw status | grep -qw "${ssh_port}/tcp" &&
+           ufw status | grep -qw "443/tcp" &&
+           ufw status | grep -qw "80/tcp"; then
+            (sleep 0.2) &
+            spinner $! "$(t spinner_firewall_already_set)"
+        else
+            (
+                sudo ufw --force reset
+                sudo ufw default deny incoming
+                sudo ufw allow "${ssh_port}/tcp"
+                sudo ufw allow 80/tcp
+                sudo ufw allow 443/tcp
+                sudo ufw --force enable
+            ) >/dev/null 2>&1 &
+            spinner $! "$(t spinner_configuring_firewall)"
+            show_success "$(t ufw_ports_opened) ${ssh_port},80,443"
+        fi
     fi
 
-    ssh_port=$(grep -Ei '^\s*Port\s+' /etc/ssh/sshd_config | awk '{print $2}' | head -1)
-    ssh_port=${ssh_port:-22}
-
-    if dpkg -s ufw &>/dev/null &&
-        ufw status | head -1 | grep -q "Status: active" &&
-        ufw status verbose | grep -q "Default: deny (incoming)" &&
-        ufw status | grep -qw "${ssh_port}/tcp" &&
-        ufw status | grep -qw "443/tcp" &&
-        ufw status | grep -qw "80/tcp"; then
-        (sleep 0.2) &
-        spinner $! "$(t spinner_firewall_already_set)"
-    else
-        (
-            sudo ufw --force reset
-            sudo ufw default deny incoming
-            sudo ufw allow "${ssh_port}/tcp"
-            sudo ufw allow 443/tcp
-            sudo ufw allow 80/tcp
-            sudo ufw --force enable
-        ) >/dev/null 2>&1 &
-        spinner $! "$(t spinner_configuring_firewall)"
+    if dpkg -s unattended-upgrades &>/dev/null; then
+        if systemctl is-enabled --quiet unattended-upgrades && systemctl is-active --quiet unattended-upgrades; then
+            (sleep 0.2) &
+            spinner $! "$(t spinner_auto_updates_already_set)"
+        else
+            (
+                echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo debconf-set-selections
+                sudo dpkg-reconfigure -f noninteractive unattended-upgrades 2>/dev/null || true
+                sudo sed -i '/^Unattended-Upgrade::SyslogEnable/ d' /etc/apt/apt.conf.d/50unattended-upgrades
+                echo 'Unattended-Upgrade::SyslogEnable "true";' | sudo tee -a /etc/apt/apt.conf.d/50unattended-upgrades >/dev/null
+                sudo systemctl restart unattended-upgrades || true
+            ) >/dev/null 2>&1 &
+            spinner $! "$(t spinner_setting_auto_updates)"
+            show_success "$(t auto_updates_enabled)"
+        fi
     fi
 
-    if dpkg -s unattended-upgrades &>/dev/null &&
-        systemctl is-enabled --quiet unattended-upgrades &&
-        systemctl is-active --quiet unattended-upgrades &&
-        grep -q '^Unattended-Upgrade::SyslogEnable.*true' \
-            /etc/apt/apt.conf.d/50unattended-upgrades 2>/dev/null; then
-        (sleep 0.2) & # визуальный «фейковый» процесс
-        spinner $! "$(t spinner_auto_updates_already_set)"
-    else
-        (
-            echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true |
-                sudo debconf-set-selections
-            sudo dpkg-reconfigure -f noninteractive unattended-upgrades
-            sudo sed -i '/^Unattended-Upgrade::SyslogEnable/ d' \
-                /etc/apt/apt.conf.d/50unattended-upgrades
-            echo 'Unattended-Upgrade::SyslogEnable "true";' |
-                sudo tee -a /etc/apt/apt.conf.d/50unattended-upgrades >/dev/null
-            sudo systemctl restart unattended-upgrades
-        ) >/dev/null 2>&1 &
-        spinner $! "$(t spinner_setting_auto_updates)"
-    fi
-
-    echo
-    show_success "$(t system_dependencies_success)"
+    show_success "$(t all_dependencies_installed)"
 }
 
 create_dir() {
@@ -2527,32 +2586,27 @@ simple_read_domain_or_ip() {
     local result=""
     local attempts=0
     local max_attempts=10
-
     while [ $attempts -lt $max_attempts ]; do
-        local prompt_formatted_text=""
         if [ -n "$default_value" ]; then
-            prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
+            echo -ne "${ORANGE}${prompt} [$default_value]: ${NC}" >&2
         else
-            prompt_formatted_text="${ORANGE}${prompt}:${NC}"
+            echo -ne "${ORANGE}${prompt}: ${NC}" >&2
         fi
-
-        read -p "$prompt_formatted_text" input
+        read input
+        echo >&2
 
         if [ -z "$input" ] && [ -n "$default_value" ]; then
             result="$default_value"
             break
         fi
-
         if [ -z "$input" ]; then
             echo -e "${BOLD_RED}$(t validation_input_empty)${NC}" >&2
             ((attempts++))
             continue
         fi
-
         if [ "$validation_type" = "ip_only" ]; then
             result=$(validate_ip "$input")
             local status=$?
-
             if [ $status -eq 0 ]; then
                 break
             else
@@ -2561,7 +2615,6 @@ simple_read_domain_or_ip() {
         elif [ "$validation_type" = "domain_only" ]; then
             result=$(validate_domain_name "$input")
             local status=$?
-
             if [ $status -eq 0 ]; then
                 break
             else
@@ -2571,7 +2624,6 @@ simple_read_domain_or_ip() {
         else
             result=$(validate_domain "$input")
             local status=$?
-
             if [ $status -eq 0 ]; then
                 break
             else
@@ -2580,10 +2632,8 @@ simple_read_domain_or_ip() {
                 echo -e "${BOLD_RED}$(t validation_ip_format)${NC}" >&2
             fi
         fi
-
         ((attempts++))
     done
-
     if [ $attempts -eq $max_attempts ]; then
         if [ -n "$default_value" ]; then
             echo -e "${BOLD_RED}$(t validation_max_attempts_default) $default_value${NC}" >&2
@@ -2594,8 +2644,6 @@ simple_read_domain_or_ip() {
             return 1
         fi
     fi
-
-    echo >&2
     echo "$result"
 }
 
