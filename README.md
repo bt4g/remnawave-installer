@@ -149,17 +149,34 @@ The script supports additional parameters to control which versions of component
 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/install.sh)" @ --lang=en --panel-branch=dev
 ```
 
+**Use specific version of Remnawave (e.g., 1.65):**
+
+```bash
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/install.sh)" @ --lang=en --panel-branch=1.65
+```
+
 **Use development script and Remnawave version:**
 
 ```bash
 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/install.sh)" @ --lang=en --panel-branch=dev --installer-branch=dev
 ```
 
+**Reinstall while preserving certificates:**
+
+```bash
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/install.sh)" @ --lang=en --keep-caddy-data
+```
+
 **Available parameters:**
 
 - `--lang=en|ru` - Interface language
-- `--panel-branch=main|dev` - Remnawave backend and node Docker image versions
+- `--panel-branch=main|dev|alpha|X.Y[.Z]` - Remnawave backend and node Docker image versions
+  - `main` - latest stable version
+  - `dev` - development version
+  - `alpha` - alpha testing version (backend only, node will use dev)
+  - `X.Y[.Z]` - specific version number (e.g., 1.65, 2.0.1)
 - `--installer-branch=main|dev` - Installer script branch (affects download URL)
+- `--keep-caddy-data` - Preserve Caddy data (certificates) during reinstallation
 
 ---
 

@@ -38,13 +38,21 @@ generate_xray_config() {
   cat >"$config_file" <<EOL
 {
   "log": {
-    "loglevel": "debug"
+    "loglevel": "warning"
+  },
+  "dns": {
+    "servers": [
+      {
+        "address": "https://dns.google/dns-query",
+        "skipFallback": false
+      }
+    ],
+    "queryStrategy": "ForceIPv4"
   },
   "inbounds": [
     {
-      "tag": "VLESS TCP REALITY",
+      "tag": "VLESS",
       "port": 443,
-      "listen": "0.0.0.0",
       "protocol": "vless",
       "settings": {
         "clients": [],
@@ -70,7 +78,7 @@ generate_xray_config() {
           ],
           "privateKey": "$private_key",
           "serverNames": [
-              "$self_steal_domain"
+            "$self_steal_domain"
           ]
         }
       }
@@ -93,13 +101,6 @@ generate_xray_config() {
           "geoip:private"
         ],
         "type": "field",
-        "outboundTag": "BLOCK"
-      },
-      {
-        "type": "field",
-        "domain": [
-          "geosite:private"
-        ],
         "outboundTag": "BLOCK"
       },
       {

@@ -7,6 +7,7 @@
 LANG_CODE="${LANG_CODE:-en}"
 REMNAWAVE_BRANCH="${REMNAWAVE_BRANCH:-main}"
 INSTALLER_BRANCH="${INSTALLER_BRANCH:-main}"
+KEEP_CADDY_DATA="${KEEP_CADDY_DATA:-false}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -34,6 +35,10 @@ while [[ $# -gt 0 ]]; do
             INSTALLER_BRANCH="$2"
             shift 2
             ;;
+        --keep-caddy-data)
+            KEEP_CADDY_DATA="true"
+            shift
+            ;;
         *)
             shift
             ;;
@@ -54,9 +59,15 @@ NC=$(tput sgr0)
 
 VERSION="1.6.2"
 
-if [ "$REMNAWAVE_BRANCH" = "dev" ]; then
+if [[ "$REMNAWAVE_BRANCH" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+    REMNAWAVE_BACKEND_TAG="$REMNAWAVE_BRANCH"
+    REMNAWAVE_NODE_TAG="$REMNAWAVE_BRANCH"
+elif [ "$REMNAWAVE_BRANCH" = "dev" ]; then
     REMNAWAVE_BACKEND_TAG="dev"
     REMNAWAVE_NODE_TAG="dev"
+elif [ "$REMNAWAVE_BRANCH" = "alpha" ]; then
+    REMNAWAVE_BACKEND_TAG="alpha"
+    REMNAWAVE_NODE_TAG="dev"  # Node doesn't have alpha tag, use dev
 else
     REMNAWAVE_BACKEND_TAG="latest"
     REMNAWAVE_NODE_TAG="latest"
@@ -118,7 +129,7 @@ TRANSLATIONS_EN[main_menu_restart_panel]="Restart panel"
 TRANSLATIONS_EN[main_menu_remove_panel]="Remove panel"
 TRANSLATIONS_EN[main_menu_rescue_cli]="Remnawave Rescue CLI [Reset admin]"
 TRANSLATIONS_EN[main_menu_show_credentials]="Show panel access credentials"
-TRANSLATIONS_EN[main_menu_warp_integration]="Add WARP integration"
+TRANSLATIONS_EN[main_menu_warp_integration]="Add WARP integration (Native WARP in Docker)"
 TRANSLATIONS_EN[main_menu_exit]="Exit"
 TRANSLATIONS_EN[main_menu_select_option]="Select option:"
 
@@ -229,6 +240,7 @@ TRANSLATIONS_EN[removal_confirm_continue]="To continue, you need to DELETE previ
 TRANSLATIONS_EN[removal_complete_success]="Remnawave has been completely removed from your system. Press any key to continue..."
 TRANSLATIONS_EN[removal_previous_success]="Previous installation removed."
 TRANSLATIONS_EN[removal_no_installation]="No Remnawave installation detected on this system."
+TRANSLATIONS_EN[removal_keep_caddy_data]="✓ Caddy data (certificates) will be preserved."
 
 TRANSLATIONS_EN[restart_panel_dir_not_found]="Error: panel directory not found at /opt/remnawave!"
 TRANSLATIONS_EN[restart_install_panel_first]="Please install Remnawave panel first."
@@ -303,7 +315,12 @@ TRANSLATIONS_EN[spinner_registering_user]="Registering user"
 TRANSLATIONS_EN[spinner_getting_public_key]="Getting public key..."
 TRANSLATIONS_EN[spinner_creating_node]="Creating node..."
 TRANSLATIONS_EN[spinner_getting_inbounds]="Getting list of inbounds..."
-TRANSLATIONS_EN[spinner_creating_host]="Creating host for"
+TRANSLATIONS_EN[spinner_creating_config_profile]="Creating configuration profile..."
+TRANSLATIONS_EN[spinner_getting_config_profiles]="Getting configuration profiles..."
+TRANSLATIONS_EN[spinner_deleting_config_profile]="Deleting default configuration profile..."
+TRANSLATIONS_EN[spinner_getting_squads]="Getting list of squads..."
+TRANSLATIONS_EN[spinner_updating_squad]="Updating squad with new inbound..."
+TRANSLATIONS_EN[spinner_creating_host]="Creating host..."
 TRANSLATIONS_EN[spinner_cleaning_services]="Cleaning up"
 TRANSLATIONS_EN[spinner_force_removing]="Force removing container"
 TRANSLATIONS_EN[spinner_removing_directory]="Removing directory"
@@ -367,6 +384,13 @@ TRANSLATIONS_EN[api_empty_response_creating_node]="Error: Empty response from se
 TRANSLATIONS_EN[api_failed_create_node]="Error: Failed to create node, response:"
 TRANSLATIONS_EN[api_empty_response_getting_inbounds]="Error: Empty response from server when getting inbounds."
 TRANSLATIONS_EN[api_failed_extract_uuid]="Error: Failed to extract UUID from response."
+TRANSLATIONS_EN[api_empty_response_creating_profile]="Error: Empty response from server when creating config profile."
+TRANSLATIONS_EN[api_failed_create_profile]="Error: Failed to create config profile."
+TRANSLATIONS_EN[api_empty_response_getting_profiles]="Error: Empty response from server when getting config profiles."
+TRANSLATIONS_EN[api_failed_delete_profile]="Error: Failed to delete config profile."
+TRANSLATIONS_EN[api_empty_response_getting_squads]="Error: Empty response from server when getting squads."
+TRANSLATIONS_EN[api_empty_response_updating_squad]="Error: Empty response from server when updating squad."
+TRANSLATIONS_EN[api_failed_update_squad]="Error: Failed to update squad."
 TRANSLATIONS_EN[api_empty_response_creating_host]="Error: Empty response from server when creating host."
 TRANSLATIONS_EN[api_failed_create_host]="Error: Failed to create host."
 TRANSLATIONS_EN[api_empty_response_creating_user]="Error: Empty response from server when creating user."
@@ -467,7 +491,7 @@ TRANSLATIONS_EN[warp_generating_config]="Generating WireGuard configuration..."
 TRANSLATIONS_EN[warp_getting_current_config]="Getting current XRAY configuration..."
 TRANSLATIONS_EN[warp_updating_config]="Updating XRAY configuration with WARP..."
 TRANSLATIONS_EN[warp_success]="WARP integration added successfully!"
-TRANSLATIONS_EN[warp_success_details]="WARP outbound has been added to your XRAY configuration.\nThe following domains will now route through WARP:\n- Google services (Gemini)\n- OpenAI\n- Spotify\n- Canva\n- ipinfo.io \n- You can add more domains in the panel, by editing the Xray config."
+TRANSLATIONS_EN[warp_success_details]="WARP outbound has been added to your XRAY configuration.\nYou can add more domains in the panel, by editing the Xray config."
 TRANSLATIONS_EN[warp_failed_download]="Failed to download wgcf"
 TRANSLATIONS_EN[warp_failed_install]="Failed to install wgcf"
 TRANSLATIONS_EN[warp_failed_register]="Failed to register WARP account"
@@ -476,6 +500,56 @@ TRANSLATIONS_EN[warp_failed_get_config]="Failed to get current XRAY configuratio
 TRANSLATIONS_EN[warp_failed_update_config]="Failed to update XRAY configuration"
 TRANSLATIONS_EN[warp_failed_auth]="Failed to authenticate with panel"
 TRANSLATIONS_EN[warp_already_configured]="WARP is already configured in XRAY"
+
+TRANSLATIONS_EN[warp_docker_title]="Docker WARP Native Integration"
+TRANSLATIONS_EN[warp_docker_subtitle]="GitHub: https://github.com/xxphantom/docker-warp-native"
+TRANSLATIONS_EN[warp_docker_downloading]="Downloading docker-compose.yml..."
+TRANSLATIONS_EN[warp_docker_download_failed]="Failed to download docker-compose.yml"
+TRANSLATIONS_EN[warp_docker_starting]="Starting WARP container..."
+TRANSLATIONS_EN[warp_docker_start_failed]="Failed to start WARP container"
+TRANSLATIONS_EN[warp_docker_logs]="Container logs:"
+TRANSLATIONS_EN[warp_docker_no_docker]="Docker is not installed"
+TRANSLATIONS_EN[warp_docker_already_installed]="Docker WARP Native is already installed"
+TRANSLATIONS_EN[warp_docker_reinstall]="Do you want to reinstall it?"
+TRANSLATIONS_EN[warp_docker_config_title]="WARP Configuration for XRAY"
+TRANSLATIONS_EN[warp_docker_config_info]="To use WARP in your XRAY configuration, add the following:"
+TRANSLATIONS_EN[warp_docker_outbound_title]="Outbound configuration"
+TRANSLATIONS_EN[warp_docker_routing_title]="Routing rule example"
+TRANSLATIONS_EN[warp_docker_config_note]="Note: Replace 'example.com' with domains you want to route through WARP"
+TRANSLATIONS_EN[warp_docker_success]="Docker WARP Native installed successfully!"
+TRANSLATIONS_EN[warp_docker_success_details]="WARP outbound has been added. ipinfo.io will route through WARP"
+TRANSLATIONS_EN[warp_docker_profile_not_found]="Profile not found"
+TRANSLATIONS_EN[warp_docker_updating_config_only]="Updating configuration only (container already running)"
+TRANSLATIONS_EN[warp_docker_config_added]="WARP configuration has been added to the profile:"
+TRANSLATIONS_EN[warp_docker_outbound_added]="Outbound added"
+TRANSLATIONS_EN[warp_docker_routing_added]="Routing rule added"
+TRANSLATIONS_EN[warp_docker_edit_domains]="Edit domains in the panel to route specific sites through WARP"
+TRANSLATIONS_EN[warp_docker_config_updated]="Profile has been updated with WARP configuration"
+
+TRANSLATIONS_EN[spinner_getting_nodes]="Getting list of nodes..."
+TRANSLATIONS_EN[api_empty_response_getting_nodes]="Empty response when getting nodes"
+TRANSLATIONS_EN[warp_select_nodes_title]="Select nodes for WARP integration:"
+TRANSLATIONS_EN[warp_all_nodes]="All nodes"
+TRANSLATIONS_EN[warp_node_local]="(local)"
+TRANSLATIONS_EN[warp_no_nodes_found]="No nodes found in the panel"
+TRANSLATIONS_EN[warp_select_node_prompt]="Enter node number: "
+TRANSLATIONS_EN[warp_invalid_selection]="Invalid selection"
+TRANSLATIONS_EN[warp_panel_only_detected]="Panel-only installation detected"
+TRANSLATIONS_EN[warp_node_only_detected]="Node-only installation detected"
+TRANSLATIONS_EN[warp_installing_container_only]="Installing Docker WARP container only..."
+TRANSLATIONS_EN[warp_remote_nodes_warning]="For remote nodes, you must run this script on each node server to install Docker WARP"
+TRANSLATIONS_EN[warp_docker_repo_link]="Docker WARP repository: https://github.com/xxphantom/docker-warp-native"
+TRANSLATIONS_EN[warp_config_will_update]="Xray configuration will be updated for selected nodes"
+TRANSLATIONS_EN[warp_manual_config_needed]="You need to update the Xray configuration manually or run this script with panel access"
+TRANSLATIONS_EN[warp_container_installed_node_only]="Docker WARP container installed. Panel configuration update required."
+TRANSLATIONS_EN[warp_single_local_node_detected]="Local node detected"
+TRANSLATIONS_EN[warp_single_remote_node_detected]="Remote node detected"
+TRANSLATIONS_EN[warp_found_profiles]="Found unique profiles"
+TRANSLATIONS_EN[warp_profile_updated]="Profile updated for nodes"
+TRANSLATIONS_EN[warp_affected_nodes_profiles]="Affected nodes and profiles"
+TRANSLATIONS_EN[warp_nodes]="Nodes"
+TRANSLATIONS_EN[warp_profile]="profile"
+TRANSLATIONS_EN[warp_nodes_lowercase]="nodes"
 
 # Including module: ru.sh
 
@@ -498,7 +572,7 @@ TRANSLATIONS_RU[main_menu_restart_panel]="Перезапустить панел�
 TRANSLATIONS_RU[main_menu_remove_panel]="Удалить панель"
 TRANSLATIONS_RU[main_menu_rescue_cli]="Remnawave Rescue CLI [Сброс админа]"
 TRANSLATIONS_RU[main_menu_show_credentials]="Показать учетные данные панели"
-TRANSLATIONS_RU[main_menu_warp_integration]="Добавить WARP интеграцию"
+TRANSLATIONS_RU[main_menu_warp_integration]="Добавить WARP интеграцию (Native WARP in Docker)"
 TRANSLATIONS_RU[main_menu_exit]="Выход"
 TRANSLATIONS_RU[main_menu_select_option]="Выберите опцию:"
 
@@ -609,6 +683,7 @@ TRANSLATIONS_RU[removal_confirm_continue]="Для продолжения нео�
 TRANSLATIONS_RU[removal_complete_success]="Remnawave был полностью удален из вашей системы. Нажмите любую клавишу для продолжения..."
 TRANSLATIONS_RU[removal_previous_success]="Предыдущая установка удалена."
 TRANSLATIONS_RU[removal_no_installation]="Установка Remnawave не обнаружена в этой системе."
+TRANSLATIONS_RU[removal_keep_caddy_data]="✓ Данные Caddy (сертификаты) будут сохранены."
 
 TRANSLATIONS_RU[restart_panel_dir_not_found]="Ошибка: директория панели не найдена в /opt/remnawave!"
 TRANSLATIONS_RU[restart_install_panel_first]="Пожалуйста, сначала установите панель Remnawave."
@@ -683,7 +758,12 @@ TRANSLATIONS_RU[spinner_registering_user]="Регистрация пользов
 TRANSLATIONS_RU[spinner_getting_public_key]="Получение публичного ключа..."
 TRANSLATIONS_RU[spinner_creating_node]="Создание ноды..."
 TRANSLATIONS_RU[spinner_getting_inbounds]="Получение списка входящих соединений..."
-TRANSLATIONS_RU[spinner_creating_host]="Создание хоста для"
+TRANSLATIONS_RU[spinner_creating_config_profile]="Создание профиля конфигурации..."
+TRANSLATIONS_RU[spinner_getting_config_profiles]="Получение профилей конфигурации..."
+TRANSLATIONS_RU[spinner_deleting_config_profile]="Удаление профиля конфигурации по умолчанию..."
+TRANSLATIONS_RU[spinner_getting_squads]="Получение списка сквадов..."
+TRANSLATIONS_RU[spinner_updating_squad]="Обновление сквада с новым подключением..."
+TRANSLATIONS_RU[spinner_creating_host]="Создание хоста..."
 TRANSLATIONS_RU[spinner_cleaning_services]="Очистка сервисов"
 TRANSLATIONS_RU[spinner_force_removing]="Принудительное удаление контейнера"
 TRANSLATIONS_RU[spinner_removing_directory]="Удаление директории"
@@ -747,6 +827,13 @@ TRANSLATIONS_RU[api_empty_response_creating_node]="Ошибка: Пустой о
 TRANSLATIONS_RU[api_failed_create_node]="Ошибка: Не удалось создать ноду, ответ:"
 TRANSLATIONS_RU[api_empty_response_getting_inbounds]="Ошибка: Пустой ответ от сервера при получении входящих соединений."
 TRANSLATIONS_RU[api_failed_extract_uuid]="Ошибка: Не удалось извлечь UUID из ответа."
+TRANSLATIONS_RU[api_empty_response_creating_profile]="Ошибка: Пустой ответ от сервера при создании профиля конфигурации."
+TRANSLATIONS_RU[api_failed_create_profile]="Ошибка: Не удалось создать профиль конфигурации."
+TRANSLATIONS_RU[api_empty_response_getting_profiles]="Ошибка: Пустой ответ от сервера при получении профилей конфигурации."
+TRANSLATIONS_RU[api_failed_delete_profile]="Ошибка: Не удалось удалить профиль конфигурации."
+TRANSLATIONS_RU[api_empty_response_getting_squads]="Ошибка: Пустой ответ от сервера при получении сквадов."
+TRANSLATIONS_RU[api_empty_response_updating_squad]="Ошибка: Пустой ответ от сервера при обновлении сквада."
+TRANSLATIONS_RU[api_failed_update_squad]="Ошибка: Не удалось обновить сквад."
 TRANSLATIONS_RU[api_empty_response_creating_host]="Ошибка: Пустой ответ от сервера при создании хоста."
 TRANSLATIONS_RU[api_failed_create_host]="Ошибка: Не удалось создать хост."
 TRANSLATIONS_RU[api_empty_response_creating_user]="Ошибка: Пустой ответ от сервера при создании пользователя."
@@ -847,7 +934,7 @@ TRANSLATIONS_RU[warp_generating_config]="Генерация WireGuard конфи
 TRANSLATIONS_RU[warp_getting_current_config]="Получение текущей конфигурации XRAY..."
 TRANSLATIONS_RU[warp_updating_config]="Обновление конфигурации XRAY с WARP..."
 TRANSLATIONS_RU[warp_success]="WARP интеграция успешно добавлена!"
-TRANSLATIONS_RU[warp_success_details]="WARP outbound добавлен в вашу конфигурацию XRAY.\nСледующие домены теперь будут маршрутизироваться через WARP:\n- Сервисы Google (Gemini)\n- OpenAI\n- Spotify\n- Canva\n- ipinfo.io \n- Вы можете добавить больше доменов в панели изменив Xray конфиг."
+TRANSLATIONS_RU[warp_success_details]="WARP outbound добавлен в вашу конфигурацию XRAY.\nВы можете добавить больше доменов в панели изменив Xray конфиг."
 TRANSLATIONS_RU[warp_failed_download]="Не удалось загрузить wgcf"
 TRANSLATIONS_RU[warp_failed_install]="Не удалось установить wgcf"
 TRANSLATIONS_RU[warp_failed_register]="Не удалось зарегистрировать WARP аккаунт"
@@ -856,6 +943,56 @@ TRANSLATIONS_RU[warp_failed_get_config]="Не удалось получить т
 TRANSLATIONS_RU[warp_failed_update_config]="Не удалось обновить конфигурацию XRAY"
 TRANSLATIONS_RU[warp_failed_auth]="Не удалось авторизоваться в панели"
 TRANSLATIONS_RU[warp_already_configured]="WARP уже настроен в XRAY"
+
+TRANSLATIONS_RU[warp_docker_title]="Интеграция Docker WARP Native"
+TRANSLATIONS_RU[warp_docker_subtitle]="GitHub: https://github.com/xxphantom/docker-warp-native"
+TRANSLATIONS_RU[warp_docker_downloading]="Загрузка docker-compose.yml..."
+TRANSLATIONS_RU[warp_docker_download_failed]="Не удалось загрузить docker-compose.yml"
+TRANSLATIONS_RU[warp_docker_starting]="Запуск WARP контейнера..."
+TRANSLATIONS_RU[warp_docker_start_failed]="Не удалось запустить WARP контейнер"
+TRANSLATIONS_RU[warp_docker_logs]="Логи контейнера:"
+TRANSLATIONS_RU[warp_docker_no_docker]="Docker не установлен"
+TRANSLATIONS_RU[warp_docker_already_installed]="Docker WARP Native уже установлен"
+TRANSLATIONS_RU[warp_docker_reinstall]="Хотите переустановить?"
+TRANSLATIONS_RU[warp_docker_config_title]="Конфигурация WARP для XRAY"
+TRANSLATIONS_RU[warp_docker_config_info]="Для использования WARP в конфигурации XRAY добавьте следующее:"
+TRANSLATIONS_RU[warp_docker_outbound_title]="Конфигурация исходящего соединения"
+TRANSLATIONS_RU[warp_docker_routing_title]="Пример правила маршрутизации"
+TRANSLATIONS_RU[warp_docker_config_note]="Примечание: Замените 'example.com' на домены, которые хотите направить через WARP"
+TRANSLATIONS_RU[warp_docker_success]="Docker WARP Native успешно установлен!"
+TRANSLATIONS_RU[warp_docker_success_details]="Добавлен WARP outbound. ipinfo.io будет маршрутизироваться через WARP"
+TRANSLATIONS_RU[warp_docker_profile_not_found]="Профиль не найден"
+TRANSLATIONS_RU[warp_docker_updating_config_only]="Обновление только конфигурации (контейнер уже запущен)"
+TRANSLATIONS_RU[warp_docker_config_added]="Конфигурация WARP добавлена в профиль:"
+TRANSLATIONS_RU[warp_docker_outbound_added]="Добавлен исходящий канал"
+TRANSLATIONS_RU[warp_docker_routing_added]="Добавлено правило маршрутизации"
+TRANSLATIONS_RU[warp_docker_edit_domains]="Отредактируйте домены в панели для маршрутизации через WARP"
+TRANSLATIONS_RU[warp_docker_config_updated]="Профиль обновлен с конфигурацией WARP"
+
+TRANSLATIONS_RU[spinner_getting_nodes]="Получение списка нод..."
+TRANSLATIONS_RU[api_empty_response_getting_nodes]="Пустой ответ при получении списка нод"
+TRANSLATIONS_RU[warp_select_nodes_title]="Выберите ноды для интеграции WARP:"
+TRANSLATIONS_RU[warp_all_nodes]="Все ноды"
+TRANSLATIONS_RU[warp_node_local]="(локальная)"
+TRANSLATIONS_RU[warp_no_nodes_found]="В панели не найдено ни одной ноды"
+TRANSLATIONS_RU[warp_select_node_prompt]="Введите номер ноды: "
+TRANSLATIONS_RU[warp_invalid_selection]="Неверный выбор"
+TRANSLATIONS_RU[warp_panel_only_detected]="Обнаружена установка только панели"
+TRANSLATIONS_RU[warp_node_only_detected]="Обнаружена установка только ноды"
+TRANSLATIONS_RU[warp_installing_container_only]="Установка только Docker WARP контейнера..."
+TRANSLATIONS_RU[warp_remote_nodes_warning]="Для удаленных нод необходимо запустить этот скрипт на каждом сервере ноды для установки Docker WARP"
+TRANSLATIONS_RU[warp_docker_repo_link]="Репозиторий Docker WARP: https://github.com/xxphantom/docker-warp-native"
+TRANSLATIONS_RU[warp_config_will_update]="Конфигурация Xray будет обновлена для выбранных нод"
+TRANSLATIONS_RU[warp_manual_config_needed]="Необходимо обновить конфигурацию Xray вручную или запустить скрипт с доступом к панели"
+TRANSLATIONS_RU[warp_container_installed_node_only]="Docker WARP контейнер установлен. Требуется обновление конфигурации панели."
+TRANSLATIONS_RU[warp_single_local_node_detected]="Обнаружена локальная нода"
+TRANSLATIONS_RU[warp_single_remote_node_detected]="Обнаружена удаленная нода"
+TRANSLATIONS_RU[warp_found_profiles]="Найдено уникальных профилей"
+TRANSLATIONS_RU[warp_profile_updated]="Профиль обновлен для нод"
+TRANSLATIONS_RU[warp_affected_nodes_profiles]="Затронутые ноды и профили"
+TRANSLATIONS_RU[warp_nodes]="Ноды"
+TRANSLATIONS_RU[warp_profile]="профиль"
+TRANSLATIONS_RU[warp_nodes_lowercase]="ноды"
 
 # Including module: system.sh
 
@@ -1022,11 +1159,17 @@ remove_previous_installation() {
     if [ -d "$REMNAWAVE_DIR" ]; then
         if [ "$from_menu" = true ]; then
             show_warning "$(t removal_installation_detected)"
+            if [ "$KEEP_CADDY_DATA" = "true" ]; then
+                echo -e "${BOLD_GREEN}$(t removal_keep_caddy_data)${NC}"
+            fi
             if ! prompt_yes_no "$(t removal_confirm_delete)" "$ORANGE"; then
                 return 1
             fi
         else
             show_warning "$(t removal_previous_detected)"
+            if [ "$KEEP_CADDY_DATA" = "true" ]; then
+                echo -e "${BOLD_GREEN}$(t removal_keep_caddy_data)${NC}"
+            fi
             if ! prompt_yes_no "$(t removal_confirm_continue)" "$ORANGE"; then
                 return 1
             fi
@@ -1045,7 +1188,15 @@ remove_previous_installation() {
         for compose_file in "${compose_configs[@]}"; do
             if [ -f "$compose_file" ]; then
                 local dir_path=$(dirname "$compose_file")
-                cd "$dir_path" && docker compose down -v --rmi local --remove-orphans >/dev/null 2>&1 &
+                local compose_cmd="docker compose down"
+                
+                if [[ "$dir_path" == *"/caddy"* ]] && [ "$KEEP_CADDY_DATA" = "true" ]; then
+                    compose_cmd="$compose_cmd --rmi local --remove-orphans"
+                else
+                    compose_cmd="$compose_cmd -v --rmi local --remove-orphans"
+                fi
+                
+                cd "$dir_path" && eval "$compose_cmd" >/dev/null 2>&1 &
                 spinner $! "$(t spinner_cleaning_services) $(basename "$dir_path")"
             fi
         done
@@ -1891,6 +2042,7 @@ make_api_request() {
         -H "Host: $panel_domain"
         -H "X-Forwarded-For: $host_only"
         -H "X-Forwarded-Proto: https"
+        -H "X-Remnawave-Client-type: browser"
     )
 
     if [ -n "$token" ]; then
@@ -1996,8 +2148,10 @@ create_node() {
     local panel_domain="$3"
     local node_host="$4"
     local node_port="$5"
+    local profile_uuid="$6"
+    local inbound_uuid="$7"
 
-    local node_name="VLESS-NODE"
+    local node_name="VLESS"
     local temp_file=$(mktemp)
 
     local new_node_data=$(
@@ -2006,6 +2160,12 @@ create_node() {
     "name": "$node_name",
     "address": "$node_host",
     "port": $node_port,
+    "configProfile": {
+        "activeConfigProfileUuid": "$profile_uuid",
+        "activeInbounds": [
+            "$inbound_uuid"
+        ]
+    },
     "isTrafficTrackingActive": false,
     "trafficLimitBytes": 0,
     "notifyPercent": 0,
@@ -2042,6 +2202,165 @@ EOF
     fi
 }
 
+get_config_profiles() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    
+    local temp_file=$(mktemp)
+    
+    make_api_request "GET" "http://$panel_url/api/config-profiles" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_getting_config_profiles)"
+    profiles_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$profiles_response" ]; then
+        echo -e "${BOLD_RED}$(t api_empty_response_getting_profiles)${NC}"
+        return 1
+    fi
+    
+    echo "$profiles_response"
+}
+
+delete_config_profile() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    local profile_uuid="$4"
+    
+    local temp_file=$(mktemp)
+    
+    make_api_request "DELETE" "http://$panel_url/api/config-profiles/$profile_uuid" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_deleting_config_profile)"
+    delete_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$delete_response" ] || echo "$delete_response" | jq -e '.response.isDeleted == true' >/dev/null 2>&1; then
+        return 0
+    fi
+    
+    if echo "$delete_response" | jq -e '.error' >/dev/null 2>&1; then
+        echo -e "${BOLD_RED}$(t api_failed_delete_profile)${NC}"
+        echo
+        echo "$(t api_response):"
+        echo "$delete_response"
+        return 1
+    fi
+    
+    return 0
+}
+
+create_config_profile() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    local profile_name="$4"
+    local xray_config="$5"
+    
+    local temp_file=$(mktemp)
+    
+    local profile_data=$(cat <<EOF
+{
+    "name": "$profile_name",
+    "config": $xray_config
+}
+EOF
+    )
+    
+    make_api_request "POST" "http://$panel_url/api/config-profiles" "$token" "$panel_domain" "$profile_data" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_creating_config_profile)"
+    profile_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$profile_response" ]; then
+        echo -e "${BOLD_RED}$(t api_empty_response_creating_profile)${NC}"
+        return 1
+    fi
+    
+    if echo "$profile_response" | jq -e '.response.uuid' >/dev/null; then
+        local profile_uuid=$(echo "$profile_response" | jq -r '.response.uuid')
+        local inbound_uuid=$(echo "$profile_response" | jq -r '.response.inbounds[0].uuid')
+        echo "$profile_uuid:$inbound_uuid"
+        return 0
+    else
+        echo -e "${BOLD_RED}$(t api_failed_create_profile)${NC}"
+        echo
+        echo "$(t api_response):"
+        echo "$profile_response"
+        return 1
+    fi
+}
+
+get_squads() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    
+    local temp_file=$(mktemp)
+    
+    make_api_request "GET" "http://$panel_url/api/internal-squads" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_getting_squads)"
+    squads_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$squads_response" ]; then
+        echo -e "${BOLD_RED}$(t api_empty_response_getting_squads)${NC}"
+        return 1
+    fi
+    
+    echo "$squads_response"
+}
+
+update_squad() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    local squad_uuid="$4"
+    local inbound_uuid="$5"
+    
+    local temp_file=$(mktemp)
+    
+    local squad_response=$(get_squads "$panel_url" "$token" "$panel_domain")
+    if [ -z "$squad_response" ] || ! echo "$squad_response" | jq -e '.response.internalSquads' >/dev/null; then
+        echo -e "${BOLD_RED}$(t api_empty_response_getting_squads)${NC}"
+        return 1
+    fi
+    
+    local existing_inbounds=$(echo "$squad_response" | jq -r --arg uuid "$squad_uuid" '.response.internalSquads[] | select(.uuid == $uuid) | .inbounds[].uuid')
+    if [ -z "$existing_inbounds" ]; then
+        existing_inbounds="[]"
+    else
+        existing_inbounds=$(echo "$existing_inbounds" | jq -R . | jq -s .)
+    fi
+    
+    local inbounds_array=$(jq -n --argjson existing "$existing_inbounds" --arg new "$inbound_uuid" '$existing + [$new] | unique')
+    
+    local squad_data=$(jq -n --arg uuid "$squad_uuid" --argjson inbounds "$inbounds_array" '{
+        uuid: $uuid,
+        inbounds: $inbounds
+    }')
+    
+    make_api_request "PATCH" "http://$panel_url/api/internal-squads" "$token" "$panel_domain" "$squad_data" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_updating_squad)"
+    local update_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$update_response" ]; then
+        echo -e "${BOLD_RED}$(t api_empty_response_updating_squad)${NC}"
+        return 1
+    fi
+    
+    if echo "$update_response" | jq -e '.response.uuid' >/dev/null; then
+        return 0
+    else
+        echo -e "${BOLD_RED}$(t api_failed_update_squad)${NC}"
+        echo
+        echo "$(t api_response):"
+        echo "$update_response"
+        return 1
+    fi
+}
+
 get_inbounds() {
     local panel_url="$1"
     local token="$2"
@@ -2068,35 +2387,60 @@ get_inbounds() {
     echo "$inbound_uuid"
 }
 
+get_nodes() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    
+    local temp_file=$(mktemp)
+    
+    make_api_request "GET" "http://$panel_url/api/nodes" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_getting_nodes)"
+    local response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$response" ]; then
+        echo -e "${BOLD_RED}$(t api_empty_response_getting_nodes)${NC}"
+        return 1
+    fi
+    
+    echo "$response"
+}
+
 create_host() {
     local panel_url="$1"
     local token="$2"
     local panel_domain="$3"
-    local inbound_uuid="$4"
-    local self_steal_domain="$5"
+    local profile_uuid="$4"
+    local inbound_uuid="$5"
+    local self_steal_domain="$6"
 
     local temp_file=$(mktemp)
 
     local host_data=$(
         cat <<EOF
 {
-    "inboundUuid": "$inbound_uuid",
-    "remark": "VLESS TCP REALITY",
+    "inbound": {
+        "configProfileUuid": "$profile_uuid",
+        "configProfileInboundUuid": "$inbound_uuid"
+    },
+    "remark": "VLESS",
     "address": "$self_steal_domain",
     "port": 443,
     "path": "",
     "sni": "$self_steal_domain",
-    "host": "$self_steal_domain",
-    "alpn": "h2,http/1.1",
+    "host": "",
+    "alpn": null,
     "fingerprint": "chrome",
     "allowInsecure": false,
-    "isDisabled": false
+    "isDisabled": false,
+    "securityLayer": "DEFAULT"
 }
 EOF
     )
 
     make_api_request "POST" "http://$panel_url/api/hosts" "$token" "$panel_domain" "$host_data" >"$temp_file" 2>&1 &
-    spinner $! "$(t spinner_creating_host) UUID: $inbound_uuid..."
+    spinner $! "$(t spinner_creating_host)..."
     host_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
@@ -2119,6 +2463,7 @@ create_user() {
     local panel_domain="$3"
     local username="$4"
     local inbound_uuid="$5"
+    local squad_uuid="$6"
 
     local temp_file=$(mktemp)
     local temp_headers=$(mktemp)
@@ -2132,6 +2477,9 @@ create_user() {
     "trafficLimitStrategy": "NO_RESET",
     "activeUserInbounds": [
         "$inbound_uuid"
+    ],
+    "activeInternalSquads": [
+        "$squad_uuid"
     ],
     "expireAt": "2099-12-31T23:59:59.000Z",
     "description": "Default user created during installation",
@@ -2148,6 +2496,7 @@ EOF
             -H "Host: $panel_domain"
             -H "X-Forwarded-For: $host_only"
             -H "X-Forwarded-Proto: https"
+            -H "X-Remnawave-Client-type: browser"
             -H "Authorization: Bearer $token"
         )
 
@@ -2342,7 +2691,13 @@ collect_ports_separate_installation() {
 }
 
 setup_panel_environment() {
-    curl -s -o .env "$REMNAWAVE_BACKEND_REPO/$REMNAWAVE_BRANCH/.env.sample"
+    local env_branch="$REMNAWAVE_BRANCH"
+    if [ "$REMNAWAVE_BRANCH" = "alpha" ]; then
+        env_branch="dev"
+    elif [[ "$REMNAWAVE_BRANCH" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+        env_branch="main"
+    fi
+    curl -s -o .env "$REMNAWAVE_BACKEND_REPO/$env_branch/.env.sample"
 
     update_file ".env" \
         "JWT_AUTH_SECRET" "$JWT_AUTH_SECRET" \
@@ -2709,13 +3064,21 @@ generate_xray_config() {
   cat >"$config_file" <<EOL
 {
   "log": {
-    "loglevel": "debug"
+    "loglevel": "warning"
+  },
+  "dns": {
+    "servers": [
+      {
+        "address": "https://dns.google/dns-query",
+        "skipFallback": false
+      }
+    ],
+    "queryStrategy": "ForceIPv4"
   },
   "inbounds": [
     {
-      "tag": "VLESS TCP REALITY",
+      "tag": "VLESS",
       "port": 443,
-      "listen": "0.0.0.0",
       "protocol": "vless",
       "settings": {
         "clients": [],
@@ -2741,7 +3104,7 @@ generate_xray_config() {
           ],
           "privateKey": "$private_key",
           "serverNames": [
-              "$self_steal_domain"
+            "$self_steal_domain"
           ]
         }
       }
@@ -2764,13 +3127,6 @@ generate_xray_config() {
           "geoip:private"
         ],
         "type": "field",
-        "outboundTag": "BLOCK"
-      },
-      {
-        "type": "field",
-        "domain": [
-          "geosite:private"
-        ],
         "outboundTag": "BLOCK"
       },
       {
@@ -3012,8 +3368,8 @@ run_remnawave_cli() {
 
 is_bbr_enabled() {
   local cc qd
-  if grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf &&
-    grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf; then
+  if grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf 2>/dev/null &&
+    grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf 2>/dev/null; then
     cc=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)
     qd=$(sysctl -n net.core.default_qdisc 2>/dev/null)
     [[ $cc == "bbr" && $qd == "fq" ]] && return 0
@@ -3031,11 +3387,23 @@ get_bbr_menu_text() {
 
 apply_qdisc_now() {
   local dev
-  dev=$(ip route | awk '/default/ {print $5; exit}')
+  if ! command -v tc >/dev/null 2>&1; then
+    return 0
+  fi
+  
+  dev=$(ip route 2>/dev/null | awk '/default/ {print $5; exit}')
   [[ -n $dev ]] && tc qdisc replace dev "$dev" root fq 2>/dev/null || true
 }
 
 load_bbr_module() {
+  if ! command -v modprobe >/dev/null 2>&1; then
+    return 0
+  fi
+  
+  if lsmod 2>/dev/null | grep -q tcp_bbr; then
+    return 0
+  fi
+  
   modprobe tcp_bbr 2>/dev/null || true
 }
 
@@ -3047,14 +3415,14 @@ enable_bbr() {
   sed -i -E \
     -e '/^\s*net\.core\.default_qdisc\s*=/d' \
     -e '/^\s*net\.ipv4\.tcp_congestion_control\s*=/d' \
-    /etc/sysctl.conf
+    /etc/sysctl.conf 2>/dev/null || true
 
   {
     echo "net.core.default_qdisc=fq"
     echo "net.ipv4.tcp_congestion_control=bbr"
   } >>/etc/sysctl.conf
 
-  sysctl -p >/dev/null
+  sysctl -p >/dev/null 2>&1
 
   apply_qdisc_now
 
@@ -3066,15 +3434,15 @@ enable_bbr() {
 disable_bbr() {
   echo -e "\n${BOLD_GREEN}$(t bbr_disable)${NC}\n"
 
-  if grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf ||
-    grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf; then
+  if grep -q "net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf 2>/dev/null ||
+    grep -q "net.core.default_qdisc=fq" /etc/sysctl.conf 2>/dev/null; then
     show_info "$(t info_removing_bbr_config)"
 
-    sed -i '/net.core.default_qdisc=fq/d' /etc/sysctl.conf
-    sed -i '/net.ipv4.tcp_congestion_control=bbr/d' /etc/sysctl.conf
+    sed -i '/net.core.default_qdisc=fq/d' /etc/sysctl.conf 2>/dev/null || true
+    sed -i '/net.ipv4.tcp_congestion_control=bbr/d' /etc/sysctl.conf 2>/dev/null || true
 
-    sysctl -w net.ipv4.tcp_congestion_control=cubic >/dev/null
-    sysctl -w net.core.default_qdisc=fq_codel >/dev/null
+    sysctl -w net.ipv4.tcp_congestion_control=cubic >/dev/null 2>&1
+    sysctl -w net.core.default_qdisc=fq_codel >/dev/null 2>&1
 
     show_success "$(t success_bbr_disabled)"
   else
@@ -3466,10 +3834,24 @@ handle_update_menu() {
     done
 }
 
-# Including module: warp-integration.sh
+# Including module: warp-docker-integration.sh
 
 
-check_panel_installation() {
+check_installation_type() {
+    if [ -d /opt/remnawave ] && docker ps --format '{{.Names}}' | grep -q '^remnawave$'; then
+        if [ -d /opt/remnawave/node ] && docker ps --format '{{.Names}}' | grep -q '^remnanode$'; then
+            echo "all-in-one"
+        else
+            echo "panel-only"
+        fi
+    elif [ -d /opt/remnanode ] && docker ps --format '{{.Names}}' | grep -q '^remnanode$'; then
+        echo "node-only"
+    else
+        echo "none"
+    fi
+}
+
+check_panel_installation_docker() {
     if [ ! -d /opt/remnawave ]; then
         show_error "$(t warp_panel_not_found)"
         echo -e "${YELLOW}$(t update_install_first)${NC}"
@@ -3499,7 +3881,7 @@ check_panel_installation() {
     return 0
 }
 
-extract_panel_credentials() {
+extract_panel_credentials_docker() {
     local credentials_file="/opt/remnawave/credentials.txt"
     
     PANEL_USERNAME=$(grep "REMNAWAVE ADMIN USERNAME:" "$credentials_file" | cut -d':' -f2 | xargs)
@@ -3519,7 +3901,7 @@ extract_panel_credentials() {
     return 0
 }
 
-authenticate_panel() {
+authenticate_panel_docker() {
     local panel_url="127.0.0.1:3000"
     local api_url="http://${panel_url}/api/auth/login"
     
@@ -3549,270 +3931,484 @@ authenticate_panel() {
     fi
 }
 
-show_warp_terms() {
-    clear
-    echo -e "${BOLD_GREEN}$(t warp_terms_title)${NC}"
+get_nodes_list() {
+    local panel_url="127.0.0.1:3000"
+    local nodes_response=$(get_nodes "$panel_url" "$PANEL_TOKEN" "$PANEL_DOMAIN")
+    
+    if [ $? -ne 0 ] || [ -z "$nodes_response" ]; then
+        show_error "$(t warp_no_nodes_found)"
+        return 1
+    fi
+    
+    NODES_JSON=$(echo "$nodes_response" | jq -r '.response // empty')
+    if [ -z "$NODES_JSON" ] || [ "$NODES_JSON" = "null" ] || [ "$NODES_JSON" = "[]" ]; then
+        show_error "$(t warp_no_nodes_found)"
+        return 1
+    fi
+    
+    return 0
+}
+
+select_nodes_for_warp() {
+    local installation_type="$1"
+    local nodes_count=$(echo "$NODES_JSON" | jq '. | length')
+    
+    if [ "$nodes_count" -eq 0 ]; then
+        show_error "$(t warp_no_nodes_found)"
+        return 1
+    fi
+    
+    SELECTED_NODES=()
+    SELECTED_NODE_ADDRESSES=()
+    HAS_LOCAL_NODE=false
+    
+    if [ "$nodes_count" -eq 1 ]; then
+        local node_uuid=$(echo "$NODES_JSON" | jq -r ".[0].uuid")
+        local node_address=$(echo "$NODES_JSON" | jq -r ".[0].address")
+        local node_name=$(echo "$NODES_JSON" | jq -r ".[0].name")
+        
+        SELECTED_NODES+=("$node_uuid|$node_name")
+        SELECTED_NODE_ADDRESSES+=("$node_address")
+        
+        if [[ "$node_address" == "172.17.0.1" ]] || [[ "$node_address" == "127.0.0.1" ]] || [[ "$node_address" == "localhost" ]]; then
+            HAS_LOCAL_NODE=true
+            show_info "$(t warp_single_local_node_detected): $node_name - $node_address"
+        else
+            show_info "$(t warp_single_remote_node_detected): $node_name - $node_address"
+        fi
+        
+        return 0
+    fi
+    
+    local nodes_array=()
+    local i=0
+    while [ $i -lt "$nodes_count" ]; do
+        local node_name=$(echo "$NODES_JSON" | jq -r ".[$i].name")
+        local node_address=$(echo "$NODES_JSON" | jq -r ".[$i].address")
+        local node_uuid=$(echo "$NODES_JSON" | jq -r ".[$i].uuid")
+        local is_local=""
+        
+        if [[ "$node_address" == "172.17.0.1" ]] || [[ "$node_address" == "127.0.0.1" ]] || [[ "$node_address" == "localhost" ]]; then
+            is_local=" $(t warp_node_local)"
+        fi
+        
+        nodes_array+=("$node_uuid|$node_name - $node_address$is_local")
+        ((i++))
+    done
+    
     echo
-    echo -e "${YELLOW}$(t warp_terms_text)${NC}"
-    echo -e "${BLUE}$(t warp_terms_url)${NC}"
+    echo -e "${BOLD_BLUE}$(t warp_select_nodes_title)${NC}"
     echo
+    echo -e "${BOLD_GREEN}0)${NC} $(t warp_all_nodes)"
     
-    if ! prompt_yes_no "$(t warp_terms_confirm)" "$YELLOW"; then
-        show_info "$(t warp_terms_declined)"
-        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-        read -r
+    i=0
+    while [ $i -lt "$nodes_count" ]; do
+        local node_info="${nodes_array[$i]}"
+        local display_info="${node_info#*|}"
+        echo -e "${BOLD_GREEN}$((i+1)))${NC} $display_info"
+        ((i++))
+    done
+    
+    echo
+    read -p "$(t warp_select_node_prompt)" selection
+    
+    if ! [[ "$selection" =~ ^[0-9]+$ ]] || [ "$selection" -lt 0 ] || [ "$selection" -gt "$nodes_count" ]; then
+        show_error "$(t warp_invalid_selection)"
         return 1
+    fi
+    
+    if [ "$selection" -eq 0 ]; then
+        i=0
+        while [ $i -lt "$nodes_count" ]; do
+            local node_uuid=$(echo "$NODES_JSON" | jq -r ".[$i].uuid")
+            local node_address=$(echo "$NODES_JSON" | jq -r ".[$i].address")
+            local node_name=$(echo "$NODES_JSON" | jq -r ".[$i].name")
+            
+            SELECTED_NODES+=("$node_uuid|$node_name")
+            SELECTED_NODE_ADDRESSES+=("$node_address")
+            
+            if [[ "$node_address" == "172.17.0.1" ]] || [[ "$node_address" == "127.0.0.1" ]] || [[ "$node_address" == "localhost" ]]; then
+                HAS_LOCAL_NODE=true
+            fi
+            ((i++))
+        done
+    else
+        local node_index=$((selection-1))
+        local node_uuid=$(echo "$NODES_JSON" | jq -r ".[$node_index].uuid")
+        local node_address=$(echo "$NODES_JSON" | jq -r ".[$node_index].address")
+        local node_name=$(echo "$NODES_JSON" | jq -r ".[$node_index].name")
+        
+        SELECTED_NODES+=("$node_uuid|$node_name")
+        SELECTED_NODE_ADDRESSES+=("$node_address")
+        
+        if [[ "$node_address" == "172.17.0.1" ]] || [[ "$node_address" == "127.0.0.1" ]] || [[ "$node_address" == "localhost" ]]; then
+            HAS_LOCAL_NODE=true
+        fi
     fi
     
     return 0
 }
 
-install_wgcf() {
-    local wgcf_version="2.2.26"
-    local wgcf_arch="linux_amd64"
-    local wgcf_url="https://github.com/ViRb3/wgcf/releases/download/v${wgcf_version}/wgcf_${wgcf_version}_${wgcf_arch}"
-    local temp_file=$(mktemp)
-    
-    (wget -q "$wgcf_url" -O "$temp_file") &
-    spinner $! "$(t warp_downloading_wgcf)"
-    
-    if [ $? -ne 0 ] || [ ! -s "$temp_file" ]; then
-        rm -f "$temp_file"
-        show_error "$(t warp_failed_download)"
-        return 1
-    fi
-    
-    (sudo mv "$temp_file" /usr/bin/wgcf && sudo chmod +x /usr/bin/wgcf) &
-    spinner $! "$(t warp_installing_wgcf)"
-    
-    if [ $? -ne 0 ]; then
-        show_error "$(t warp_failed_install)"
-        return 1
-    fi
-    
-    return 0
-}
-
-generate_warp_config() {
-    local temp_dir=$(mktemp -d)
-    cd "$temp_dir"
-    
-    (echo "Yes" | wgcf register) &
-    spinner $! "$(t warp_registering_account)"
-    
-    if [ $? -ne 0 ] || [ ! -f "wgcf-account.toml" ]; then
-        cd - >/dev/null
-        rm -rf "$temp_dir"
-        show_error "$(t warp_failed_register)"
-        return 1
-    fi
-    
-    (wgcf generate) &
-    spinner $! "$(t warp_generating_config)"
-    
-    if [ $? -ne 0 ] || [ ! -f "wgcf-profile.conf" ]; then
-        cd - >/dev/null
-        rm -rf "$temp_dir"
-        show_error "$(t warp_failed_generate)"
-        return 1
-    fi
-    
-    WARP_PRIVATE_KEY=$(grep "PrivateKey" wgcf-profile.conf | cut -d'=' -f2 | xargs)
-    WARP_PUBLIC_KEY=$(grep "PublicKey" wgcf-profile.conf | cut -d'=' -f2 | xargs)
-    
-    cd - >/dev/null
-    rm -rf "$temp_dir"
-    
-    if [ -z "$WARP_PRIVATE_KEY" ] || [ -z "$WARP_PUBLIC_KEY" ]; then
-        show_error "$(t warp_failed_generate)"
-        return 1
-    fi
-    
-    return 0
-}
-
-get_current_xray_config() {
+update_profiles_for_selected_nodes() {
     local panel_url="127.0.0.1:3000"
     local temp_file=$(mktemp)
     
-    make_api_request "GET" "http://$panel_url/api/xray" "$PANEL_TOKEN" "$PANEL_DOMAIN" "" >"$temp_file" 2>&1 &
+    make_api_request "GET" "http://$panel_url/api/config-profiles" "$PANEL_TOKEN" "$PANEL_DOMAIN" "" >"$temp_file" 2>&1 &
     spinner $! "$(t warp_getting_current_config)"
-    local response=$(cat "$temp_file")
+    local profiles_response=$(cat "$temp_file")
     rm -f "$temp_file"
     
-    if [ -z "$response" ]; then
+    if [ -z "$profiles_response" ]; then
         show_error "$(t warp_failed_get_config)"
         return 1
     fi
     
-    CURRENT_CONFIG=$(echo "$response" | jq -r '.response.config')
-    if [ -z "$CURRENT_CONFIG" ] || [ "$CURRENT_CONFIG" = "null" ]; then
+    local profile_groups=$(
+        for node_info in "${SELECTED_NODES[@]}"; do
+            local node_uuid="${node_info%%|*}"
+            local node_name="${node_info#*|}"
+            local node_data=$(echo "$NODES_JSON" | jq -r ".[] | select(.uuid == \"$node_uuid\")")
+            local profile_uuid=$(echo "$node_data" | jq -r '.configProfile.activeConfigProfileUuid // empty')
+            
+            if [ -n "$profile_uuid" ] && [ "$profile_uuid" != "null" ]; then
+                echo "$profile_uuid|$node_name"
+            fi
+        done | sort | jq -R -s -c 'split("\n") | map(select(length > 0) | split("|") | {profile: .[0], node: .[1]}) | group_by(.profile) | map({profile: .[0].profile, nodes: map(.node)})'
+    )
+    
+    local total_profiles=$(echo "$profile_groups" | jq '. | length')
+    if [ "$total_profiles" -eq 0 ]; then
         show_error "$(t warp_failed_get_config)"
         return 1
     fi
     
-    return 0
-}
-
-check_warp_already_configured() {
-    if echo "$CURRENT_CONFIG" | jq -e '.outbounds[] | select(.tag == "warp")' >/dev/null 2>&1; then
-        show_warning "$(t warp_already_configured)"
-        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-        read -r
-        return 1
-    fi
-    return 0
-}
-
-add_warp_outbound() {
-    local warp_outbound=$(cat <<EOF
+    show_info "$(t warp_found_profiles): $total_profiles"
+    
+    local profiles_updated=0
+    UPDATED_PROFILES_INFO=()
+    
+    echo "$profile_groups" | jq -c '.[]' | while read -r group; do
+        local profile_uuid=$(echo "$group" | jq -r '.profile')
+        local node_names=$(echo "$group" | jq -r '.nodes | join(", ")')
+        
+        local current_config=$(echo "$profiles_response" | jq -r ".response.configProfiles[] | select(.uuid == \"$profile_uuid\") | .config" 2>/dev/null)
+        
+        if [ -z "$current_config" ] || [ "$current_config" = "null" ]; then
+            show_error "$(t warp_failed_get_config) for profile $profile_uuid"
+            continue
+        fi
+        
+        local profile_name=$(echo "$profiles_response" | jq -r ".response.configProfiles[] | select(.uuid == \"$profile_uuid\") | .name // \"$profile_uuid\"" 2>/dev/null)
+        
+        if echo "$current_config" | jq -e '.outbounds[] | select(.tag == "warp-out")' >/dev/null 2>&1; then
+            show_warning "$(t warp_already_configured) ($(t warp_profile): $profile_name, $(t warp_nodes_lowercase): $node_names)"
+            continue
+        fi
+        
+        local warp_outbound=$(cat <<'EOF'
 {
-  "tag": "warp",
-  "protocol": "wireguard",
-  "settings": {
-    "secretKey": "$WARP_PRIVATE_KEY",
-    "DNS": "1.1.1.1",
-    "kernelMode": false,
-    "address": ["172.16.0.2/32"],
-    "peers": [
-      {
-        "publicKey": "$WARP_PUBLIC_KEY",
-        "endpoint": "engage.cloudflareclient.com:2408"
-      }
-    ]
+  "tag": "warp-out",
+  "protocol": "freedom",
+  "settings": {},
+  "streamSettings": {
+    "sockopt": {
+      "interface": "warp",
+      "tcpFastOpen": true
+    }
   }
 }
 EOF
-)
-
-    UPDATED_CONFIG=$(echo "$CURRENT_CONFIG" | jq --argjson warp_outbound "$warp_outbound" '.outbounds += [$warp_outbound]')
-
-    if [ $? -ne 0 ]; then
-        show_error "$(t warp_failed_update_config)"
-        return 1
-    fi
-
-    return 0
-}
-
-add_warp_routing() {
-    local warp_routing_rule=$(cat <<EOF
+        )
+        
+        local updated_config=$(echo "$current_config" | jq --argjson warp_outbound "$warp_outbound" '.outbounds += [$warp_outbound]')
+        
+        if [ $? -ne 0 ]; then
+            show_error "$(t warp_failed_update_config) for profile $profile_uuid"
+            continue
+        fi
+        
+        local warp_routing_rule=$(cat <<'EOF'
 {
-  "outboundTag": "warp",
+  "type": "field",
   "domain": [
-    "geosite:google-gemini",
-    "openai.com",
-    "ipinfo.io",
-    "spotify.com",
-    "canva.com"
+    "ipinfo.io"
   ],
-  "type": "field"
+  "inboundTag": [
+    "VLESS"
+  ],
+  "outboundTag": "warp-out"
 }
 EOF
-)
-
-    UPDATED_CONFIG=$(echo "$UPDATED_CONFIG" | jq --argjson warp_rule "$warp_routing_rule" '.routing.rules += [$warp_rule]')
-
-    if [ $? -ne 0 ]; then
-        show_error "$(t warp_failed_update_config)"
-        return 1
-    fi
-
-    return 0
-}
-
-update_xray_with_warp() {
-    local panel_url="127.0.0.1:3000"
-    local config_file=$(mktemp)
-
-    echo "$UPDATED_CONFIG" > "$config_file"
-
-    if ! update_xray_config "$panel_url" "$PANEL_TOKEN" "$PANEL_DOMAIN" "$config_file"; then
-        rm -f "$config_file"
-        show_error "$(t warp_failed_update_config)"
-        return 1
-    fi
-
-    rm -f "$config_file"
-    return 0
-}
-
-add_warp_integration() {
-    clear
-    echo -e "${BOLD_GREEN}$(t warp_title)${NC}"
-    echo
-
-    show_info "$(t warp_checking_installation)" "$ORANGE"
-    if ! check_panel_installation; then
-        return 0
-    fi
-
-    if ! show_warp_terms; then
-        return 0
-    fi
-
-    if ! extract_panel_credentials; then
-        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-        read -r
-        return 0
-    fi
-
-    if ! authenticate_panel; then
-        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-        read -r
-        return 0
-    fi
-
-    if ! get_current_xray_config; then
-        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-        read -r
-        return 0
-    fi
-
-    if ! check_warp_already_configured; then
-        return 0
-    fi
-
-    if ! command -v wgcf &> /dev/null; then
-        if ! install_wgcf; then
-            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-            read -r
+        )
+        
+        updated_config=$(echo "$updated_config" | jq 'if .routing == null then .routing = {} else . end')
+        updated_config=$(echo "$updated_config" | jq 'if .routing.rules == null then .routing.rules = [] else . end')
+        updated_config=$(echo "$updated_config" | jq --argjson warp_rule "$warp_routing_rule" '.routing.rules += [$warp_rule]')
+        
+        if [ $? -ne 0 ]; then
+            show_error "$(t warp_failed_update_config) for profile $profile_uuid"
+            continue
+        fi
+        
+        local update_data=$(jq -n --arg uuid "$profile_uuid" --argjson config "$updated_config" '{
+            uuid: $uuid,
+            config: $config
+        }')
+        
+        local update_temp=$(mktemp)
+        make_api_request "PATCH" "http://$panel_url/api/config-profiles" "$PANEL_TOKEN" "$PANEL_DOMAIN" "$update_data" >"$update_temp" 2>&1 &
+        spinner $! "$(t warp_updating_config) ($node_names)"
+        local update_response=$(cat "$update_temp")
+        rm -f "$update_temp"
+        
+        if [ -z "$update_response" ]; then
+            show_error "$(t warp_failed_update_config) for profile $profile_uuid"
+            continue
+        fi
+        
+        if echo "$update_response" | jq -e '.response.uuid' >/dev/null 2>&1; then
+            ((profiles_updated++))
+            echo "$node_names|$profile_name" >> /tmp/warp_updated_profiles.tmp
+            show_success "$(t warp_profile_updated): $node_names"
+        else
+            show_error "$(t warp_failed_update_config) for profile $profile_uuid"
+            echo "$(t api_response):"
+            echo "$update_response"
+        fi
+    done
+    
+    if [ -f /tmp/warp_updated_profiles.tmp ]; then
+        while IFS='|' read -r nodes profile; do
+            UPDATED_PROFILES_INFO+=("$nodes ($(t warp_profile): $profile)")
+        done < /tmp/warp_updated_profiles.tmp
+        rm -f /tmp/warp_updated_profiles.tmp
+        
+        if [ ${#UPDATED_PROFILES_INFO[@]} -gt 0 ]; then
             return 0
         fi
     fi
+    
+    return 1
+}
 
-    if ! generate_warp_config; then
-        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-        read -r
-        return 0
+install_docker_warp_native() {
+    local warp_dir="/opt/docker-warp-native"
+    
+    mkdir -p "$warp_dir"
+    
+    show_info "$(t warp_docker_downloading)"
+    if ! wget -q "https://raw.githubusercontent.com/xxphantom/docker-warp-native/refs/heads/main/docker-compose.yml" -O "$warp_dir/docker-compose.yml"; then
+        show_error "$(t warp_docker_download_failed)"
+        return 1
     fi
-
-    if ! add_warp_outbound; then
-        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-        read -r
-        return 0
+    
+    cd "$warp_dir"
+    show_info "$(t warp_docker_starting)"
+    
+    if ! docker compose up -d; then
+        show_error "$(t warp_docker_start_failed)"
+        return 1
     fi
-
-    if ! add_warp_routing; then
-        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-        read -r
-        return 0
-    fi
-
-    show_info "$(t warp_updating_config)" "$ORANGE"
-    if ! update_xray_with_warp; then
-        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-        read -r
-        return 0
-    fi
-
+    
     echo
-    show_success "$(t warp_success)"
+    show_info "$(t warp_docker_logs)"
+    docker compose logs -f -t --tail=20 &
+    local log_pid=$!
+    
+    sleep 10
+    kill $log_pid 2>/dev/null
+    
+    cd - >/dev/null
+    return 0
+}
+
+show_warp_config_changes() {
+    local updated_profiles=("$@")
+    
+    clear
+    echo -e "${BOLD_GREEN}$(t warp_docker_config_added)${NC}"
     echo
-    echo -e "${GREEN}$(t warp_success_details)${NC}"
+    
+    if [ ${#updated_profiles[@]} -gt 0 ]; then
+        echo -e "${BOLD_BLUE}$(t warp_affected_nodes_profiles):${NC}"
+        echo
+        for profile_info in "${updated_profiles[@]}"; do
+            echo "  • $profile_info"
+        done
+        echo
+    fi
+    
+    echo -e "${BOLD_BLUE}$(t warp_docker_outbound_added):${NC}"
     echo
-    echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
-    read -r
+    cat <<'EOF'
+{
+  "tag": "warp-out",
+  "protocol": "freedom",
+  "settings": {},
+  "streamSettings": {
+    "sockopt": {
+      "interface": "warp",
+      "tcpFastOpen": true
+    }
+  }
+}
+EOF
+    echo
+    echo -e "${BOLD_BLUE}$(t warp_docker_routing_added):${NC}"
+    echo
+    cat <<'EOF'
+{
+  "type": "field",
+  "domain": [
+    "ipinfo.io"
+  ],
+  "inboundTag": ["VLESS"],
+  "outboundTag": "warp-out"
+}
+EOF
+    echo
+    echo -e "${YELLOW}$(t warp_docker_edit_domains)${NC}"
+}
+
+show_remote_nodes_warning() {
+    local has_remote=false
+    
+    for addr in "${SELECTED_NODE_ADDRESSES[@]}"; do
+        if [[ "$addr" != "172.17.0.1" ]] && [[ "$addr" != "127.0.0.1" ]] && [[ "$addr" != "localhost" ]]; then
+            has_remote=true
+            break
+        fi
+    done
+    
+    if [ "$has_remote" = true ]; then
+        echo
+        echo -e "${BOLD_RED}❗ $(t warp_remote_nodes_warning)${NC}"
+        echo
+        echo -e "${BLUE}$(t warp_docker_repo_link)${NC}"
+        echo
+    fi
+}
+
+add_warp_docker_integration() {
+    clear
+    echo -e "${BOLD_GREEN}$(t warp_docker_title)${NC}"
+    echo -e "${BLUE}$(t warp_docker_subtitle)${NC}"
+    echo
+    
+    if ! command -v docker &> /dev/null; then
+        show_error "$(t warp_docker_no_docker)"
+        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+        read -r
+        return 0
+    fi
+    
+    local installation_type=$(check_installation_type)
+    
+    case "$installation_type" in
+        "node-only")
+            show_info "$(t warp_node_only_detected)"
+            echo
+            show_info "$(t warp_installing_container_only)"
+            
+            if ! install_docker_warp_native; then
+                echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+                read -r
+                return 0
+            fi
+            
+            show_success "$(t warp_container_installed_node_only)"
+            echo
+            echo -e "${YELLOW}$(t warp_manual_config_needed)${NC}"
+            echo -e "${BLUE}$(t warp_docker_repo_link)${NC}"
+            echo
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 0
+            ;;
+            
+        "panel-only"|"all-in-one")
+            show_info "$(t warp_checking_installation)" "$ORANGE"
+            if ! check_panel_installation_docker; then
+                return 0
+            fi
+            
+            if ! extract_panel_credentials_docker; then
+                echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+                read -r
+                return 0
+            fi
+            
+            if ! authenticate_panel_docker; then
+                echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+                read -r
+                return 0
+            fi
+            
+            if ! get_nodes_list; then
+                echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+                read -r
+                return 0
+            fi
+            
+            if ! select_nodes_for_warp "$installation_type"; then
+                echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+                read -r
+                return 0
+            fi
+            
+            show_info "$(t warp_config_will_update)"
+            
+            if [ "$HAS_LOCAL_NODE" = true ] || [ "$installation_type" = "all-in-one" ]; then
+                if [ -d "/opt/docker-warp-native" ] && docker ps --format '{{.Names}}' | grep -q "docker-warp-native"; then
+                    show_warning "$(t warp_docker_already_installed)"
+                    
+                    if prompt_yes_no "$(t warp_docker_reinstall)" "$YELLOW"; then
+                        cd /opt/docker-warp-native
+                        docker compose down
+                        cd - >/dev/null
+                        rm -rf /opt/docker-warp-native
+                    else
+                        show_info "$(t warp_docker_updating_config_only)"
+                    fi
+                fi
+                
+                if [ ! -d "/opt/docker-warp-native" ] || ! docker ps --format '{{.Names}}' | grep -q "docker-warp-native"; then
+                    if ! install_docker_warp_native; then
+                        echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+                        read -r
+                        return 0
+                    fi
+                fi
+            fi
+            
+            show_info "$(t warp_updating_config)" "$ORANGE"
+            if ! update_profiles_for_selected_nodes; then
+                echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+                read -r
+                return 0
+            fi
+            
+            show_warp_config_changes "${UPDATED_PROFILES_INFO[@]}"
+            
+            show_remote_nodes_warning
+            
+            show_success "$(t warp_docker_success)"
+            echo -e "${GREEN}$(t warp_docker_success_details)${NC}"
+            echo -e "${GREEN}$(t warp_docker_config_updated)${NC}"
+            echo
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            ;;
+            
+        *)
+            show_error "$(t warp_panel_not_found)"
+            echo -e "${YELLOW}$(t update_install_first)${NC}"
+            echo
+            echo -e "${BOLD_YELLOW}$(t prompt_enter_to_return)${NC}"
+            read -r
+            return 0
+            ;;
+    esac
 }
 
 # Including module: full-auth.sh
@@ -4055,24 +4651,52 @@ configure_vless_panel_only() {
 
     generate_xray_config "$config_file" "$SELF_STEAL_DOMAIN" "$CADDY_LOCAL_PORT" "$private_key"
 
-    if ! update_xray_config "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$config_file"; then
+    local xray_config=$(cat "$config_file")
+
+    local profiles_response=$(get_config_profiles "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
+    if [ -n "$profiles_response" ]; then
+        local default_profile_uuid=$(echo "$profiles_response" | jq -r '.response.configProfiles[0].uuid // empty' 2>/dev/null)
+        
+        if [ -n "$default_profile_uuid" ] && [ "$default_profile_uuid" != "null" ]; then
+            delete_config_profile "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$default_profile_uuid"
+        fi
+    fi
+
+    local profile_result=$(create_config_profile "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "StealConfig" "$xray_config")
+    if [ -z "$profile_result" ]; then
         return 1
     fi
 
-    if ! create_node "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$NODE_HOST" "$NODE_PORT"; then
+    local profile_uuid=$(echo "$profile_result" | cut -d':' -f1)
+    local inbound_uuid=$(echo "$profile_result" | cut -d':' -f2)
+
+    if ! create_node "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$NODE_HOST" "$NODE_PORT" "$profile_uuid" "$inbound_uuid"; then
         return 1
     fi
 
-    local inbound_uuid=$(get_inbounds "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
-    if [ -z "$inbound_uuid" ]; then
+    if ! create_host "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$profile_uuid" "$inbound_uuid" "$SELF_STEAL_DOMAIN"; then
         return 1
     fi
 
-    if ! create_host "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$inbound_uuid" "$SELF_STEAL_DOMAIN"; then
+    local squads_response=$(get_squads "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
+    if [ -z "$squads_response" ]; then
         return 1
     fi
 
-    if ! create_user "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "remnawave" "$inbound_uuid"; then
+    local squad_uuid=$(echo "$squads_response" | jq -r '.response.internalSquads[0].uuid' 2>/dev/null)
+    
+    if [ -z "$squad_uuid" ] || [ "$squad_uuid" = "null" ]; then
+        echo -e "${BOLD_RED}Error: No squads found${NC}"
+        echo "Squads response:"
+        echo "$squads_response" | jq '.'
+        return 1
+    fi
+
+    if ! update_squad "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$squad_uuid" "$inbound_uuid"; then
+        return 1
+    fi
+
+    if ! create_user "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "remnawave" "$inbound_uuid" "$squad_uuid"; then
         return 1
     fi
 
@@ -4703,24 +5327,52 @@ configure_vless_all_in_one() {
     
     generate_xray_config "$config_file" "$SELF_STEAL_DOMAIN" "$CADDY_LOCAL_PORT" "$private_key"
     
-    if ! update_xray_config "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$config_file"; then
+    local xray_config=$(cat "$config_file")
+    
+    local profiles_response=$(get_config_profiles "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
+    if [ -n "$profiles_response" ]; then
+        local default_profile_uuid=$(echo "$profiles_response" | jq -r '.response.configProfiles[0].uuid // empty' 2>/dev/null)
+        
+        if [ -n "$default_profile_uuid" ] && [ "$default_profile_uuid" != "null" ]; then
+            delete_config_profile "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$default_profile_uuid"
+        fi
+    fi
+    
+    local profile_result=$(create_config_profile "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "StealConfig" "$xray_config")
+    if [ -z "$profile_result" ]; then
         return 1
     fi
     
-    if ! create_node "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$node_host" "$NODE_PORT"; then
+    local profile_uuid=$(echo "$profile_result" | cut -d':' -f1)
+    local inbound_uuid=$(echo "$profile_result" | cut -d':' -f2)
+    
+    if ! create_node "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$node_host" "$NODE_PORT" "$profile_uuid" "$inbound_uuid"; then
         return 1
     fi
     
-    local inbound_uuid=$(get_inbounds "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
-    if [ -z "$inbound_uuid" ]; then
+    if ! create_host "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$profile_uuid" "$inbound_uuid" "$SELF_STEAL_DOMAIN"; then
         return 1
     fi
     
-    if ! create_host "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$inbound_uuid" "$SELF_STEAL_DOMAIN"; then
+    local squads_response=$(get_squads "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
+    if [ -z "$squads_response" ]; then
+        return 1
+    fi
+    
+    local squad_uuid=$(echo "$squads_response" | jq -r '.response.internalSquads[0].uuid' 2>/dev/null)
+    
+    if [ -z "$squad_uuid" ] || [ "$squad_uuid" = "null" ]; then
+        echo -e "${BOLD_RED}Error: No squads found${NC}"
+        echo "Squads response:"
+        echo "$squads_response" | jq '.'
+        return 1
+    fi
+    
+    if ! update_squad "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$squad_uuid" "$inbound_uuid"; then
         return 1
     fi
 
-    if ! create_user "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "remnawave" "$inbound_uuid"; then
+    if ! create_user "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "remnawave" "$inbound_uuid" "$squad_uuid"; then
         return 1
     fi
 }
@@ -5326,7 +5978,7 @@ main() {
             toggle_bbr
             ;;
         8)
-            add_warp_integration
+            add_warp_docker_integration
             ;;
         0)
             echo "$(t exiting)"

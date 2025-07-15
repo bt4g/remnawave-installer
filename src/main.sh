@@ -118,7 +118,7 @@ main() {
             toggle_bbr
             ;;
         8)
-            add_warp_integration
+            add_warp_docker_integration
             ;;
         0)
             echo "$(t exiting)"

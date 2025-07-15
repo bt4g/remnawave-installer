@@ -87,8 +87,10 @@ create_node() {
     local panel_domain="$3"
     local node_host="$4"
     local node_port="$5"
+    local profile_uuid="$6"
+    local inbound_uuid="$7"
 
-    local node_name="VLESS-NODE"
+    local node_name="VLESS"
     local temp_file=$(mktemp)
 
     local new_node_data=$(
@@ -97,6 +99,12 @@ create_node() {
     "name": "$node_name",
     "address": "$node_host",
     "port": $node_port,
+    "configProfile": {
+        "activeConfigProfileUuid": "$profile_uuid",
+        "activeInbounds": [
+            "$inbound_uuid"
+        ]
+    },
     "isTrafficTrackingActive": false,
     "trafficLimitBytes": 0,
     "notifyPercent": 0,
@@ -133,6 +141,178 @@ EOF
     fi
 }
 
+# Get config profiles
+get_config_profiles() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    
+    local temp_file=$(mktemp)
+    
+    make_api_request "GET" "http://$panel_url/api/config-profiles" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_getting_config_profiles)"
+    profiles_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$profiles_response" ]; then
+        echo -e "${BOLD_RED}$(t api_empty_response_getting_profiles)${NC}"
+        return 1
+    fi
+    
+    echo "$profiles_response"
+}
+
+# Delete config profile
+delete_config_profile() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    local profile_uuid="$4"
+    
+    local temp_file=$(mktemp)
+    
+    make_api_request "DELETE" "http://$panel_url/api/config-profiles/$profile_uuid" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_deleting_config_profile)"
+    delete_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    # Check for successful deletion
+    if [ -z "$delete_response" ] || echo "$delete_response" | jq -e '.response.isDeleted == true' >/dev/null 2>&1; then
+        return 0
+    fi
+    
+    # Check if response indicates error
+    if echo "$delete_response" | jq -e '.error' >/dev/null 2>&1; then
+        echo -e "${BOLD_RED}$(t api_failed_delete_profile)${NC}"
+        echo
+        echo "$(t api_response):"
+        echo "$delete_response"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Create config profile
+create_config_profile() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    local profile_name="$4"
+    local xray_config="$5"
+    
+    local temp_file=$(mktemp)
+    
+    local profile_data=$(cat <<EOF
+{
+    "name": "$profile_name",
+    "config": $xray_config
+}
+EOF
+    )
+    
+    make_api_request "POST" "http://$panel_url/api/config-profiles" "$token" "$panel_domain" "$profile_data" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_creating_config_profile)"
+    profile_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$profile_response" ]; then
+        echo -e "${BOLD_RED}$(t api_empty_response_creating_profile)${NC}"
+        return 1
+    fi
+    
+    if echo "$profile_response" | jq -e '.response.uuid' >/dev/null; then
+        # Return profile UUID and inbound UUID as colon-separated string
+        local profile_uuid=$(echo "$profile_response" | jq -r '.response.uuid')
+        local inbound_uuid=$(echo "$profile_response" | jq -r '.response.inbounds[0].uuid')
+        echo "$profile_uuid:$inbound_uuid"
+        return 0
+    else
+        echo -e "${BOLD_RED}$(t api_failed_create_profile)${NC}"
+        echo
+        echo "$(t api_response):"
+        echo "$profile_response"
+        return 1
+    fi
+}
+
+# Get list of squads
+get_squads() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    
+    local temp_file=$(mktemp)
+    
+    make_api_request "GET" "http://$panel_url/api/internal-squads" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_getting_squads)"
+    squads_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$squads_response" ]; then
+        echo -e "${BOLD_RED}$(t api_empty_response_getting_squads)${NC}"
+        return 1
+    fi
+    
+    # Return the full response for processing
+    echo "$squads_response"
+}
+
+# Update squad with new inbound
+update_squad() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    local squad_uuid="$4"
+    local inbound_uuid="$5"
+    
+    local temp_file=$(mktemp)
+    
+    # First get current squad data
+    local squad_response=$(get_squads "$panel_url" "$token" "$panel_domain")
+    if [ -z "$squad_response" ] || ! echo "$squad_response" | jq -e '.response.internalSquads' >/dev/null; then
+        echo -e "${BOLD_RED}$(t api_empty_response_getting_squads)${NC}"
+        return 1
+    fi
+    
+    # Extract existing inbounds for this squad
+    local existing_inbounds=$(echo "$squad_response" | jq -r --arg uuid "$squad_uuid" '.response.internalSquads[] | select(.uuid == $uuid) | .inbounds[].uuid')
+    if [ -z "$existing_inbounds" ]; then
+        existing_inbounds="[]"
+    else
+        existing_inbounds=$(echo "$existing_inbounds" | jq -R . | jq -s .)
+    fi
+    
+    # Create array with existing and new inbound
+    local inbounds_array=$(jq -n --argjson existing "$existing_inbounds" --arg new "$inbound_uuid" '$existing + [$new] | unique')
+    
+    # Create request body
+    local squad_data=$(jq -n --arg uuid "$squad_uuid" --argjson inbounds "$inbounds_array" '{
+        uuid: $uuid,
+        inbounds: $inbounds
+    }')
+    
+    make_api_request "PATCH" "http://$panel_url/api/internal-squads" "$token" "$panel_domain" "$squad_data" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_updating_squad)"
+    local update_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$update_response" ]; then
+        echo -e "${BOLD_RED}$(t api_empty_response_updating_squad)${NC}"
+        return 1
+    fi
+    
+    if echo "$update_response" | jq -e '.response.uuid' >/dev/null; then
+        return 0
+    else
+        echo -e "${BOLD_RED}$(t api_failed_update_squad)${NC}"
+        echo
+        echo "$(t api_response):"
+        echo "$update_response"
+        return 1
+    fi
+}
+
 # Get list of inbounds
 get_inbounds() {
     local panel_url="$1"
@@ -161,36 +341,62 @@ get_inbounds() {
     echo "$inbound_uuid"
 }
 
+# Get list of nodes
+get_nodes() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    
+    local temp_file=$(mktemp)
+    
+    make_api_request "GET" "http://$panel_url/api/nodes" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_getting_nodes)"
+    local response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$response" ]; then
+        echo -e "${BOLD_RED}$(t api_empty_response_getting_nodes)${NC}"
+        return 1
+    fi
+    
+    echo "$response"
+}
+
 # Create host
 create_host() {
     local panel_url="$1"
     local token="$2"
     local panel_domain="$3"
-    local inbound_uuid="$4"
-    local self_steal_domain="$5"
+    local profile_uuid="$4"
+    local inbound_uuid="$5"
+    local self_steal_domain="$6"
 
     local temp_file=$(mktemp)
 
     local host_data=$(
         cat <<EOF
 {
-    "inboundUuid": "$inbound_uuid",
-    "remark": "VLESS TCP REALITY",
+    "inbound": {
+        "configProfileUuid": "$profile_uuid",
+        "configProfileInboundUuid": "$inbound_uuid"
+    },
+    "remark": "VLESS",
     "address": "$self_steal_domain",
     "port": 443,
     "path": "",
     "sni": "$self_steal_domain",
-    "host": "$self_steal_domain",
-    "alpn": "h2,http/1.1",
+    "host": "",
+    "alpn": null,
     "fingerprint": "chrome",
     "allowInsecure": false,
-    "isDisabled": false
+    "isDisabled": false,
+    "securityLayer": "DEFAULT"
 }
 EOF
     )
 
     make_api_request "POST" "http://$panel_url/api/hosts" "$token" "$panel_domain" "$host_data" >"$temp_file" 2>&1 &
-    spinner $! "$(t spinner_creating_host) UUID: $inbound_uuid..."
+    spinner $! "$(t spinner_creating_host)..."
     host_response=$(cat "$temp_file")
     rm -f "$temp_file"
 
@@ -214,6 +420,7 @@ create_user() {
     local panel_domain="$3"
     local username="$4"
     local inbound_uuid="$5"
+    local squad_uuid="$6"
 
     local temp_file=$(mktemp)
     local temp_headers=$(mktemp)
@@ -227,6 +434,9 @@ create_user() {
     "trafficLimitStrategy": "NO_RESET",
     "activeUserInbounds": [
         "$inbound_uuid"
+    ],
+    "activeInternalSquads": [
+        "$squad_uuid"
     ],
     "expireAt": "2099-12-31T23:59:59.000Z",
     "description": "Default user created during installation",
@@ -244,6 +454,7 @@ EOF
             -H "Host: $panel_domain"
             -H "X-Forwarded-For: $host_only"
             -H "X-Forwarded-Proto: https"
+            -H "X-Remnawave-Client-type: browser"
             -H "Authorization: Bearer $token"
         )
 

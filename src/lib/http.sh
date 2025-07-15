@@ -20,6 +20,7 @@ make_api_request() {
         -H "Host: $panel_domain"
         -H "X-Forwarded-For: $host_only"
         -H "X-Forwarded-Proto: https"
+        -H "X-Remnawave-Client-type: browser"
     )
 
     if [ -n "$token" ]; then

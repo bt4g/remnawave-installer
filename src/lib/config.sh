@@ -155,7 +155,15 @@ collect_ports_separate_installation() {
 # Setup common environment
 setup_panel_environment() {
     # Download environment template
-    curl -s -o .env "$REMNAWAVE_BACKEND_REPO/$REMNAWAVE_BRANCH/.env.sample"
+    # For alpha branch, use dev branch's .env file
+    # For numeric versions, use main branch's .env file
+    local env_branch="$REMNAWAVE_BRANCH"
+    if [ "$REMNAWAVE_BRANCH" = "alpha" ]; then
+        env_branch="dev"
+    elif [[ "$REMNAWAVE_BRANCH" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+        env_branch="main"
+    fi
+    curl -s -o .env "$REMNAWAVE_BACKEND_REPO/$env_branch/.env.sample"
 
     # Update environment file
     update_file ".env" \

@@ -149,17 +149,34 @@ sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-i
 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/install.sh)" @ --lang=ru --panel-branch=dev
 ```
 
+**Использование конкретной версии Remnawave (например, 1.65):**
+
+```bash
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/install.sh)" @ --lang=ru --panel-branch=1.65
+```
+
 **Использование dev версии скрипта и Remnawave:**
 
 ```bash
 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/install.sh)" @ --lang=ru --panel-branch=dev --installer-branch=dev
 ```
 
+**Переустановка с сохранением сертификатов:**
+
+```bash
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/xxphantom/remnawave-installer/refs/heads/main/install.sh)" @ --lang=ru --keep-caddy-data
+```
+
 **Доступные параметры:**
 
 - `--lang=en|ru` - Язык интерфейса
-- `--panel-branch=main|dev` - Версии Docker образов Remnawave backend и node
+- `--panel-branch=main|dev|alpha|X.Y[.Z]` - Версии Docker образов Remnawave backend и node
+  - `main` - последняя стабильная версия
+  - `dev` - версия для разработки
+  - `alpha` - альфа-версия для тестирования (только backend, node будет использовать dev)
+  - `X.Y[.Z]` - конкретный номер версии (например, 1.65, 2.0.1)
 - `--installer-branch=main|dev` - Ветка скрипта установки (влияет на URL загрузки)
+- `--keep-caddy-data` - Сохранить данные Caddy (сертификаты) при переустановке
 
 ---
 

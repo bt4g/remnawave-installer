@@ -20,32 +20,67 @@ configure_vless_panel_only() {
 
     local private_key=$(echo "$keys_result" | cut -d':' -f1)
 
-    # Generate Xray configuration
+    # Generate Xray configuration for config profile
     generate_xray_config "$config_file" "$SELF_STEAL_DOMAIN" "$CADDY_LOCAL_PORT" "$private_key"
 
-    # Update Xray configuration on panel
-    if ! update_xray_config "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$config_file"; then
+    # Read the generated config
+    local xray_config=$(cat "$config_file")
+
+    # Delete the first (default) profile before creating new one
+    local profiles_response=$(get_config_profiles "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
+    if [ -n "$profiles_response" ]; then
+        # Get first profile UUID
+        local default_profile_uuid=$(echo "$profiles_response" | jq -r '.response.configProfiles[0].uuid // empty' 2>/dev/null)
+        
+        if [ -n "$default_profile_uuid" ] && [ "$default_profile_uuid" != "null" ]; then
+            # Delete the first profile
+            delete_config_profile "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$default_profile_uuid"
+        fi
+    fi
+
+    # Create config profile
+    local profile_result=$(create_config_profile "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "StealConfig" "$xray_config")
+    if [ -z "$profile_result" ]; then
         return 1
     fi
 
-    # Create node entry in panel
-    if ! create_node "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$NODE_HOST" "$NODE_PORT"; then
+    local profile_uuid=$(echo "$profile_result" | cut -d':' -f1)
+    local inbound_uuid=$(echo "$profile_result" | cut -d':' -f2)
+
+    # Create node entry in panel with config profile
+    if ! create_node "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$NODE_HOST" "$NODE_PORT" "$profile_uuid" "$inbound_uuid"; then
         return 1
     fi
 
-    # Get inbound UUID
-    local inbound_uuid=$(get_inbounds "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
-    if [ -z "$inbound_uuid" ]; then
+    # Create host entry with new structure
+    if ! create_host "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$profile_uuid" "$inbound_uuid" "$SELF_STEAL_DOMAIN"; then
         return 1
     fi
 
-    # Create host entry
-    if ! create_host "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$inbound_uuid" "$SELF_STEAL_DOMAIN"; then
+    # Get squads and update with new inbound
+    local squads_response=$(get_squads "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
+    if [ -z "$squads_response" ]; then
+        return 1
+    fi
+
+    # Get first squad UUID (в alpha версии может не быть squad'а с именем Default)
+    local squad_uuid=$(echo "$squads_response" | jq -r '.response.internalSquads[0].uuid' 2>/dev/null)
+    
+    # Check if we found any squad
+    if [ -z "$squad_uuid" ] || [ "$squad_uuid" = "null" ]; then
+        echo -e "${BOLD_RED}Error: No squads found${NC}"
+        echo "Squads response:"
+        echo "$squads_response" | jq '.'
+        return 1
+    fi
+
+    # Update squad with new inbound
+    if ! update_squad "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "$squad_uuid" "$inbound_uuid"; then
         return 1
     fi
 
     # Create default user
-    if ! create_user "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "remnawave" "$inbound_uuid"; then
+    if ! create_user "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN" "remnawave" "$inbound_uuid" "$squad_uuid"; then
         return 1
     fi
 
