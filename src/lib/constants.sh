@@ -4,6 +4,7 @@
 LANG_CODE="${LANG_CODE:-en}"
 REMNAWAVE_BRANCH="${REMNAWAVE_BRANCH:-main}"
 INSTALLER_BRANCH="${INSTALLER_BRANCH:-main}"
+KEEP_CADDY_DATA="${KEEP_CADDY_DATA:-false}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -31,6 +32,10 @@ while [[ $# -gt 0 ]]; do
             INSTALLER_BRANCH="$2"
             shift 2
             ;;
+        --keep-caddy-data)
+            KEEP_CADDY_DATA="true"
+            shift
+            ;;
         *)
             shift
             ;;
@@ -51,13 +56,22 @@ YELLOW=$(tput setaf 3)
 NC=$(tput sgr0)
 
 # Script version
-VERSION="1.6.1"
+VERSION="1.6.2"
 
 # Docker image tags based on branch
-if [ "$REMNAWAVE_BRANCH" = "dev" ]; then
+# Check if branch is a version number (e.g., 1.65, 2.0.1)
+if [[ "$REMNAWAVE_BRANCH" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+    # Use the version number as tag directly
+    REMNAWAVE_BACKEND_TAG="$REMNAWAVE_BRANCH"
+    REMNAWAVE_NODE_TAG="$REMNAWAVE_BRANCH"
+elif [ "$REMNAWAVE_BRANCH" = "dev" ]; then
     REMNAWAVE_BACKEND_TAG="dev"
     REMNAWAVE_NODE_TAG="dev"
+elif [ "$REMNAWAVE_BRANCH" = "alpha" ]; then
+    REMNAWAVE_BACKEND_TAG="alpha"
+    REMNAWAVE_NODE_TAG="dev"  # Node doesn't have alpha tag, use dev
 else
+    # Default to latest for main branch
     REMNAWAVE_BACKEND_TAG="latest"
     REMNAWAVE_NODE_TAG="latest"
 fi

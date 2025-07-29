@@ -12,11 +12,17 @@ remove_previous_installation() {
         # Show warning and request confirmation (keep as is)
         if [ "$from_menu" = true ]; then
             show_warning "$(t removal_installation_detected)"
+            if [ "$KEEP_CADDY_DATA" = "true" ]; then
+                echo -e "${BOLD_GREEN}$(t removal_keep_caddy_data)${NC}"
+            fi
             if ! prompt_yes_no "$(t removal_confirm_delete)" "$ORANGE"; then
                 return 1
             fi
         else
             show_warning "$(t removal_previous_detected)"
+            if [ "$KEEP_CADDY_DATA" = "true" ]; then
+                echo -e "${BOLD_GREEN}$(t removal_keep_caddy_data)${NC}"
+            fi
             if ! prompt_yes_no "$(t removal_confirm_continue)" "$ORANGE"; then
                 return 1
             fi
@@ -37,7 +43,18 @@ remove_previous_installation() {
         for compose_file in "${compose_configs[@]}"; do
             if [ -f "$compose_file" ]; then
                 local dir_path=$(dirname "$compose_file")
-                cd "$dir_path" && docker compose down -v --rmi local --remove-orphans >/dev/null 2>&1 &
+                local compose_cmd="docker compose down"
+                
+                # Check if this is Caddy and we should keep its data
+                if [[ "$dir_path" == *"/caddy"* ]] && [ "$KEEP_CADDY_DATA" = "true" ]; then
+                    # Don't remove volumes for Caddy
+                    compose_cmd="$compose_cmd --rmi local --remove-orphans"
+                else
+                    # Remove volumes for everything else (or for Caddy if not keeping data)
+                    compose_cmd="$compose_cmd -v --rmi local --remove-orphans"
+                fi
+                
+                cd "$dir_path" && eval "$compose_cmd" >/dev/null 2>&1 &
                 spinner $! "$(t spinner_cleaning_services) $(basename "$dir_path")"
             fi
         done

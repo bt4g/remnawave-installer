@@ -30,13 +30,13 @@ MODULES = $(LIB_DIR)/constants.sh \
           $(LIB_DIR)/misc.sh \
           $(LIB_DIR)/vless.sh \
           $(LIB_DIR)/generate-selfsteal.sh \
-					$(MODULES_DIR)/tools/run-cli.sh \
-					$(MODULES_DIR)/tools/enable-bbr.sh \
-					$(MODULES_DIR)/tools/show-credentials.sh \
-					$(MODULES_DIR)/tools/update.sh \
-					$(MODULES_DIR)/tools/warp-integration.sh \
+		  $(MODULES_DIR)/tools/run-cli.sh \
+		  $(MODULES_DIR)/tools/enable-bbr.sh \
+		  $(MODULES_DIR)/tools/show-credentials.sh \
+		  $(MODULES_DIR)/tools/update.sh \
+		  $(MODULES_DIR)/tools/warp-docker-integration.sh \
           $(MODULES_DIR)/auth/full-auth.sh \
-					$(MODULES_DIR)/auth/cookie-auth.sh \
+		  $(MODULES_DIR)/auth/cookie-auth.sh \
           $(MODULES_DIR)/auth/static-site.sh \
           $(MODULES_DIR)/subscription-page.sh \
           $(MODULES_DIR)/panel/vless-config.sh \

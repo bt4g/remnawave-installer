@@ -168,47 +168,35 @@ simple_read_domain_or_ip() {
     local result=""
     local attempts=0
     local max_attempts=10
-
     while [ $attempts -lt $max_attempts ]; do
-        # Show prompt with default value if present
-        local prompt_formatted_text=""
         if [ -n "$default_value" ]; then
-            prompt_formatted_text="${ORANGE}${prompt} [$default_value]:${NC}"
+            echo -ne "${ORANGE}${prompt} [$default_value]: ${NC}" >&2
         else
-            prompt_formatted_text="${ORANGE}${prompt}:${NC}"
+            echo -ne "${ORANGE}${prompt}: ${NC}" >&2
         fi
+        read input
+        echo >&2
 
-        read -p "$prompt_formatted_text" input
-
-        # If input is empty and we have a default value, use it
         if [ -z "$input" ] && [ -n "$default_value" ]; then
             result="$default_value"
             break
         fi
-
-        # If input is empty and no default value, require input
         if [ -z "$input" ]; then
             echo -e "${BOLD_RED}$(t validation_input_empty)${NC}" >&2
             ((attempts++))
             continue
         fi
-
-        # Perform validation based on validation_type
         if [ "$validation_type" = "ip_only" ]; then
-            # Only validate as IP address
             result=$(validate_ip "$input")
             local status=$?
-
             if [ $status -eq 0 ]; then
                 break
             else
                 echo -e "${BOLD_RED}$(t validation_invalid_ip)${NC}" >&2
             fi
         elif [ "$validation_type" = "domain_only" ]; then
-            # Only validate as domain name
             result=$(validate_domain_name "$input")
             local status=$?
-
             if [ $status -eq 0 ]; then
                 break
             else
@@ -216,10 +204,8 @@ simple_read_domain_or_ip() {
                 echo -e "${BOLD_RED}$(t validation_use_only_letters)${NC}" >&2
             fi
         else
-            # Default: validate as either domain or IP
             result=$(validate_domain "$input")
             local status=$?
-
             if [ $status -eq 0 ]; then
                 break
             else
@@ -228,10 +214,8 @@ simple_read_domain_or_ip() {
                 echo -e "${BOLD_RED}$(t validation_ip_format)${NC}" >&2
             fi
         fi
-
         ((attempts++))
     done
-
     if [ $attempts -eq $max_attempts ]; then
         if [ -n "$default_value" ]; then
             echo -e "${BOLD_RED}$(t validation_max_attempts_default) $default_value${NC}" >&2
@@ -242,7 +226,5 @@ simple_read_domain_or_ip() {
             return 1
         fi
     fi
-
-    echo >&2
     echo "$result"
 }
