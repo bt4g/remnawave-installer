@@ -6,6 +6,20 @@
 
 # Generate keys for VLESS Reality
 generate_vless_keys() {
+  local panel_url="$1"
+  local token="$2"
+  local panel_domain="$3"
+  
+  # Try to generate keys using panel API first
+  if [ -n "$panel_url" ] && [ -n "$token" ] && [ -n "$panel_domain" ]; then
+    local api_keys=$(generate_x25519_keys_api "$panel_url" "$token" "$panel_domain")
+    if [ $? -eq 0 ] && [ -n "$api_keys" ]; then
+      echo "$api_keys"
+      return 0
+    fi
+  fi
+  
+  # Fallback to Docker method if API fails or parameters not provided
   local temp_file=$(mktemp)
 
   # Generate x25519 keys using Docker
@@ -13,8 +27,8 @@ generate_vless_keys() {
   spinner $! "$(t spinner_generating_keys)"
   keys=$(cat "$temp_file")
 
-  local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
-  local public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
+  local private_key=$(echo "$keys" | grep "PrivateKey:" | awk '{print $2}')
+  local public_key=$(echo "$keys" | grep "Password:" | awk '{print $2}')
   rm -f "$temp_file"
 
   if [ -z "$private_key" ] || [ -z "$public_key" ]; then

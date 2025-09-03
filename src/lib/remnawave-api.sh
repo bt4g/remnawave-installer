@@ -510,6 +510,37 @@ EOF
     fi
 }
 
+# Generate x25519 keys using panel API
+generate_x25519_keys_api() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    
+    local temp_file=$(mktemp)
+    
+    make_api_request "GET" "http://$panel_url/api/system/tools/x25519/generate" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_generating_keys)"
+    local api_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$api_response" ]; then
+        echo -e "${BOLD_RED}$(t api_failed_generate_keys)${NC}"
+        return 1
+    fi
+    
+    # Extract keys from response
+    local private_key=$(echo "$api_response" | jq -r '.response.keypairs[0].privateKey')
+    local public_key=$(echo "$api_response" | jq -r '.response.keypairs[0].publicKey')
+    
+    if [ -z "$private_key" ] || [ -z "$public_key" ] || [ "$private_key" = "null" ] || [ "$public_key" = "null" ]; then
+        echo -e "${BOLD_RED}$(t api_failed_extract_keys)${NC}"
+        return 1
+    fi
+    
+    # Return keys via echo
+    echo "$private_key:$public_key"
+}
+
 # Common user registration
 register_panel_user() {
     REG_TOKEN=$(register_user "127.0.0.1:3000" "$PANEL_DOMAIN" "$SUPERADMIN_USERNAME" "$SUPERADMIN_PASSWORD")
