@@ -11,7 +11,7 @@ configure_vless_all_in_one() {
     local node_host="172.17.0.1"  # Docker bridge IP
     
     # Generate VLESS keys
-    local keys_result=$(generate_vless_keys)
+    local keys_result=$(generate_vless_keys "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
     if [ $? -ne 0 ]; then
         return 1
     fi

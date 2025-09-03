@@ -13,7 +13,7 @@ configure_vless_panel_only() {
     NODE_HOST=$(simple_read_domain_or_ip "$(t vless_enter_node_host)" "$SELF_STEAL_DOMAIN")
 
     # Generate VLESS keys
-    local keys_result=$(generate_vless_keys)
+    local keys_result=$(generate_vless_keys "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
     if [ $? -ne 0 ]; then
         return 1
     fi

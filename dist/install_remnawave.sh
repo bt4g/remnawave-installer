@@ -2549,6 +2549,34 @@ EOF
     fi
 }
 
+generate_x25519_keys_api() {
+    local panel_url="$1"
+    local token="$2"
+    local panel_domain="$3"
+    
+    local temp_file=$(mktemp)
+    
+    make_api_request "GET" "http://$panel_url/api/system/tools/x25519/generate" "$token" "$panel_domain" "" >"$temp_file" 2>&1 &
+    spinner $! "$(t spinner_generating_keys)"
+    local api_response=$(cat "$temp_file")
+    rm -f "$temp_file"
+    
+    if [ -z "$api_response" ]; then
+        echo -e "${BOLD_RED}$(t api_failed_generate_keys)${NC}"
+        return 1
+    fi
+    
+    local private_key=$(echo "$api_response" | jq -r '.response.keypairs[0].privateKey')
+    local public_key=$(echo "$api_response" | jq -r '.response.keypairs[0].publicKey')
+    
+    if [ -z "$private_key" ] || [ -z "$public_key" ] || [ "$private_key" = "null" ] || [ "$public_key" = "null" ]; then
+        echo -e "${BOLD_RED}$(t api_failed_extract_keys)${NC}"
+        return 1
+    fi
+    
+    echo "$private_key:$public_key"
+}
+
 register_panel_user() {
     REG_TOKEN=$(register_user "127.0.0.1:3000" "$PANEL_DOMAIN" "$SUPERADMIN_USERNAME" "$SUPERADMIN_PASSWORD")
 
@@ -3035,14 +3063,26 @@ generate_qr_code() {
 
 
 generate_vless_keys() {
+  local panel_url="$1"
+  local token="$2"
+  local panel_domain="$3"
+  
+  if [ -n "$panel_url" ] && [ -n "$token" ] && [ -n "$panel_domain" ]; then
+    local api_keys=$(generate_x25519_keys_api "$panel_url" "$token" "$panel_domain")
+    if [ $? -eq 0 ] && [ -n "$api_keys" ]; then
+      echo "$api_keys"
+      return 0
+    fi
+  fi
+  
   local temp_file=$(mktemp)
 
   docker run --rm ghcr.io/xtls/xray-core x25519 >"$temp_file" 2>&1 &
   spinner $! "$(t spinner_generating_keys)"
   keys=$(cat "$temp_file")
 
-  local private_key=$(echo "$keys" | grep "Private key:" | awk '{print $3}')
-  local public_key=$(echo "$keys" | grep "Public key:" | awk '{print $3}')
+  local private_key=$(echo "$keys" | grep "PrivateKey:" | awk '{print $2}')
+  local public_key=$(echo "$keys" | grep "Password:" | awk '{print $2}')
   rm -f "$temp_file"
 
   if [ -z "$private_key" ] || [ -z "$public_key" ]; then
@@ -4642,7 +4682,7 @@ configure_vless_panel_only() {
 
     NODE_HOST=$(simple_read_domain_or_ip "$(t vless_enter_node_host)" "$SELF_STEAL_DOMAIN")
 
-    local keys_result=$(generate_vless_keys)
+    local keys_result=$(generate_vless_keys "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
     if [ $? -ne 0 ]; then
         return 1
     fi
@@ -5318,7 +5358,7 @@ configure_vless_all_in_one() {
     local config_file="$REMNAWAVE_DIR/config.json"
     local node_host="172.17.0.1"  # Docker bridge IP
     
-    local keys_result=$(generate_vless_keys)
+    local keys_result=$(generate_vless_keys "$panel_url" "$REG_TOKEN" "$PANEL_DOMAIN")
     if [ $? -ne 0 ]; then
         return 1
     fi
